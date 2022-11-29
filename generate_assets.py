@@ -30,6 +30,8 @@ Example:
 
     # Compile
     make VERSION=us -j16
+
+    # Run the
     build/us_pc/sm64.us
 
 
@@ -123,6 +125,12 @@ def generate_audio(output_dpath, info):
 def generate_image(output_dpath, info):
     shape = info['shape']
 
+    # Hack so we can use cv2 imwrite. Should not be needed when pil backend
+    # lands in kwimage.
+    if len(shape) == 3 and shape[2] == 2:
+        shape = list(shape)
+        shape[2] = 4
+
     out_fpath = output_dpath / info['fname']
     out_fpath.parent.ensuredir()
 
@@ -130,8 +138,9 @@ def generate_image(output_dpath, info):
     if new_data is None:
         new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
 
-    kwimage.imwrite(out_fpath, new_data, backend='gdal')
+    # kwimage.imwrite(out_fpath, new_data, backend='gdal')
     # kwimage.imwrite(out_fpath, new_data, backend='pil')
+    kwimage.imwrite(out_fpath, new_data, backend='cv2')
     return shape
 
 
