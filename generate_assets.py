@@ -93,7 +93,7 @@ def main():
         7
         ''')
     body = '\n'.join(item['fname'] for item in asset_metadata)
-    text = header + body
+    text = header + '\n' + body
     assets_fpath = output_dpath / '.assets-local.txt'
     assets_fpath.write_text(text)
 
