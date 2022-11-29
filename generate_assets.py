@@ -31,7 +31,7 @@ Example:
     # Compile
     make VERSION=us -j16
 
-    # Run the
+    # Run the executable
     build/us_pc/sm64.us
 
 
@@ -134,7 +134,7 @@ def generate_image(output_dpath, info):
     out_fpath = output_dpath / info['fname']
     out_fpath.parent.ensuredir()
 
-    new_data = handle_special_texture(out_fpath.name, shape)
+    new_data = handle_special_texture(info['fname'], shape)
     if new_data is None:
         new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
 
