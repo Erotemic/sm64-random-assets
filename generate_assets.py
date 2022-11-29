@@ -22,6 +22,16 @@ Example:
     # Clone this repo
     git clone https://github.com/Erotemic/sm64-random-assets.git $HOME/tmp/test_assets/sm64-random-assets
 
+    # Run the asset generator
+    python $HOME/tmp/test_assets/sm64-random-assets/generate_assets.py --dst $HOME/tmp/test_assets/sm64-port-test
+
+    # Move into the port directory
+    cd $HOME/tmp/test_assets/sm64-port-test
+
+    # Compile
+    make VERSION=us -j16
+    build/us_pc/sm64.us
+
 
 SeeAlso:
     https://github.com/TechieAndroid/sm64redrawn
@@ -74,6 +84,18 @@ def main():
 
     for info in ub.ProgIter(ext_to_info['.bin'], desc='.bin'):
         generate_binary(output_dpath, info)
+
+    # Write a dummy .assets-local.txt to trick sm64-port into thinking assets
+    # were extracted.
+    header = ub.codeblock(
+        '''
+        # This file tracks the assets currently extracted by extract_assets.py.
+        7
+        ''')
+    body = '\n'.join(item['fname'] for item in asset_metadata)
+    text = header + body
+    assets_fpath = output_dpath / '.assets-local.txt'
+    assets_fpath.write_text(text)
 
 
 def generate_audio(output_dpath, info):
