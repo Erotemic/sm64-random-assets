@@ -22,46 +22,58 @@ def main():
     asset_fpaths = [ub.Path(p) for p in lines[2:-1]]
 
     asset_fpaths = [ub.Path(p) for p in lines[2:-1]]
-    ext_to_fpaths = ub.group_items(asset_fpaths, lambda x: x.suffix)
-
     # Extract high level information about the file size and format of the file
     # we need to generate information for.
 
     metadata = []
 
-    for fname in ext_to_fpaths.pop('.aiff'):
-        info = parse_audio_info(input_dpath, fname)
-        if info is not None:
-            metadata.append(info)
+    for fname in asset_fpaths:
+        ext = fname.suffix
+        if ext == '.aiff':
+            info = parse_audio_info(input_dpath, fname)
+            if info is not None:
+                metadata.append(info)
+            else:
+                metadata.append({
+                    'fname': str(fname),
+                })
+        elif ext == '.png':
+            in_fpath = input_dpath / fname
+            if in_fpath.exists():
+                info = parse_image_info(input_dpath, fname)
+                metadata.append(info)
+            else:
+                metadata.append({
+                    'fname': str(fname),
+                })
+        elif ext == '.m64':
+            # I have no idea what these files are. Zeroing them seems to work fine.
+            in_fpath = input_dpath / fname
+            if in_fpath.exists():
+                orig = in_fpath.read_bytes()
+                metadata.append({
+                    'fname': str(fname),
+                    'size': len(orig)
+                })
+            else:
+                metadata.append({
+                    'fname': str(fname),
+                })
+        elif ext == '.bin':
+            # I have no idea what these files are. Zeroing them seems to work fine.
+            in_fpath = input_dpath / fname
+            if in_fpath.exists():
+                orig = in_fpath.read_bytes()
+                metadata.append({
+                    'type': '.bin',
+                    'fname': str(fname),
+                    'size': len(orig)
+                })
+            else:
+                metadata.append({
+                    'fname': str(fname),
+                })
 
-    for fname in ext_to_fpaths.pop('.png'):
-        in_fpath = input_dpath / fname
-        if in_fpath.exists():
-            info = parse_image_info(input_dpath, fname)
-            metadata.append(info)
-
-    for fname in ext_to_fpaths.pop('.m64'):
-        # I have no idea what these files are. Zeroing them seems to work fine.
-        in_fpath = input_dpath / fname
-        if in_fpath.exists():
-            orig = in_fpath.read_bytes()
-            metadata.append({
-                'type': '.m64',
-                'fname': str(fname),
-                'size': len(orig)
-            })
-
-    for fname in ext_to_fpaths.pop('.bin'):
-        # I have no idea what these files are. Zeroing them seems to work fine.
-        in_fpath = input_dpath / fname
-        if in_fpath.exists():
-            orig = in_fpath.read_bytes()
-            metadata.append({
-                'type': '.bin',
-                'fname': str(fname),
-                'size': len(orig)
-            })
-    assert len(ext_to_fpaths) == 0, 'did not handle all data'
     metadata_text = json.dumps(metadata, indent='    ')
     print(metadata_text)
 
