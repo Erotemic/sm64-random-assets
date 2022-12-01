@@ -65,7 +65,6 @@ def main():
             if in_fpath.exists():
                 orig = in_fpath.read_bytes()
                 metadata.append({
-                    'type': '.bin',
                     'fname': str(fname),
                     'size': len(orig)
                 })
@@ -101,7 +100,6 @@ def parse_audio_info(input_dpath, fname):
     param_dict['comptype'] = param_dict['comptype'].decode('utf8')
 
     info = {
-        'type': '.aiff',
         'size': size,
         'params': param_dict,
         'fname': str(fname),
@@ -117,7 +115,6 @@ def parse_image_info(input_dpath, fname):
     shape = kwimage.load_image_shape(in_fpath)
 
     info = {
-        'type': '.png',
         'fname': str(fname),
         'shape': list(shape),
     }

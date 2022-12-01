@@ -73,7 +73,7 @@ def main():
     asset_metadata = json.loads(asset_metadata_fpath.read_text())
 
     # Generate randomized / custom versions for each asset
-    ext_to_info = ub.group_items(asset_metadata, lambda x: x['type'])
+    ext_to_info = ub.group_items(asset_metadata, lambda x: ub.Path(x['fname']).suffix)
 
     for info in ub.ProgIter(ext_to_info['.aiff'], desc='.aiff'):
         generate_audio(output_dpath, info)
@@ -101,6 +101,8 @@ def main():
 
 
 def generate_audio(output_dpath, info):
+    if info.get('params', None) is None:
+        return
     params_dict = info['params'].copy()
     params_dict['comptype'] = params_dict['comptype'].encode()
     params_dict['compname'] = params_dict['compname'].encode()
@@ -123,6 +125,8 @@ def generate_audio(output_dpath, info):
 
 
 def generate_image(output_dpath, info):
+    if info.get('shape', None) is None:
+        return
     shape = info['shape']
 
     # Hack so we can use cv2 imwrite. Should not be needed when pil backend
@@ -141,10 +145,11 @@ def generate_image(output_dpath, info):
     # kwimage.imwrite(out_fpath, new_data, backend='gdal')
     # kwimage.imwrite(out_fpath, new_data, backend='pil')
     kwimage.imwrite(out_fpath, new_data, backend='cv2')
-    return shape
 
 
 def generate_binary(output_dpath, info):
+    if info.get('size', None) is None:
+        return
     out_fpath = output_dpath / info['fname']
     out_fpath.parent.ensuredir()
     # Not sure what these bin/m64 file are. Zeroing them seems to work fine.
