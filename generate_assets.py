@@ -134,7 +134,7 @@ def generate_image(output_dpath, info):
     out_fpath = output_dpath / info['fname']
     out_fpath.parent.ensuredir()
 
-    new_data = handle_special_texture(info['fname'], shape)
+    new_data = None  # handle_special_texture(info['fname'], shape)
     if new_data is None:
         new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
 
@@ -214,7 +214,22 @@ def build_char_name_map():
             'color': 'orange',
         }
 
-    # Sideways italic letters
+    # Sideways numbers
+    # font_graphics.05900.ia4
+    offset = 0x05900
+    fmt = 'textures/segment2/font_graphics.{:05X}.ia4.png'
+    inc = 64
+    for i in range(0, 10):
+        n = fmt.format(offset + i * inc)
+        c = chr(ord('0') + i)
+        name_to_text_lut[n] = {
+            'text': c,
+            'color': 'white',
+            'rot': 1,
+            'scale': 0.5
+        }
+
+    # Sideways italic capital letters
     'font_graphics.05B80.ia4.png'
     'font_graphics.05BC0.ia4.png'
     fmt = 'textures/segment2/font_graphics.{:05X}.ia4.png'
@@ -223,6 +238,38 @@ def build_char_name_map():
     for i in range(26):
         n = fmt.format(offset + i * inc)
         c = chr(ord('A') + i)
+        name_to_text_lut[n] = {
+            'text': c,
+            'color': 'white',
+            'rot': 1,
+            'scale': 0.5
+        }
+
+    # Sideways bold captial letters
+    # Only 5 of these.
+    'font_graphics.06DC0.ia4.png'
+    'font_graphics.06E00.ia4.png'
+    fmt = 'textures/segment2/font_graphics.{:05X}.ia4.png'
+    offset = 0x06DC0
+    inc = 0x06E00 - offset
+    for i, c in zip(range(26), ['A', 'B', 'C', 'Z', 'R']):
+        n = fmt.format(offset + i * inc)
+        # c = chr(ord('A') + i)
+        name_to_text_lut[n] = {
+            'text': c,
+            'color': 'white',
+            'rot': 1,
+            'scale': 0.5
+        }
+
+    # Sideways italic lowercase letters
+    # font_graphics.06200.ia4.png
+    fmt = 'textures/segment2/font_graphics.{:05X}.ia4.png'
+    offset = 0x06200
+    inc = 64
+    for i in range(26):
+        n = fmt.format(offset + i * inc)
+        c = chr(ord('a') + i)
         name_to_text_lut[n] = {
             'text': c,
             'color': 'white',
@@ -244,6 +291,27 @@ def build_char_name_map():
             'background': 'black',
         }
 
+    n = 'textures/segment2/font_graphics.06410.ia4.png'
+    name_to_text_lut[n] = {'text': ':', 'color': 'white', 'rot': 1, 'scale': 0.5}
+
+    n = 'textures/segment2/font_graphics.06420.ia4.png'
+    name_to_text_lut[n] = {'text': '-', 'color': 'white', 'rot': 1, 'scale': 0.5}
+
+    n = 'textures/segment2/font_graphics.06980.ia4.png'
+    name_to_text_lut[n] = {'text': '(', 'color': 'white', 'rot': 1, 'scale': 0.5}
+    n = 'textures/segment2/font_graphics.06A00.ia4.png'
+    name_to_text_lut[n] = {'text': ')', 'color': 'white', 'rot': 1, 'scale': 0.5}
+    n = 'textures/segment2/font_graphics.06A40.ia4.png'
+    name_to_text_lut[n] = {'text': '~', 'color': 'white', 'rot': 1, 'scale': 0.5}
+    n = 'textures/segment2/font_graphics.06A80.ia4.png'
+    name_to_text_lut[n] = {'text': '.', 'color': 'white', 'rot': 1, 'scale': 0.5}
+    n = 'textures/segment2/font_graphics.06AC0.ia4.png'
+    name_to_text_lut[n] = {'text': '%', 'color': 'white', 'rot': 1, 'scale': 0.5}
+    n = 'textures/segment2/font_graphics.06BC0.ia4.png'
+    name_to_text_lut[n] = {'text': '?', 'color': 'white', 'rot': 1, 'scale': 0.5}
+    n = 'textures/segment2/font_graphics.068C0.ia4.png'
+    name_to_text_lut[n] = {'text': '!', 'color': 'white', 'rot': 1, 'scale': 0.5}
+
     name_to_text_lut['levels/castle_grounds/5.ia8.png'] = {
         # fixme
         'text': 'Peach',
@@ -255,33 +323,48 @@ def build_char_name_map():
 name_to_text_lut = build_char_name_map()
 
 
+def _devel():
+    fname = 'levels/castle_grounds/5.ia8.png'
+    shape = (32, 64, 4)
+    info = name_to_text_lut[fname]
+    pass
+
+
 def handle_special_texture(fname, shape):
     import numpy as np
     fname = str(fname)
     if fname in name_to_text_lut:
         info = name_to_text_lut[fname]
-        c = info['text']
+        text = info['text']
         color = info['color']
         rot = info.get('rot', 0)
         scale = info.get('scale', 1)
         bg = np.zeros(shape, dtype=np.uint8)
-        h, w = shape[1], shape[0]
+        h, w = shape[0:2]
         if rot:
+            bg = np.rot90(bg, k=1)
+            bg = np.ascontiguousarray(bg)
             h, w = w, h
         org = (w // 2, h // 2)
-        img = kwimage.draw_text_on_image(
-            bg, c, fontScale=0.6 * scale, thickness=1, org=org, halign='center',
-            valign='center', color=color)
+        img, info = kwimage.draw_text_on_image(
+            bg,
+            # {'width': w, 'height': h}
+            text, fontScale=0.6 * scale, thickness=1, org=org, halign='center',
+            valign='center', color=color, return_info=True)
+
         if rot:
-            img = np.rot90(img, k=3)
-            img = np.flipud(img)
+            img = np.fliplr(img)
+            img = np.rot90(img, k=-1)
+            img = np.ascontiguousarray(img)
         return img
 
 
 if __name__ == '__main__':
     """
     CommandLine:
-        cd ~/code/sm64-random-assets/
-        python generate_assets.py --dst ~/code/sm64-port-safe
+        python ~/code/sm64-random-assets/generate_assets.py --dst ~/code/sm64-port-safe
+        cd ~/code/sm64-port-safe
+        make VERSION=us -j16
+        build/us_pc/sm64.us
     """
     main()
