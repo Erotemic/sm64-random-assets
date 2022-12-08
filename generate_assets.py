@@ -14,6 +14,7 @@ Usage:
 Example:
 
     # Make a temporary directory
+    rm -rf $HOME/tmp/test_assets
     mkdir -p $HOME/tmp/test_assets
 
     # Clone the sm64 port repo
@@ -24,6 +25,30 @@ Example:
 
     # Run the asset generator
     python $HOME/tmp/test_assets/sm64-random-assets/generate_assets.py --dst $HOME/tmp/test_assets/sm64-port-test
+
+    # Move into the port directory
+    cd $HOME/tmp/test_assets/sm64-port-test
+
+    # Compile
+    make VERSION=us -j16
+
+    # Run the executable
+    build/us_pc/sm64.us
+
+
+Example:
+
+    # Internal Test
+
+    # Make a temporary directory
+    rm -rf $HOME/tmp/test_assets
+    mkdir -p $HOME/tmp/test_assets
+
+    # Clone the sm64 port repo
+    git clone https://github.com/sm64-port/sm64-port $HOME/tmp/test_assets/sm64-port-test
+
+    # Run the asset generator
+    python $HOME/code/sm64-random-assets/generate_assets.py --dst $HOME/tmp/test_assets/sm64-port-test
 
     # Move into the port directory
     cd $HOME/tmp/test_assets/sm64-port-test
@@ -138,7 +163,7 @@ def generate_image(output_dpath, info):
     out_fpath = output_dpath / info['fname']
     out_fpath.parent.ensuredir()
 
-    new_data = None  # handle_special_texture(info['fname'], shape)
+    new_data = handle_special_texture(info['fname'], shape)
     if new_data is None:
         new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
 
