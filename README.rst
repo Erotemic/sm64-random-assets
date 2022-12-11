@@ -4,13 +4,21 @@ educational purposes.
 
 Python Requirements:
 
-* kwimage
-* python-opencv-headless
-* ubelt
-* numpy
+.. code:: bash
+
+   pip install kwimage
+   pip install python-opencv-headless
+   pip install ubelt numpy
 
 
 This has only been tested for building the US variant, and only on Linux.
+
+For each asset it generates a random texture, except in special cases like text
+where it was possible to generate reasonable textures with open source tools.
+The result is surprisingly playable.
+
+
+.. image:: https://i.imgur.com/iiMPSTZ.png
 
 
 Example Usage:

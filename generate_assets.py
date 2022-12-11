@@ -36,7 +36,7 @@ Example:
     build/us_pc/sm64.us
 
 
-Example:
+Ignore:
 
     # Internal Test
 
@@ -48,7 +48,7 @@ Example:
     git clone https://github.com/sm64-port/sm64-port $HOME/tmp/test_assets/sm64-port-test
 
     # Run the asset generator
-    python $HOME/code/sm64-random-assets/generate_assets.py --dst $HOME/tmp/test_assets/sm64-port-test
+    python $HOME/code/sm64-random-assets/generate_assets.py --dst $HOME/tmp/test_assets/sm64-port-test --reference $HOME/code/sm64-port
 
     # Move into the port directory
     cd $HOME/tmp/test_assets/sm64-port-test
@@ -74,8 +74,15 @@ import os
 def main():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dst', default=None, help='Path to the sm64-port repo to generate assets for.')
-    parser.add_argument('--repo', default=None, help='Path to this repo. Should not need to specify.')
+    parser.add_argument('--dst', default=None, help=(
+        'Path to the sm64-port repo to generate assets for.'))
+    parser.add_argument('--reference', default=None, help=(
+        'A reference to a directory with a different set of assets to '
+        'compare against for debugging.'
+    ))
+    parser.add_argument('--manifest_fpath', default=None, help=(
+        'Path to the asset manifest to use. If unspecified, attempts '
+        'to use the one in this repo'))
     args = parser.parse_args()
 
     # Path to the clone of sm64-port we will generate assets for.
@@ -84,17 +91,17 @@ def main():
     else:
         output_dpath = ub.Path(args.dst).expand()
 
-    # This path
-    if args.repo is None:
-        # repo_dpath = ub.Path('~/code/sm64-random-assets').expand()
+    # Find the path to the asset mainfest, which contains a list of what data
+    # to be generated.
+    if args.manifest_fpath is None:
         repo_dpath = ub.Path(__file__).parent
+        asset_metadata_fpath = repo_dpath / 'asset_metadata.json'
     else:
-        repo_dpath = ub.Path(args.repo).expand()
-    print('output_dpath = {}'.format(ub.repr2(output_dpath, nl=1)))
-    print('repo_dpath = {}'.format(ub.repr2(repo_dpath, nl=1)))
+        asset_metadata_fpath = ub.Path(args.manifest_fpath).expand()
+    print('output_dpath = {}'.format(ub.urepr(output_dpath, nl=1)))
+    print('asset_metadata_fpath = {}'.format(ub.urepr(asset_metadata_fpath, nl=1)))
 
     # Load the assets that need to be generated.
-    asset_metadata_fpath = repo_dpath / 'asset_metadata.json'
     asset_metadata = json.loads(asset_metadata_fpath.read_text())
 
     # Generate randomized / custom versions for each asset
@@ -225,6 +232,7 @@ def build_char_name_map():
         name_to_text_lut[n] = {
             'text': c,
             'color': 'white',
+            'scale': 0.8,
         }
 
     # Big fancy letters
@@ -243,6 +251,35 @@ def build_char_name_map():
             'text': c,
             'color': 'orange',
         }
+
+    segment2_rgba16_data = [
+        {'index': 0x04800, 'text': "'"},
+        {'index': 0x04A00, 'text': '"'},
+        {'index': 0x05000, 'text': '?'},
+        {'index': 0x05600, 'text': 'x', 'comment': 'times'},
+    ]
+    for item in segment2_rgba16_data:
+        n = 'textures/segment2/segment2.{index:05X}.rgba16.png'.format(**item)
+        item.setdefault('color', 'orange')
+        name_to_text_lut[n] = item
+
+    segment2_rgba16_data = [
+        {'index': 0x05800, 'text': 'o', 'comment': 'coin', 'color': 'yellow'},
+        {'index': 0x05A00, 'text': 'O', 'comment': 'mario head', 'color': 'red'},
+        {'index': 0x05C00, 'text': '*', 'comment': 'star', 'color': 'yellow'},
+        {'index': 0x06200, 'text': '3', 'color': 'green', 'scale': 0.5, 'background': 'black'},
+        {'index': 0x06280, 'text': '3', 'color': 'green', 'scale': 0.5, 'background': 'black'},
+        {'index': 0x06300, 'text': '6', 'color': 'green', 'scale': 0.5, 'background': 'black'},
+        {'index': 0x07080, 'text': '.', 'color': 'yellow'},
+        {'index': 0x07B50, 'text': '8', 'color': 'gray', 'comment': 'camera'},
+        {'index': 0x07D50, 'text': 'O', 'color': 'brown', 'comment': 'lakitu head'},
+        {'index': 0x07F50, 'text': 'X', 'color': 'red', 'comment': 'locked X', 'background': 'darkred'},
+        {'index': 0x08150, 'text': '^', 'color': 'yellow', 'comment': 'c-up'},
+        {'index': 0x081D0, 'text': 'V', 'color': 'yellow', 'comment': 'c-down'},
+    ]
+    for item in segment2_rgba16_data:
+        n = 'textures/segment2/segment2.{index:05X}.rgba16.png'.format(**item)
+        name_to_text_lut[n] = item
 
     # Sideways numbers
     # font_graphics.05900.ia4
@@ -268,23 +305,6 @@ def build_char_name_map():
     for i in range(26):
         n = fmt.format(offset + i * inc)
         c = chr(ord('A') + i)
-        name_to_text_lut[n] = {
-            'text': c,
-            'color': 'white',
-            'rot': 1,
-            'scale': 0.5
-        }
-
-    # Sideways bold captial letters
-    # Only 5 of these.
-    'font_graphics.06DC0.ia4.png'
-    'font_graphics.06E00.ia4.png'
-    fmt = 'textures/segment2/font_graphics.{:05X}.ia4.png'
-    offset = 0x06DC0
-    inc = 0x06E00 - offset
-    for i, c in zip(range(26), ['A', 'B', 'C', 'Z', 'R']):
-        n = fmt.format(offset + i * inc)
-        # c = chr(ord('A') + i)
         name_to_text_lut[n] = {
             'text': c,
             'color': 'white',
@@ -327,20 +347,60 @@ def build_char_name_map():
     n = 'textures/segment2/font_graphics.06420.ia4.png'
     name_to_text_lut[n] = {'text': '-', 'color': 'white', 'rot': 1, 'scale': 0.5}
 
-    n = 'textures/segment2/font_graphics.06980.ia4.png'
-    name_to_text_lut[n] = {'text': '(', 'color': 'white', 'rot': 1, 'scale': 0.5}
-    n = 'textures/segment2/font_graphics.06A00.ia4.png'
-    name_to_text_lut[n] = {'text': ')', 'color': 'white', 'rot': 1, 'scale': 0.5}
-    n = 'textures/segment2/font_graphics.06A40.ia4.png'
-    name_to_text_lut[n] = {'text': '~', 'color': 'white', 'rot': 1, 'scale': 0.5}
-    n = 'textures/segment2/font_graphics.06A80.ia4.png'
-    name_to_text_lut[n] = {'text': '.', 'color': 'white', 'rot': 1, 'scale': 0.5}
-    n = 'textures/segment2/font_graphics.06AC0.ia4.png'
-    name_to_text_lut[n] = {'text': '%', 'color': 'white', 'rot': 1, 'scale': 0.5}
-    n = 'textures/segment2/font_graphics.06BC0.ia4.png'
-    name_to_text_lut[n] = {'text': '?', 'color': 'white', 'rot': 1, 'scale': 0.5}
-    n = 'textures/segment2/font_graphics.068C0.ia4.png'
-    name_to_text_lut[n] = {'text': '!', 'color': 'white', 'rot': 1, 'scale': 0.5}
+    # Not entirely sure about some of these
+    ia4_font_graphics_data = [
+        {'index': 0x06880, 'text': 'I', 'comment': 'updown arrow', 'utf': '⬍'},
+        {'index': 0x068C0, 'text': '!'},
+        {'index': 0x06900, 'text': 'O', 'comment': 'coin symbol', 'utf': '🪙'},
+        {'index':    None, 'text': 'x', 'comment': 'times symbol', 'utf': None},
+        {'index':    None, 'text': '('},
+        {'index':    None, 'text': 'H', 'comment': 'double paren'},
+        {'index':    None, 'text': ')'},
+        {'index':    None, 'text': '~'},
+        {'index':    None, 'text': '.', 'comment': 'cdot?'},
+        {'index':    None, 'text': '%'},
+        {'index':    None, 'text': '.'},
+        {'index':    None, 'text': ','},
+        {'index':    None, 'text': "'"},
+        {'index':    None, 'text': '?'},
+        {'index':    None, 'text': '*', 'comment': 'filled star'},
+        {'index':    None, 'text': '*', 'comment': 'unfilled star'},
+        {'index':    None, 'text': '"', 'comment': ''},
+        {'index':    None, 'text': '"', 'comment': ''},
+        {'index':    None, 'text': ':', 'comment': ''},
+        {'index':    None, 'text': '-', 'comment': ''},
+        {'index':    None, 'text': '&', 'comment': ''},
+        # Sideways bold captial letters
+        # Only 5 of these corresponding to buttons.
+        {'index': 0x06DC0, 'text': 'A'},
+        {'index':    None, 'text': 'B'},
+        {'index':    None, 'text': 'C'},
+        {'index':    None, 'text': 'Z'},
+        {'index':    None, 'text': 'R'},
+        {'index':    None, 'text': '^', 'comment': 'direction arrow'},
+        {'index':    None, 'text': 'V', 'comment': 'direction arrow'},
+        {'index':    None, 'text': '<', 'comment': 'direction arrow'},
+        {'index': 0x06FC0, 'text': '>', 'comment': 'direction arrow'},
+    ]
+    base = 0x06880
+    for inc, item in enumerate(ia4_font_graphics_data):
+        index = base + (0x40 * inc)
+        if item.get('index', None) is not None:
+            assert item['index'] == index
+        item['index'] = index
+
+    for item in ia4_font_graphics_data:
+        n = 'textures/segment2/font_graphics.{index:05X}.ia4.png'.format(**item)
+        name_to_text_lut[n] = {'text': item['text'], 'color': 'white', 'rot': 1, 'scale': 0.5}
+
+    ia1_segment_data = [
+        {'index':    0x06410, 'text': ':', 'base': 'font_graphics'},
+        {'index':    0x06420, 'text': '-', 'base': 'font_graphics'},
+        {'index':    0x07340, 'text': '|', 'base': 'segment2'},
+    ]
+    for item in ia1_segment_data:
+        n = 'textures/segment2/{base}.{index:05X}.ia1.png'.format(**item)
+        name_to_text_lut[n] = {'text': item['text'], 'color': 'white', 'rot': 1, 'scale': 0.5}
 
     name_to_text_lut['levels/castle_grounds/5.ia8.png'] = {
         # fixme
@@ -354,10 +414,83 @@ name_to_text_lut = build_char_name_map()
 
 
 def _devel():
-    fname = 'levels/castle_grounds/5.ia8.png'
-    shape = (32, 64, 4)
-    info = name_to_text_lut[fname]
-    pass
+    """
+    Developer scratchpad
+    """
+    dst = ub.Path('$HOME/tmp/test_assets/sm64-port-test').expand()
+    ref = ub.Path('$HOME/code/sm64-port').expand()
+    asset_metadata_fpath = ub.Path('$HOME/code/sm64-random-assets/asset_metadata.json').expand()
+
+    # Load the assets that need to be generated.
+    asset_metadata = json.loads(asset_metadata_fpath.read_text())
+    # Remove non-existing data
+    asset_metadata = [info for info in asset_metadata if (ref / info['fname']).exists() ]
+
+    # Enrich the metadata
+    import parse
+    # Extract the hex index
+    pat = parse.Parser('{base}.{hex}.{imgtype}.png')
+    for item in asset_metadata:
+        name = ub.Path(item['fname']).name
+        result = pat.parse(name)
+        if result is not None:
+            item['index'] = int(result['hex'], base=16)
+            item['base'] = result['base']
+            item['imgtype'] = result['imgtype']
+
+    # Generate randomized / custom versions for each asset
+    ext_to_info = ub.group_items(asset_metadata, lambda x: ub.Path(x['fname']).suffix)
+    subinfos = ub.group_items(ext_to_info['.png'], lambda x: str(ub.Path(x['fname']).parent))
+
+    subinfo = subinfos['textures/segment2']
+    subinfo = subinfos['textures/ipl3_raw']
+    relevant = subinfo
+    # relevant = [info for info in subinfo if 'index' in info]
+    # relevant = sorted(relevant, key=lambda x: (x['base'], x['index']))
+
+    group = relevant
+
+    # groups = ub.group_items(relevant, lambda x: x['imgtype'])
+    # for g, group in list(groups.items()):
+    #     # g = 'rgba16.png'
+    #     group = groups[g]
+    #     if group:
+    #         break
+
+    # group = groups['ia4']
+    # group = groups['ia1']
+    # group = groups['rgba16']
+    # group = groups['ia8']
+    # group = groups['ia16']
+
+    cells = []
+    for info in group:
+        fpath1 = ref / info['fname']
+        print(f'fpath1={fpath1}')
+        fpath2 = dst / info['fname']
+        # Remove alpha channel
+        img1 = kwimage.imread(fpath1)[..., 0:-1]
+        img2 = kwimage.imread(fpath2)[..., 0:-1]
+
+        img1 = kwimage.imresize(img1, scale=10, interpolation='nearest')
+        img2 = kwimage.imresize(img2, scale=10, interpolation='nearest')
+
+        img1 = kwimage.ensure_float01(img1)
+        img2 = kwimage.ensure_float01(img2)
+
+        cell = kwimage.stack_images([img1, img2], axis=1, pad=4, bg_value='purple')
+        text = str(str(fpath2.name).split('.')[0:2])
+        cell = kwimage.draw_header_text(cell, text, fit=True)
+        cells.append(cell)
+
+    canvas = kwimage.stack_images_grid(cells, pad=16, bg_value='green', chunksize=4)
+    import kwplot
+    kwplot.autompl()
+    kwplot.imshow(canvas)
+
+    # fname = 'levels/castle_grounds/5.ia8.png'
+    # shape = (32, 64, 4)
+    # info = name_to_text_lut[fname]
 
 
 def handle_special_texture(fname, shape):
