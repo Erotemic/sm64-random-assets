@@ -47,14 +47,16 @@ Ignore:
     # Clone the sm64 port repo
     git clone https://github.com/sm64-port/sm64-port $HOME/tmp/test_assets/sm64-port-test
 
-    # Run the asset generator
-    python $HOME/code/sm64-random-assets/generate_assets.py --dst $HOME/tmp/test_assets/sm64-port-test --reference $HOME/code/sm64-port
-
     # Move into the port directory
     cd $HOME/tmp/test_assets/sm64-port-test
 
+    # Run the asset generator
+    python $HOME/code/sm64-random-assets/generate_assets.py \
+        --dst $HOME/tmp/test_assets/sm64-port-test \
+        --reference $HOME/code/sm64-port
+
     # Compile
-    make VERSION=us -j16
+    make clean && make VERSION=us -j9
 
     # Run the executable
     build/us_pc/sm64.us
@@ -107,17 +109,73 @@ def main():
     # Generate randomized / custom versions for each asset
     ext_to_info = ub.group_items(asset_metadata, lambda x: ub.Path(x['fname']).suffix)
 
-    for info in ub.ProgIter(ext_to_info['.aiff'], desc='.aiff'):
-        generate_audio(output_dpath, info)
+    use_reference = 1
+    if use_reference:
+        ref_dpath = ub.Path(args.reference)
+
+    def copy_reference(output_dpath, info, ref_dpath):
+        ref_fpath = ref_dpath / info['fname']
+        out_fpath = output_dpath / info['fname']
+        if ref_fpath.exists():
+            ref_fpath.copy(out_fpath, overwrite=True)
+
+
+    """
+
+    Note: on my older processor machine, the game freezes after the startup
+    splash screen fade to black and never gets to the mario head.
+
+    Table of when this behavior happened
+
+        png | aiff | m64 | bin | result
+        ----+------+-----+-----+-------
+        REF | REF  | REF | REF | worked
+        gen | gen  | REF | REF | worked
+        REF | REF  | gen | gen | worked
+        gen | REF  | gen | gen | worked
+        REF | gen  | gen | gen | worked
+        gen | gen  | REF | gen | freeze
+        gen | gen  | gen | REF | freeze
+        gen | gen  | gen | gen | freeze
+
+    Ah, it does freeze later in the game on whomps with,
+    gen, ref, gen, gen, but is ok with ref, ref, gen, gen.
+    Also ok with ref, gen, gen, gen.
+
+    Seems to be due to the i8 textures
+    """
+
+    use_reference = 0
 
     for info in ub.ProgIter(ext_to_info['.png'], desc='.png'):
-        generate_image(output_dpath, info)
+        if use_reference:
+            copy_reference(output_dpath, info, ref_dpath)
+        else:
+            generate_image(output_dpath, info)
+
+    use_reference = 0
+
+    for info in ub.ProgIter(ext_to_info['.aiff'], desc='.aiff'):
+        if use_reference:
+            copy_reference(output_dpath, info, ref_dpath)
+        else:
+            generate_audio(output_dpath, info)
+
+    use_reference = 0
 
     for info in ub.ProgIter(ext_to_info['.m64'], desc='.m64'):
-        generate_binary(output_dpath, info)
+        if use_reference:
+            copy_reference(output_dpath, info, ref_dpath)
+        else:
+            generate_binary(output_dpath, info)
+
+    use_reference = 0
 
     for info in ub.ProgIter(ext_to_info['.bin'], desc='.bin'):
-        generate_binary(output_dpath, info)
+        if use_reference:
+            copy_reference(output_dpath, info, ref_dpath)
+        else:
+            generate_binary(output_dpath, info)
 
     # Write a dummy .assets-local.txt to trick sm64-port into thinking assets
     # were extracted.
@@ -157,6 +215,15 @@ def generate_audio(output_dpath, info):
 
 
 def generate_image(output_dpath, info):
+    """
+    Differnt texture types
+
+    ia1
+    ia4
+    ia8
+    ia16
+    rgba16
+    """
     if info.get('shape', None) is None:
         return
     shape = info['shape']
@@ -172,11 +239,37 @@ def generate_image(output_dpath, info):
 
     new_data = handle_special_texture(info['fname'], shape)
     if new_data is None:
-        new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+        if out_fpath.name.endswith('.ia1.png'):
+            new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+            # new_data[new_data < 127] = 0
+            # new_data[new_data >= 127] = 255
+            # new_data[:] = 0
+        elif out_fpath.name.endswith('.ia4.png'):
+            new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+            # new_data[new_data < 127] = 0
+            # new_data[new_data >= 127] = 255
+            # new_data[:] = 0
+        elif out_fpath.name.endswith('.ia8.png'):
+            # Its just these ones that cause the game to freeze
+            # on my older CPU when there is too much variation in the data
+            new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+            new_data[new_data < 127] = 0
+            new_data[new_data >= 127] = 255
+            new_data[:] = 0
+        elif out_fpath.name.endswith('.ia16.png'):
+            new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+            # new_data[new_data < 127] = 0
+            # new_data[new_data >= 127] = 255
+        elif out_fpath.name.endswith('.rgba16.png'):
+            new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+        else:
+            new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+        # new_data[..., 0:3] = 0
+        # new_data[..., 3] = 0
 
     # kwimage.imwrite(out_fpath, new_data, backend='gdal')
     # kwimage.imwrite(out_fpath, new_data, backend='pil')
-    kwimage.imwrite(out_fpath, new_data, backend='cv2')
+    kwimage.imwrite(out_fpath, new_data, backend='pil')
 
 
 def generate_binary(output_dpath, info):
@@ -279,6 +372,43 @@ def build_char_name_map():
     ]
     for item in segment2_rgba16_data:
         n = 'textures/segment2/segment2.{index:05X}.rgba16.png'.format(**item)
+        name_to_text_lut[n] = item
+
+    main_menu_texts = [
+        {'index': 0x0AC40, 'text': '0', 'color': 'white', 'scale': 0.5, 'binary': True},
+    ]
+    # Numbers
+    for i in range(1, 10):
+        new = main_menu_texts[0].copy()
+        new['text'] = str(i)
+        new['index'] = new['index'] + (64 * i)
+        main_menu_texts.append(new)
+    # Letters
+    for i in range(0, 26):
+        new = main_menu_texts[0].copy()
+        new['text'] = chr(i + 65)
+        new['index'] = new['index'] + (64 * (i + 10))
+        main_menu_texts.append(new)
+    for item in main_menu_texts:
+        n = 'levels/menu/main_menu_seg7_us.{index:05X}.ia8.png'.format(**item)
+        name_to_text_lut[n] = item
+    mmia8 = {'color': 'white', 'scale': 0.5, 'binary': True}
+    main_menu_texts2 = [
+        {'index': 0x0B540 + 64 * 0, 'text': 'O', 'comment': 'coin', **mmia8},
+        {'index': 0x0B540 + 64 * 1, 'text': 'x', 'comment': 'times', **mmia8},
+        {'index': 0x0B540 + 64 * 2, 'text': '*', 'comment': 'star', **mmia8},
+        {'index': 0x0B540 + 64 * 3, 'text': '-', 'comment': '', **mmia8},
+        {'index': 0x0B540 + 64 * 4, 'text': ',', 'comment': '', **mmia8},
+        {'index': 0x0B540 + 64 * 5, 'text': "'", 'comment': '', **mmia8},
+        {'index': 0x0B540 + 64 * 6, 'text': '!', 'comment': '', **mmia8},
+        {'index': 0x0B540 + 64 * 7, 'text': '?', 'comment': '', **mmia8},
+        {'index': 0x0B540 + 64 * 8, 'text': '@', 'comment': 'face', **mmia8},
+        {'index': 0x0B540 + 64 * 9, 'text': '%', 'comment': 'not sure', **mmia8},
+        {'index': 0x0B540 + 64 * 10, 'text': '.', 'comment': '', **mmia8},
+        {'index': 0x0B540 + 64 * 11, 'text': '&', 'comment': '', **mmia8},
+    ]
+    for item in main_menu_texts2:
+        n = 'levels/menu/main_menu_seg7_us.{index:05X}.ia8.png'.format(**item)
         name_to_text_lut[n] = item
 
     # Sideways numbers
@@ -442,6 +572,8 @@ def _devel():
     ext_to_info = ub.group_items(asset_metadata, lambda x: ub.Path(x['fname']).suffix)
     subinfos = ub.group_items(ext_to_info['.png'], lambda x: str(ub.Path(x['fname']).parent))
 
+    relevant = [x for x in ext_to_info['.png'] if x['fname'].endswith('.ia8.png')]
+
     subinfo = subinfos['textures/segment2']
     subinfo = subinfos['textures/ipl3_raw']
     relevant = subinfo
@@ -469,21 +601,39 @@ def _devel():
         print(f'fpath1={fpath1}')
         fpath2 = dst / info['fname']
         # Remove alpha channel
-        img1 = kwimage.imread(fpath1)[..., 0:-1]
-        img2 = kwimage.imread(fpath2)[..., 0:-1]
+        img1 = kwimage.imread(fpath1, backend='pil')
+        img2 = kwimage.imread(fpath2, backend='pil')
 
-        img1 = kwimage.imresize(img1, scale=10, interpolation='nearest')
-        img2 = kwimage.imresize(img2, scale=10, interpolation='nearest')
+        if img1.shape[2] == 2:
+            img1 = np.dstack([kwimage.atleast_3channels(img1[..., 0]), img1[..., 1]])
+        if img2.shape[2] == 2:
+            img2 = np.dstack([kwimage.atleast_3channels(img2[..., 0]), img2[..., 1]])
 
-        img1 = kwimage.ensure_float01(img1)
-        img2 = kwimage.ensure_float01(img2)
+        bg1 = kwimage.checkerboard(dsize=img1.shape[0:2][::-1],
+                                   off_value=32, on_value=64, dtype=np.uint8)
+        bg2 = kwimage.checkerboard(dsize=img2.shape[0:2][::-1],
+                                   off_value=32, on_value=64, dtype=np.uint8)
+
+        img1 = kwimage.overlay_alpha_images(img1, bg1, keepalpha=0)
+        img2 = kwimage.overlay_alpha_images(img2, bg2, keepalpha=0)
+
+        # alpha1 = img1[..., 3]
+        # alpha2 = img2[..., 3]
+        img1 = kwimage.ensure_float01(img1[..., 0:3])
+        img2 = kwimage.ensure_float01(img2[..., 0:3])
+        # img1 = np.dstack([img1, alpha1 / 255])
+        # img2 = np.dstack([img2, alpha1 / 255])
+
+        img1 = kwimage.imresize(img1, max_dim=128, interpolation='nearest')
+        img2 = kwimage.imresize(img2, max_dim=128, interpolation='nearest')
+
 
         cell = kwimage.stack_images([img1, img2], axis=1, pad=4, bg_value='purple')
         text = str(str(fpath2.name).split('.')[0:2])
         cell = kwimage.draw_header_text(cell, text, fit=True)
         cells.append(cell)
 
-    canvas = kwimage.stack_images_grid(cells, pad=16, bg_value='green', chunksize=4)
+    canvas = kwimage.stack_images_grid(cells, pad=16, bg_value='green', chunksize=8)
     import kwplot
     kwplot.autompl()
     kwplot.imshow(canvas)
@@ -502,6 +652,7 @@ def handle_special_texture(fname, shape):
         color = info['color']
         rot = info.get('rot', 0)
         scale = info.get('scale', 1)
+        binary = info.get('binary', 0)
         bg = np.zeros(shape, dtype=np.uint8)
         h, w = shape[0:2]
         if rot:
@@ -519,6 +670,11 @@ def handle_special_texture(fname, shape):
             img = np.fliplr(img)
             img = np.rot90(img, k=-1)
             img = np.ascontiguousarray(img)
+
+        if binary:
+            thresh = 160
+            img[img >= thresh] = 255
+            img[img < thresh] = 0
         return img
 
 
