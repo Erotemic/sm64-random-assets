@@ -767,8 +767,11 @@ def handle_special_texture(fname, shape):
         generated = kwimage.draw_text_on_image(
             None, 'bubble', color='lightblue')
     elif 'coin' in fname:
+        # generated = kwimage.draw_text_on_image(
+        #     None, '$', color='yellow')
+        # TODO: fix when background color has alpha
         generated = kwimage.draw_text_on_image(
-            None, '$', color='yellow')
+            {'color': (0.0, 0.0, 0.0, 0.0)}, '$', color='yellow')
     elif 'thwomp_face' in fname:
         generated = kwimage.draw_text_on_image(
             {'color': 'lightblue'}, ';(', color='black')
