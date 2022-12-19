@@ -58,7 +58,7 @@ Ignore:
     #--hybrid_mode
 
     # Compile
-    make clean && make VERSION=us -j2
+    make clean && make VERSION=us -j9
 
     # Run the executable
     build/us_pc/sm64.us
@@ -376,7 +376,7 @@ def build_char_name_map():
         name_to_text_lut[n] = item
 
     segment2_rgba16_data = [
-        {'index': 0x05800, 'text': 'o', 'comment': 'coin', 'color': 'yellow'},
+        {'index': 0x05800, 'text': '$', 'comment': 'coin', 'color': 'yellow'},
         {'index': 0x05A00, 'text': 'O', 'comment': 'mario head', 'color': 'red'},
         {'index': 0x05C00, 'text': '*', 'comment': 'star', 'color': 'yellow'},
         {'index': 0x06200, 'text': '3', 'color': 'green', 'scale': 0.5, 'background': 'black'},
@@ -384,7 +384,7 @@ def build_char_name_map():
         {'index': 0x06300, 'text': '6', 'color': 'green', 'scale': 0.5, 'background': 'black'},
         {'index': 0x07080, 'text': '.', 'color': 'yellow'},
         {'index': 0x07B50, 'text': '8', 'color': 'gray', 'comment': 'camera'},
-        {'index': 0x07D50, 'text': 'O', 'color': 'brown', 'comment': 'lakitu head'},
+        {'index': 0x07D50, 'text': 'O', 'color': 'yellow', 'comment': 'lakitu head'},
         {'index': 0x07F50, 'text': 'X', 'color': 'red', 'comment': 'locked X', 'background': 'darkred'},
         {'index': 0x08150, 'text': '^', 'color': 'yellow', 'comment': 'c-up'},
         {'index': 0x081D0, 'text': 'V', 'color': 'yellow', 'comment': 'c-down'},
@@ -767,14 +767,14 @@ def handle_special_texture(fname, shape):
         generated = kwimage.draw_text_on_image(
             None, 'bubble', color='lightblue')
     elif 'coin' in fname:
-        # generated = kwimage.draw_text_on_image(
-        #     None, '$', color='yellow')
-        # TODO: fix when background color has alpha
         generated = kwimage.draw_text_on_image(
-            {'color': (0.0, 0.0, 0.0, 0.0)}, '$', color='yellow')
+            None, '$', color='yellow')
+        # TODO: fix when background color has alpha
+        # generated = kwimage.draw_text_on_image(
+        #     {'color': (0.0, 0.0, 0.0, 0.0)}, '$', color='yellow')
     elif 'thwomp_face' in fname:
         generated = kwimage.draw_text_on_image(
-            {'color': 'lightblue'}, ';(', color='black')
+            {'color': 'lightblue'}, ':(', color='black')
 
     if generated is not None:
         generated = kwimage.imresize(generated, dsize=shape[0:2][::-1])
