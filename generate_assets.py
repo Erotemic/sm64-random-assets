@@ -54,10 +54,11 @@ Ignore:
     python $HOME/code/sm64-random-assets/generate_assets.py \
         --dst $HOME/tmp/test_assets/sm64-port-test \
         --reference $HOME/code/sm64-port \
-        --hybrid_mode --compare
+        --compare
+    #--hybrid_mode
 
     # Compile
-    make clean && make VERSION=us -j9
+    make clean && make VERSION=us -j2
 
     # Run the executable
     build/us_pc/sm64.us
@@ -678,10 +679,10 @@ def _compare(ref_dpath, output_dpath, asset_metadata_fpath):
     # info = name_to_text_lut[fname]
 
 
-class AssetGenerator:
-    def match(self, fname):
-        import xdev
-        xdev.Pattern.coerce('actors/power_meter').match(fname)
+# class AssetGenerator:
+#     def match(self, fname):
+#         import xdev
+#         xdev.Pattern.coerce('actors/power_meter').match(fname)
 
 
 import parse
@@ -689,10 +690,7 @@ import parse
 class PowerMeter:
 
     def match(self, fname):
-        return 'power_meter' in fname
-        # pat = parse.Parser('actors/power_meter/power_meter_{type}.rgba16.png')
-        # result = pat.parse(fname)
-        # return result
+        return 'actors/power_meter/power_meter_' in fname
 
     def generate(self, fname):
         pat = parse.Parser('actors/power_meter/power_meter_{type}.rgba16.png')
@@ -748,6 +746,39 @@ def handle_special_texture(fname, shape):
                 generated = kwimage.ensure_uint255(generated.clip(0, 1))
                 print(f'generated fname={fname}')
                 return generated
+
+    generated = None
+    if fname == 'levels/intro/2_copyright.rgba16.png':
+        generated = kwimage.draw_text_on_image(
+            None, 'For Educational Use Only', color='skyblue')
+    if fname == 'levels/intro/3_tm.rgba16.png':
+        generated = kwimage.draw_text_on_image(
+            None, 'TM', color='white')
+    if 'actors/blue_fish' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, 'blue\nfish', color='blue')
+    if 'eyes' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, 'eyes', color='gray')
+    elif 'eye' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, 'eye', color='gray')
+    elif 'bubble' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, 'bubble', color='lightblue')
+    elif 'coin' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, '$', color='yellow')
+    elif 'thwomp_face' in fname:
+        generated = kwimage.draw_text_on_image(
+            {'color': 'lightblue'}, ';(', color='black')
+
+    if generated is not None:
+        generated = kwimage.imresize(generated, dsize=shape[0:2][::-1])
+        if generated.dtype.kind == 'f':
+            generated = generated.clip(0, 1)
+        generated = kwimage.ensure_uint255(generated)
+        return generated
 
     if fname in name_to_text_lut:
         info = name_to_text_lut[fname]
