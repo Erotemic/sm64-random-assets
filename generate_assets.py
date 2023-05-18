@@ -53,7 +53,9 @@ Ignore:
     # Run the asset generator
     python $HOME/code/sm64-random-assets/generate_assets.py \
         --dst $HOME/tmp/test_assets/sm64-port-test \
-        --reference $HOME/code/sm64-port
+        --reference $HOME/code/sm64-port \
+        --compare
+    #--hybrid_mode
 
     # Compile
     make clean && make VERSION=us -j9
@@ -67,6 +69,7 @@ SeeAlso:
 """
 import numpy as np
 import ubelt as ub
+import parse
 import aifc
 import kwimage
 import json
@@ -85,7 +88,12 @@ def main():
     parser.add_argument('--manifest_fpath', default=None, help=(
         'Path to the asset manifest to use. If unspecified, attempts '
         'to use the one in this repo'))
+    parser.add_argument('--hybrid_mode', default=None, action='store_true', help=(
+        'hybrid_mode'))
+    parser.add_argument('--compare', default=None, action='store_true', help=(
+        'hybrid_mode'))
     args = parser.parse_args()
+    print('args.__dict__ = {}'.format(ub.repr2(args.__dict__, nl=1)))
 
     # Path to the clone of sm64-port we will generate assets for.
     if args.dst is None:
@@ -141,40 +149,40 @@ def main():
     gen, ref, gen, gen, but is ok with ref, ref, gen, gen.
     Also ok with ref, gen, gen, gen.
 
-    Seems to be due to the i8 textures
+    Seems to be due to the i8 textures, probably overwrote important data in
+    resulting binary
     """
 
     use_reference = 0
 
     for info in ub.ProgIter(ext_to_info['.png'], desc='.png'):
-        if use_reference:
+        if not use_reference:
+            out = generate_image(output_dpath, info)
+        if use_reference or (args.hybrid_mode and out['status'] != 'generated'):
             copy_reference(output_dpath, info, ref_dpath)
-        else:
-            generate_image(output_dpath, info)
 
     use_reference = 0
 
     for info in ub.ProgIter(ext_to_info['.aiff'], desc='.aiff'):
-        if use_reference:
+        if not use_reference:
+            out = generate_audio(output_dpath, info)
+        if use_reference or (args.hybrid_mode and out['status'] != 'generated'):
             copy_reference(output_dpath, info, ref_dpath)
-        else:
-            generate_audio(output_dpath, info)
 
     use_reference = 0
 
     for info in ub.ProgIter(ext_to_info['.m64'], desc='.m64'):
-        if use_reference:
+        if not use_reference:
+            out = generate_binary(output_dpath, info)
+        if use_reference or (args.hybrid_mode and out['status'] != 'generated'):
             copy_reference(output_dpath, info, ref_dpath)
-        else:
-            generate_binary(output_dpath, info)
-
     use_reference = 0
 
     for info in ub.ProgIter(ext_to_info['.bin'], desc='.bin'):
-        if use_reference:
+        if not use_reference:
+            out = generate_binary(output_dpath, info)
+        if use_reference or (args.hybrid_mode and out['status'] != 'generated'):
             copy_reference(output_dpath, info, ref_dpath)
-        else:
-            generate_binary(output_dpath, info)
 
     # Write a dummy .assets-local.txt to trick sm64-port into thinking assets
     # were extracted.
@@ -188,10 +196,13 @@ def main():
     assets_fpath = output_dpath / '.assets-local.txt'
     assets_fpath.write_text(text)
 
+    if args.compare:
+        _compare(ref_dpath, output_dpath, asset_metadata_fpath)
+
 
 def generate_audio(output_dpath, info):
     if info.get('params', None) is None:
-        return
+        return {'status': 'value-error'}
     params_dict = info['params'].copy()
     params_dict['comptype'] = params_dict['comptype'].encode()
     params_dict['compname'] = params_dict['compname'].encode()
@@ -210,7 +221,10 @@ def generate_audio(output_dpath, info):
         new_file = aifc.open(file, 'wb')
         new_file.setparams(params)
         new_file.writeframes(new_data)
-    return params
+
+    # out = {'status': 'zeroed'}
+    out = {'status': 'randomized'}
+    return out
 
 
 def generate_image(output_dpath, info):
@@ -224,14 +238,14 @@ def generate_image(output_dpath, info):
     rgba16
     """
     if info.get('shape', None) is None:
-        return
+        return {'status': 'value-error'}
     shape = info['shape']
 
     # Hack so we can use cv2 imwrite. Should not be needed when pil backend
     # lands in kwimage.
     if len(shape) == 3 and shape[2] == 2:
         shape = list(shape)
-        shape[2] = 4
+        # shape[2] = 4
 
     out_fpath = output_dpath / info['fname']
     out_fpath.parent.ensuredir()
@@ -265,20 +279,26 @@ def generate_image(output_dpath, info):
             new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
         # new_data[..., 0:3] = 0
         # new_data[..., 3] = 0
+        out = {'status': 'randomized'}
+    else:
+        out = {'status': 'generated'}
 
     # kwimage.imwrite(out_fpath, new_data, backend='gdal')
     # kwimage.imwrite(out_fpath, new_data, backend='pil')
     kwimage.imwrite(out_fpath, new_data, backend='pil')
+    return out
 
 
 def generate_binary(output_dpath, info):
     if info.get('size', None) is None:
-        return
+        return {'status': 'value-error'}
     out_fpath = output_dpath / info['fname']
     out_fpath.parent.ensuredir()
     # Not sure what these bin/m64 file are. Zeroing them seems to work fine.
     new = b'\x00' * info['size']
     out_fpath.write_bytes(new)
+    out = {'status': 'zeroed'}
+    return out
 
 
 def build_char_name_map():
@@ -356,7 +376,7 @@ def build_char_name_map():
         name_to_text_lut[n] = item
 
     segment2_rgba16_data = [
-        {'index': 0x05800, 'text': 'o', 'comment': 'coin', 'color': 'yellow'},
+        {'index': 0x05800, 'text': '$', 'comment': 'coin', 'color': 'yellow'},
         {'index': 0x05A00, 'text': 'O', 'comment': 'mario head', 'color': 'red'},
         {'index': 0x05C00, 'text': '*', 'comment': 'star', 'color': 'yellow'},
         {'index': 0x06200, 'text': '3', 'color': 'green', 'scale': 0.5, 'background': 'black'},
@@ -364,7 +384,7 @@ def build_char_name_map():
         {'index': 0x06300, 'text': '6', 'color': 'green', 'scale': 0.5, 'background': 'black'},
         {'index': 0x07080, 'text': '.', 'color': 'yellow'},
         {'index': 0x07B50, 'text': '8', 'color': 'gray', 'comment': 'camera'},
-        {'index': 0x07D50, 'text': 'O', 'color': 'brown', 'comment': 'lakitu head'},
+        {'index': 0x07D50, 'text': 'O', 'color': 'yellow', 'comment': 'lakitu head'},
         {'index': 0x07F50, 'text': 'X', 'color': 'red', 'comment': 'locked X', 'background': 'darkred'},
         {'index': 0x08150, 'text': '^', 'color': 'yellow', 'comment': 'c-up'},
         {'index': 0x081D0, 'text': 'V', 'color': 'yellow', 'comment': 'c-down'},
@@ -542,13 +562,15 @@ def build_char_name_map():
 name_to_text_lut = build_char_name_map()
 
 
-def _devel():
+def _compare(ref_dpath, output_dpath, asset_metadata_fpath):
     """
     Developer scratchpad
     """
-    dst = ub.Path('$HOME/tmp/test_assets/sm64-port-test').expand()
-    ref = ub.Path('$HOME/code/sm64-port').expand()
-    asset_metadata_fpath = ub.Path('$HOME/code/sm64-random-assets/asset_metadata.json').expand()
+    dst = output_dpath
+    ref = ref_dpath
+    # dst = ub.Path('$HOME/tmp/test_assets/sm64-port-test').expand()
+    # ref = ub.Path('$HOME/code/sm64-port').expand()
+    # asset_metadata_fpath = ub.Path('$HOME/code/sm64-random-assets/asset_metadata.json').expand()
 
     # Load the assets that need to be generated.
     asset_metadata = json.loads(asset_metadata_fpath.read_text())
@@ -571,79 +593,192 @@ def _devel():
     ext_to_info = ub.group_items(asset_metadata, lambda x: ub.Path(x['fname']).suffix)
     subinfos = ub.group_items(ext_to_info['.png'], lambda x: str(ub.Path(x['fname']).parent))
 
-    relevant = [x for x in ext_to_info['.png'] if x['fname'].endswith('.ia8.png')]
+    # relevant = [x for x in ext_to_info['.png'] if x['fname'].endswith('.ia8.png')]
 
-    subinfo = subinfos['textures/segment2']
-    subinfo = subinfos['textures/ipl3_raw']
-    relevant = subinfo
-    # relevant = [info for info in subinfo if 'index' in info]
-    # relevant = sorted(relevant, key=lambda x: (x['base'], x['index']))
+    compare_dpath = (dst / 'asset_compare').ensuredir()
+    import xdev
+    xdev.view_directory(compare_dpath)
+    for key, subinfo in ub.ProgIter(subinfos.items(), desc='compare'):
 
-    group = relevant
+        compare_fpath = compare_dpath / key.replace('/', '_') + '.png'
 
-    # groups = ub.group_items(relevant, lambda x: x['imgtype'])
-    # for g, group in list(groups.items()):
-    #     # g = 'rgba16.png'
-    #     group = groups[g]
-    #     if group:
-    #         break
+        group = subinfo
 
-    # group = groups['ia4']
-    # group = groups['ia1']
-    # group = groups['rgba16']
-    # group = groups['ia8']
-    # group = groups['ia16']
+        # subinfo = subinfos['textures/segment2']
+        # subinfo = subinfos['textures/ipl3_raw']
+        # subinfo = subinfos['actors/mario']
+        # relevant = subinfo
+        # # relevant = [info for info in subinfo if 'index' in info]
+        # # relevant = sorted(relevant, key=lambda x: (x['base'], x['index']))
 
-    cells = []
-    for info in group:
-        fpath1 = ref / info['fname']
-        print(f'fpath1={fpath1}')
-        fpath2 = dst / info['fname']
-        # Remove alpha channel
-        img1 = kwimage.imread(fpath1, backend='pil')
-        img2 = kwimage.imread(fpath2, backend='pil')
+        # group = relevant
 
-        if img1.shape[2] == 2:
-            img1 = np.dstack([kwimage.atleast_3channels(img1[..., 0]), img1[..., 1]])
-        if img2.shape[2] == 2:
-            img2 = np.dstack([kwimage.atleast_3channels(img2[..., 0]), img2[..., 1]])
+        # groups = ub.group_items(relevant, lambda x: x['imgtype'])
+        # for g, group in list(groups.items()):
+        #     # g = 'rgba16.png'
+        #     group = groups[g]
+        #     if group:
+        #         break
 
-        bg1 = kwimage.checkerboard(dsize=img1.shape[0:2][::-1],
-                                   off_value=32, on_value=64, dtype=np.uint8)
-        bg2 = kwimage.checkerboard(dsize=img2.shape[0:2][::-1],
-                                   off_value=32, on_value=64, dtype=np.uint8)
+        # group = groups['ia4']
+        # group = groups['ia1']
+        # group = groups['rgba16']
+        # group = groups['ia8']
+        # group = groups['ia16']
 
-        img1 = kwimage.overlay_alpha_images(img1, bg1, keepalpha=0)
-        img2 = kwimage.overlay_alpha_images(img2, bg2, keepalpha=0)
+        cells = []
+        for info in group:
+            fpath1 = ref / info['fname']
+            fpath2 = dst / info['fname']
+            # Remove alpha channel
+            img1 = kwimage.imread(fpath1, backend='pil')
+            img2 = kwimage.imread(fpath2, backend='pil')
 
-        # alpha1 = img1[..., 3]
-        # alpha2 = img2[..., 3]
-        img1 = kwimage.ensure_float01(img1[..., 0:3])
-        img2 = kwimage.ensure_float01(img2[..., 0:3])
-        # img1 = np.dstack([img1, alpha1 / 255])
-        # img2 = np.dstack([img2, alpha1 / 255])
+            if img1.shape[2] == 2:
+                img1 = np.dstack([kwimage.atleast_3channels(img1[..., 0]), img1[..., 1]])
+            if img2.shape[2] == 2:
+                img2 = np.dstack([kwimage.atleast_3channels(img2[..., 0]), img2[..., 1]])
 
-        img1 = kwimage.imresize(img1, max_dim=128, interpolation='nearest')
-        img2 = kwimage.imresize(img2, max_dim=128, interpolation='nearest')
+            bg1 = kwimage.checkerboard(dsize=img1.shape[0:2][::-1],
+                                       off_value=32, on_value=64, dtype=np.uint8)
+            bg2 = kwimage.checkerboard(dsize=img2.shape[0:2][::-1],
+                                       off_value=32, on_value=64, dtype=np.uint8)
 
-        cell = kwimage.stack_images([img1, img2], axis=1, pad=4, bg_value='purple')
-        text = str(str(fpath2.name).split('.')[0:2])
-        cell = kwimage.draw_header_text(cell, text, fit=True)
-        cells.append(cell)
+            img1 = kwimage.overlay_alpha_images(img1, bg1, keepalpha=0)
+            img2 = kwimage.overlay_alpha_images(img2, bg2, keepalpha=0)
 
-    canvas = kwimage.stack_images_grid(cells, pad=16, bg_value='green', chunksize=8)
-    import kwplot
-    kwplot.autompl()
-    kwplot.imshow(canvas)
+            # alpha1 = img1[..., 3]
+            # alpha2 = img2[..., 3]
+            img1 = kwimage.ensure_float01(img1[..., 0:3])
+            img2 = kwimage.ensure_float01(img2[..., 0:3])
+            # img1 = np.dstack([img1, alpha1 / 255])
+            # img2 = np.dstack([img2, alpha1 / 255])
+
+            img1 = kwimage.imresize(img1, max_dim=128, interpolation='nearest')
+            img2 = kwimage.imresize(img2, max_dim=128, interpolation='nearest')
+
+            cell = kwimage.stack_images([img1, img2], axis=1, pad=4, bg_value='purple')
+            text = str(str(fpath2.name).split('.')[0:2])
+            cell = kwimage.draw_header_text(cell, text, fit=True)
+            cells.append(cell)
+
+        canvas = kwimage.stack_images_grid(cells, pad=16, bg_value='green', chunksize=8)
+        canvas = kwimage.normalize(canvas)
+
+        canvas = kwimage.ensure_uint255(canvas)
+        canvas = kwimage.draw_header_text(canvas, key)
+        kwimage.imwrite(compare_fpath, canvas)
+
+        # import kwplot
+        # kwplot.autompl()
+        # kwplot.imshow(canvas)
 
     # fname = 'levels/castle_grounds/5.ia8.png'
     # shape = (32, 64, 4)
     # info = name_to_text_lut[fname]
 
 
+# class AssetGenerator:
+#     def match(self, fname):
+#         import xdev
+#         xdev.Pattern.coerce('actors/power_meter').match(fname)
+
+class PowerMeter:
+
+    def match(self, fname):
+        return 'actors/power_meter/power_meter_' in fname
+
+    def generate(self, fname):
+        pat = parse.Parser('actors/power_meter/power_meter_{type}.rgba16.png')
+        result = pat.parse(fname)
+
+        mapping = {
+            'full': 8,
+            'seven_segments': 7,
+            'six_segments': 6,
+            'five_segments': 5,
+            'four_segments': 4,
+            'three_segments': 3,
+            'two_segments': 2,
+            'one_segment': 1,
+        }
+        power = mapping.get(result.named['type'], None)
+        if power is None:
+            return None
+        else:
+            power_to_color = {
+                8: kwimage.Color.coerce('lightblue'),
+                6: kwimage.Color.coerce('lightgreen'),
+                4: kwimage.Color.coerce('yellow'),
+                2: kwimage.Color.coerce('red'),
+                1: kwimage.Color.coerce('brown'),
+            }
+            if power in power_to_color:
+                color = power_to_color[power]
+            else:
+                color1 = power_to_color[power + 1]
+                color2 = power_to_color[power - 1]
+                color = color1.interpolate(color2, alpha=0.5)
+
+            canvas = np.zeros((64, 64, 4), dtype=np.float32)
+            circle = kwimage.Polygon.circle((32, 32), 32)
+            canvas = circle.draw_on(canvas, color=color)
+            canvas = canvas.clip(0, 1)
+            return canvas
+            # kwplot.imshow(canvas)
+
+
 def handle_special_texture(fname, shape):
     import numpy as np
     fname = str(fname)
+
+    generators = [PowerMeter()]
+    for gen in generators:
+        if gen.match(fname):
+            print(f'try to generate fname={fname}')
+            generated = gen.generate(fname)
+            if generated is not None:
+                generated = kwimage.imresize(generated, dsize=shape[0:2][::-1])
+                generated = kwimage.ensure_uint255(generated.clip(0, 1))
+                print(f'generated fname={fname}')
+                return generated
+
+    generated = None
+    if fname == 'levels/intro/2_copyright.rgba16.png':
+        generated = kwimage.draw_text_on_image(
+            None, 'For Educational Use Only', color='skyblue')
+    if fname == 'levels/intro/3_tm.rgba16.png':
+        generated = kwimage.draw_text_on_image(
+            None, 'TM', color='white')
+    if 'actors/blue_fish' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, 'blue\nfish', color='blue')
+    if 'eyes' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, 'eyes', color='gray')
+    elif 'eye' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, 'eye', color='gray')
+    elif 'bubble' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, 'bubble', color='lightblue')
+    elif 'coin' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, '$', color='yellow')
+        # TODO: fix when background color has alpha
+        # generated = kwimage.draw_text_on_image(
+        #     {'color': (0.0, 0.0, 0.0, 0.0)}, '$', color='yellow')
+    elif 'thwomp_face' in fname:
+        generated = kwimage.draw_text_on_image(
+            {'color': 'lightblue'}, ':(', color='black')
+
+    if generated is not None:
+        generated = kwimage.imresize(generated, dsize=shape[0:2][::-1])
+        if generated.dtype.kind == 'f':
+            generated = generated.clip(0, 1)
+        generated = kwimage.ensure_uint255(generated)
+        return generated
+
     if fname in name_to_text_lut:
         info = name_to_text_lut[fname]
         text = info['text']
