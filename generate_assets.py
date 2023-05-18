@@ -110,7 +110,7 @@ def main():
     ext_to_info = ub.group_items(asset_metadata, lambda x: ub.Path(x['fname']).suffix)
 
     use_reference = 1
-    if use_reference:
+    if use_reference and args.reference is not None:
         ref_dpath = ub.Path(args.reference)
 
     def copy_reference(output_dpath, info, ref_dpath):
@@ -118,7 +118,6 @@ def main():
         out_fpath = output_dpath / info['fname']
         if ref_fpath.exists():
             ref_fpath.copy(out_fpath, overwrite=True)
-
 
     """
 
@@ -626,7 +625,6 @@ def _devel():
 
         img1 = kwimage.imresize(img1, max_dim=128, interpolation='nearest')
         img2 = kwimage.imresize(img2, max_dim=128, interpolation='nearest')
-
 
         cell = kwimage.stack_images([img1, img2], axis=1, pad=4, bg_value='purple')
         text = str(str(fpath2.name).split('.')[0:2])

@@ -6,9 +6,7 @@ Python Requirements:
 
 .. code:: bash
 
-   pip install kwimage
-   pip install python-opencv-headless
-   pip install ubelt numpy
+   pip install kwimage opencv-python-headless ubelt numpy
 
 
 This has only been tested for building the US variant, and only on Linux.
@@ -45,3 +43,34 @@ Example Usage:
 
     # Run the executable
     build/us_pc/sm64.us
+
+
+Troubleshooting
+---------------
+
+On NixOS opencv seems to behave oddly and raises an error. Test for the issue via:
+
+.. code::
+
+   python -c "import sys; sys.OpenCV_LOADER_DEBUG=1; import cv2"
+
+
+You have the issue if it gives the following error:
+
+.. code::
+
+    ImportError: OpenCV loader: missing configuration file: ['config.py']. Check OpenCV installation.
+
+I found a reference discussing the issue `here <https://scratch.mit.edu/discuss/topic/666732/?page=1>`_.
+
+It seems that the problem is that it is not identifying the correct loader
+directory. A workaround can be done by modifing the file with some
+`UNIX magic <https://jpmens.net/media/2021a/Ql6c5GU.jpg>`_.
+
+.. code::
+
+   SITE_PACKAGE_DPATH=$(python -c "import sysconfig; print(sysconfig.get_paths()['platlib'])")
+   cat $SITE_PACKAGE_DPATH/cv2/__init__.py
+   sed -i "s|LOADER_DIR =.*|LOADER_DIR = '$SITE_PACKAGE_DPATH/cv2'|" $SITE_PACKAGE_DPATH/cv2/__init__.py
+
+   python -c "import cv2"
