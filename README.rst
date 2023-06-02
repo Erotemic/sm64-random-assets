@@ -19,9 +19,13 @@ The result is surprisingly playable.
 .. image:: https://i.imgur.com/iiMPSTZ.png
 
 
-Example Usage:
+PC Port Example Usage
+---------------------
 
 .. code:: bash
+
+    # PC Port Dependencies
+    sudo apt install -y git build-essential pkg-config libusb-1.0-0-dev libsdl2-dev
 
     # Make a temporary directory
     mkdir -p $HOME/tmp/test_assets
@@ -119,6 +123,7 @@ Install pyenv
     # Install X11 (doesnt seem to help)
     # conda install -c conda-forge xorg-libx11
     # conda install -c conda-forge libusb
+    conda install -c conda-forge capstone
 
 Headless Usage:
 
