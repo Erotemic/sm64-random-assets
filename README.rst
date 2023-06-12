@@ -145,8 +145,13 @@ Headless Usage:
     cd $HOME/tmp/test_assets/sm64-test
 
     # Compile
-    make VERSION=us -j16
+    COMPARE=0 make VERSION=us -j16
 
-    # Run the executable
-    build/us_pc/sm64.us
+    # The compiled ROM is:
+    build/us/sm64.us.z64
 
+
+Known Issues
+------------
+
+Something is causing the first Bowser fight to lock on real N64 hardware.
