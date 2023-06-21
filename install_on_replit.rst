@@ -1,7 +1,7 @@
-REPLit Instructions
+Replit Instructions
 -------------------
 
-These instructions outlines the steps to compile a SM64 ROM on REPLIT.
+These instructions outlines the steps to compile a SM64 ROM on Replit.
 
 Navigate to `replit.com <https://replit.com/>`_
 
@@ -76,7 +76,7 @@ Install the Prerequisites
 =========================
 
 In our new configured shell we will install the prerequisites. Due to some
-weirdness with REPLit, opencv fails to find its config, which causes an error
+weirdness with Replit, opencv fails to find its config, which causes an error
 if we try to use it. A quick patch makes this error go away.
 
 .. code:: bash
@@ -95,7 +95,7 @@ code itself.
 
    # Define where we will put the code (the REPL_SLUG is an REPL provided
    # environment variable that gives us folder name where we can put things
-   # without worrying about REPLit deleting them)
+   # without worrying about Replit deleting them)
    CODE_DPATH=$HOME/$REPL_SLUG/code
    echo "CODE_DPATH = $CODE_DPATH"
    mkdir -p $CODE_DPATH/code
