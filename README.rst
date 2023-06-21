@@ -131,3 +131,5 @@ Resources
 * The SM64 Port: https://github.com/sm64-port/sm64-port
 
 * The SM64 Decomp: https://github.com/n64decomp/sm64
+
+* The SM64 Decomp Discord: https://discord.gg/DuYH3Fh

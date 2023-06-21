@@ -72,10 +72,10 @@ Now that we have updated our environment, click the "+" icon to create a new
 .. ..  https://search.nixos.org/packages
 
 
-Install the Prerequistes
-========================
+Install the Prerequisites
+=========================
 
-In our new configured shell we will install the prerequistes. Due to some
+In our new configured shell we will install the prerequisites. Due to some
 weirdness with REPLit, opencv fails to find its config, which causes an error
 if we try to use it. A quick patch makes this error go away.
 
@@ -95,16 +95,16 @@ code itself.
 
    # Define where we will put the code (the REPL_SLUG is an REPL provided
    # environment variable that gives us folder name where we can put things
-   # without worring about REPLit deleting them)
-   ROOT_DPATH=$HOME/$REPL_SLUG
-   echo $ROOT_DPATH
-   mkdir -p $ROOT_DPATH/code
+   # without worrying about REPLit deleting them)
+   CODE_DPATH=$HOME/$REPL_SLUG/code
+   echo "CODE_DPATH = $CODE_DPATH"
+   mkdir -p $CODE_DPATH/code
 
-   # Clone the ROM-only sm64 repo
-   git clone https://github.com/n64decomp/sm64.git $ROOT_DPATH/code/sm64
+   # Clone this repo
+   git clone https://github.com/Erotemic/sm64-random-assets.git $CODE_DPATH/sm64-random-assets
 
-   # Clone the asset autogeneration repo
-   git clone https://github.com/Erotemic/sm64-random-assets.git $ROOT_DPATH/code/sm64-random-assets
+   cd $CODE_DPATH/sm64-random-assets
+   git submodule update --init tpl/sm64
 
 
 Now we can use the asset autogeneration code to populate the assets in the main repo.
@@ -112,8 +112,7 @@ Now we can use the asset autogeneration code to populate the assets in the main 
 .. code:: bash
 
    # Run the asset generator
-   python $ROOT_DPATH/code/sm64-random-assets/generate_assets.py --dst $ROOT_DPATH/code/sm64
-
+   python $CODE_DPATH/sm64-random-assets/generate_assets.py --dst $CODE_DPATH/sm64-random-assets/tpl/sm64
 
 
 Now we are ready to build the game. We move into the sm64 directory and run
@@ -122,7 +121,7 @@ Now we are ready to build the game. We move into the sm64 directory and run
 .. code:: bash
 
    # Move into the sm64 directory
-   cd $ROOT_DPATH/code/sm64
+   cd $CODE_DPATH/sm64-random-assets/tpl/sm64
 
    # Compile
    NOEXTRACT=1 COMPARE=0 NON_MATCHING=0 VERSION=us make
