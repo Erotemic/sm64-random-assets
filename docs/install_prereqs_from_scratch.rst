@@ -196,6 +196,7 @@ Try with simple nix
     nix-shell -p pkg-config
     nix-shell -p python311Packages.pip
     nix-shell -p python311
+    nix-shell -p binutils
 
 
 # Replit Config

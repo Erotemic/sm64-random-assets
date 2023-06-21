@@ -22,25 +22,30 @@ The result is surprisingly playable.
 PC Port Example Usage
 ---------------------
 
+The following instructions were written on an Ubuntu 22.04 PC
+
 .. code:: bash
 
     # PC Port Dependencies
     sudo apt install -y git build-essential pkg-config libusb-1.0-0-dev libsdl2-dev
 
-    # Make a temporary directory
-    mkdir -p $HOME/tmp/test_assets
+    # You can set your "code" directory path - the place where you will clone
+    # this repo - to be somewhere convinient for you
+    CODE_DPATH=$HOME/code3
 
-    # Clone the sm64 port repo
-    git clone https://github.com/sm64-port/sm64-port $HOME/tmp/test_assets/sm64-port-test
+    # Ensure your code directory exists
+    mkdir -p $CODE_DPATH
 
     # Clone this repo
-    git clone https://github.com/Erotemic/sm64-random-assets.git $HOME/tmp/test_assets/sm64-random-assets
+    git clone https://github.com/Erotemic/sm64-random-assets.git $CODE_DPATH/sm64-random-assets
+
+    git submodule update --init $CODE_DPATH/sm64-random-assets/tpl/sm64-port
 
     # Run the asset generator
-    python $HOME/tmp/test_assets/sm64-random-assets/generate_assets.py --dst $HOME/tmp/test_assets/sm64-port-test
+    python $CODE_DPATH/sm64-random-assets/generate_assets.py --dst $HOME/tmp/test_assets2/sm64-port-test
 
     # Move into the port directory
-    cd $HOME/tmp/test_assets/sm64-port-test
+    cd $HOME/tmp/test_assets2/sm64-port-test
 
     # Compile
     make VERSION=us -j16
@@ -54,7 +59,7 @@ Headless ROM Usage
 .. code:: bash
 
     # Make a temporary directory
-    ROOT_DPATH=$HOME/tmp/tmp-code
+    ROOT_DPATH=$HOME/tmp/tmp-code3
     mkdir -p $ROOT_DPATH
 
     # Clone the ROM-only sm64 repo
@@ -71,7 +76,8 @@ Headless ROM Usage
 
     # Compile
     NUM_CPUS=$(nproc --all)
-    COMPARE=0 NON_MATCHING=1 make VERSION=us -j$NUM_CPUS
+    #COMPARE=0 NON_MATCHING=0 make VERSION=us -j$NUM_CPUS
+    NOEXTRACT=1 COMPARE=0 NON_MATCHING=0 VERSION=us make
 
     # The compiled ROM is:
     build/us/sm64.us.z64
