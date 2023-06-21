@@ -77,7 +77,7 @@ Headless ROM Usage
 
     # You can set your "code" directory path - the place where you will clone
     # this repo - to be somewhere convenient for you
-    CODE_DPATH=$HOME/code3
+    CODE_DPATH=$HOME/code
 
     # Ensure your code directory exists
     mkdir -p $CODE_DPATH
