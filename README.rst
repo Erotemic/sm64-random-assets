@@ -1,6 +1,8 @@
+SM64 Randomized Asset Generator
+===============================
+
 Generates non-copyrighted randomized assets so sm64 and sm64-port can be used
 for educational purposes.
-
 
 This has only been tested for building the US variant, and only on Linux.
 
