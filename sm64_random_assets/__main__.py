@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
 """
-Forwards to the real main script for backwards comaptability
+Module entry point
 """
 from sm64_random_assets.main import main
 

@@ -38,37 +38,43 @@ HYBRID_MODE=1
 NUM_CPUS=$(nproc --all)
 if [[ "$HYBRID_MODE" == "1" ]]; then
     REFERENCE_DPATH="$THIS_DPATH/tpl/sm64-ref"
-    git clone "$THIS_DPATH"/tpl/sm64/.git "$REFERENCE_DPATH"
 
-    # Dont do this unless we have a proper copy, which we cannot provide here.
-    # The correct baserom should have a sha256sum of
-    # 17ce077343c6133f8c9f2d6d6d9a4ab62c8cd2aa57c40aea1f490b4c8bb21d91
-    if type load_secrets; then
-        load_secrets
-        SM64_CID=$(load_secret_var sm64_cid)
-        echo "SM64_CID = $SM64_CID"
-        ipfs get "$SM64_CID" -o "$REFERENCE_DPATH/baserom.us.z64"
+    if ! test -d "$REFERENCE_DPATH" ; then
+        git clone "$THIS_DPATH"/tpl/sm64/.git "$REFERENCE_DPATH"
+
+        # Dont do this unless we have a proper copy, which we cannot provide here.
+        # The correct baserom should have a sha256sum of
+        # 17ce077343c6133f8c9f2d6d6d9a4ab62c8cd2aa57c40aea1f490b4c8bb21d91
+        if type load_secrets; then
+            load_secrets
+            SM64_CID=$(load_secret_var sm64_cid)
+            echo "SM64_CID = $SM64_CID"
+            ipfs get "$SM64_CID" -o "$REFERENCE_DPATH/baserom.us.z64"
+        fi
     fi
 
-    if test -f "$REFERENCE_DPATH/baserom.us.z64" ; then
-        (cd "$REFERENCE_DPATH" && make "-j$NUM_CPUS")
-    else
-        echo "Reference ROM does not exist, cannot make reference build"
+    if ! test -f "$REFERENCE_DPATH"/build/us/sm64.us.z64 ; then
+
+        if test -f "$REFERENCE_DPATH/baserom.us.z64" ; then
+            (cd "$REFERENCE_DPATH" && make "-j$NUM_CPUS")
+        else
+            echo "Reference ROM does not exist, cannot make reference build"
+        fi
     fi
 else
     REFERENCE_DPATH=None
 fi
 
 
-python3 ./generate_assets.py --dst "tpl/sm64" \
+python3 -m sm64_random_assets --dst "$THIS_DPATH/tpl/sm64" \
     --reference "$REFERENCE_DPATH" \
     --hybrid_mode=$HYBRID_MODE \
     --compare=$HYBRID_MODE \
     --reference-config "
-        png: 0
-        aiff: 1
-        m64: 0
-        bin: 0
+        png: generate
+        aiff: reference
+        m64: generate
+        bin: generate
     "
 
 
@@ -77,8 +83,12 @@ python3 ./generate_assets.py --dst "tpl/sm64" \
 NUM_CPUS=$(nproc --all)
 
 # Move into the ROM-only sm64 directory
-( cd "tpl/sm64" && NOEXTRACT=1 COMPARE=0 NON_MATCHING=0 VERSION=us make -j"$NUM_CPUS" )
+( cd "$THIS_DPATH/tpl/sm64" && NOEXTRACT=1 COMPARE=0 NON_MATCHING=0 VERSION=us make -j"$NUM_CPUS" )
 
 # The compiled ROM is: tpl/sm64/build/us/sm64.us.z64
 
-cp tpl/sm64/build/us/sm64.us.z64 /media/joncrall/9DC3-BFF3/Custom/sm64.us.z64
+EVERDRIVE_DPATH=/media/joncrall/9DC3-BFF3
+
+if test -d $EVERDRIVE_DPATH ; then
+    cp tpl/sm64/build/us/sm64.us.z64 "$EVERDRIVE_DPATH"/Custom/sm64.us.z64
+fi
