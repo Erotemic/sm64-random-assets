@@ -137,3 +137,5 @@ Resources
 * Kaze Emanuar ROM Hacks: https://www.notabug.org/anomie/kaze-emanuar-romhacks
 
 * High resolution redrawn textures: https://github.com/TechieAndroid/sm64redrawn
+
+* SM64 Randomizer: https://github.com/andrelikesdogs/sm64-randomizer

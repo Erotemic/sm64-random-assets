@@ -7,10 +7,29 @@ import numpy as np
 import kwimage
 
 
+def is_headless():
+    """
+    Hueristic to see if the user likely has a display or not.
+    Not comprehensive.
+
+    References:
+        https://stackoverflow.com/questions/52964022/how-to-detect-if-the-current-go-process-is-running-in-a-headless-non-gui-envir
+    """
+    import sys
+    import os
+    if sys.platfrom.startswith('win32'):
+        return True
+    else:
+        DISPLAY = os.environ.get('DISPLAY', '')
+        return bool(DISPLAY)
+
+
 def compare(ref_dpath, output_dpath, asset_metadata_fpath):
     """
     Developer scratchpad
     """
+    import parse
+    import xdev
     print(f'asset_metadata_fpath={asset_metadata_fpath}')
     print(f'output_dpath={output_dpath}')
     print(f'ref_dpath={ref_dpath}')
@@ -28,7 +47,6 @@ def compare(ref_dpath, output_dpath, asset_metadata_fpath):
     asset_metadata = [info for info in asset_metadata if (ref / info['fname']).exists() ]
 
     # Enrich the metadata
-    import parse
     # Extract the hex index
     pat = parse.Parser('{base}.{hex}.{imgtype}.png')
     for item in asset_metadata:
@@ -46,8 +64,10 @@ def compare(ref_dpath, output_dpath, asset_metadata_fpath):
     # relevant = [x for x in ext_to_info['.png'] if x['fname'].endswith('.ia8.png')]
 
     compare_dpath = (dst / 'asset_compare').ensuredir()
-    import xdev
-    xdev.view_directory(compare_dpath)
+
+    if not is_headless():
+        xdev.view_directory(compare_dpath)
+
     for key, subinfo in ub.ProgIter(subinfos.items(), desc='compare'):
 
         compare_fpath = compare_dpath / key.replace('/', '_') + '.png'

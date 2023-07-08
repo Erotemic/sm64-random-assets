@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
 Development helper script.  This populates the initial metadata information in
-the repo.  It does not need to be run by an end user.
+the repo. The results is a json file that should already exist in this repo.
+It does not need to be run by an end user. We maintain this file to show the
+bootstrap process and in case we need to extract extra informaiton that we are
+not aware is important yet.
+
+Usage:
+    python -m sm64_random_assets.bootstrap.build_asset_metadata
 """
 import ubelt as ub
 import aifc
@@ -16,9 +22,26 @@ def main():
     """
     # Assumes running in the root of this repo
     # Given a set of pre-existing extracted assets
-    input_dpath = ub.Path('~/code/sm64-port').expand()
+    # input_dpath = ub.Path('~/code/sm64-port').expand()
+
+    try:
+        mod_dpath = ub.Path(__file__).parent
+    except NameError:
+        # mod_dpath = ub.Path('~/code/sm64-port/').expand()
+        # dev ipython hacks
+        input_dpath = ub.Path('~/code/sm64/').expand()
+        repo_dpath = ub.Path('~/code/sm64-random-assets').expand()
+    else:
+        repo_dpath = mod_dpath.parent
+        input_dpath = repo_dpath / 'tpl/sm64'
+        mod_dpath = repo_dpath / 'sm64_random_assets'
 
     manifest_fpath = input_dpath / '.assets-local.txt'
+    asset_metadata_fpath = mod_dpath / 'asset_metadata.json'
+
+    assert input_dpath.exists()
+    assert manifest_fpath.exists()
+
     lines = manifest_fpath.read_text().split('\n')
     asset_fpaths = [ub.Path(p) for p in lines[2:-1]]
 
@@ -77,11 +100,8 @@ def main():
     metadata_text = json.dumps(metadata, indent='    ')
     print(metadata_text)
 
-    # This repo path
-    repo_dpath = ub.Path('~/code/sm64-random-assets').expand()
     # manifest_fpath.copy(repo_dpath, overwrite=True)
 
-    asset_metadata_fpath = repo_dpath / 'asset_metadata.json'
     asset_metadata_fpath.write_text(metadata_text)
 
 
@@ -125,6 +145,6 @@ def parse_image_info(input_dpath, fname):
 if __name__ == '__main__':
     """
     CommandLine:
-        python build_asset_metadata.py
+        python -m sm64_random_assets.build_asset_metadata
     """
     main()

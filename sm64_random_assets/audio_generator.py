@@ -4,7 +4,7 @@ import os
 
 def generate_audio(output_dpath, info):
     if info.get('params', None) is None:
-        return {'status': 'value-error'}
+        return {'status': 'value-error: audio has no params'}
     params_dict = info['params'].copy()
     params_dict['comptype'] = params_dict['comptype'].encode()
     params_dict['compname'] = params_dict['compname'].encode()

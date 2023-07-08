@@ -5,7 +5,7 @@ import kwimage
 
 def generate_image(output_dpath, info):
     """
-    Differnt texture types
+    Different texture types
 
     ia1
     ia4
@@ -14,7 +14,7 @@ def generate_image(output_dpath, info):
     rgba16
     """
     if info.get('shape', None) is None:
-        return {'status': 'value-error'}
+        return {'status': 'value-error: image has no shape'}
     shape = info['shape']
 
     # Hack so we can use cv2 imwrite. Should not be needed when pil backend
@@ -383,12 +383,12 @@ def handle_special_texture(fname, shape):
     generators = [PowerMeter()]
     for gen in generators:
         if gen.match(fname):
-            print(f'try to generate fname={fname}')
+            # print(f'try to generate fname={fname}')
             generated = gen.generate(fname)
             if generated is not None:
                 generated = kwimage.imresize(generated, dsize=shape[0:2][::-1])
                 generated = kwimage.ensure_uint255(generated.clip(0, 1))
-                print(f'generated fname={fname}')
+                # print(f'generated fname={fname}')
                 return generated
 
     generated = None

@@ -1,2 +1,2 @@
 def test_import():
-    import sm64-random-assets
+    import sm64_random_assets
