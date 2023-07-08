@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# PYTHON_ARGCOMPLETE_OK
 """
 Generates non-copyrighted assets for SM64
 
@@ -85,13 +87,16 @@ def main():
         'A reference to a directory with a different set of assets to '
         'compare against for debugging.'
     ))
+    parser.add_argument('--reference-config', default=None, help=(
+        'YAML config for reference'
+    ))
     parser.add_argument('--manifest_fpath', default=None, help=(
         'Path to the asset manifest to use. If unspecified, attempts '
         'to use the one in this repo'))
     parser.add_argument('--hybrid_mode', default=None, action='store_true', help=(
         'hybrid_mode'))
     parser.add_argument('--compare', default=None, action='store_true', help=(
-        'hybrid_mode'))
+        'run the compare debug tool'))
     args = parser.parse_args()
     print('args.__dict__ = {}'.format(ub.repr2(args.__dict__, nl=1)))
 
@@ -153,31 +158,37 @@ def main():
     resulting binary
     """
 
-    use_reference = 0
+    from kwutil.util_yaml import Yaml
+    reference_config = Yaml.coerce(args.reference_config)
+    if reference_config is None:
+        reference_config = {}
 
+    use_reference = reference_config.get('png', 0)
+    print(f'use_reference={use_reference}')
     for info in ub.ProgIter(ext_to_info['.png'], desc='.png'):
         if not use_reference:
             out = generate_image(output_dpath, info)
         if use_reference or (args.hybrid_mode and out['status'] != 'generated'):
             copy_reference(output_dpath, info, ref_dpath)
 
-    use_reference = 0
-
+    use_reference = reference_config.get('aiff', 0)
+    print(f'use_reference={use_reference}')
     for info in ub.ProgIter(ext_to_info['.aiff'], desc='.aiff'):
         if not use_reference:
             out = generate_audio(output_dpath, info)
         if use_reference or (args.hybrid_mode and out['status'] != 'generated'):
             copy_reference(output_dpath, info, ref_dpath)
 
-    use_reference = 0
-
+    use_reference = reference_config.get('m64', 0)
+    print(f'use_reference={use_reference}')
     for info in ub.ProgIter(ext_to_info['.m64'], desc='.m64'):
         if not use_reference:
             out = generate_binary(output_dpath, info)
         if use_reference or (args.hybrid_mode and out['status'] != 'generated'):
             copy_reference(output_dpath, info, ref_dpath)
-    use_reference = 0
 
+    use_reference = reference_config.get('bin', 0)
+    print(f'use_reference={use_reference}')
     for info in ub.ProgIter(ext_to_info['.bin'], desc='.bin'):
         if not use_reference:
             out = generate_binary(output_dpath, info)
@@ -566,8 +577,13 @@ def _compare(ref_dpath, output_dpath, asset_metadata_fpath):
     """
     Developer scratchpad
     """
-    dst = output_dpath
-    ref = ref_dpath
+    print(f'asset_metadata_fpath={asset_metadata_fpath}')
+    print(f'output_dpath={output_dpath}')
+    print(f'ref_dpath={ref_dpath}')
+    dst = output_dpath.absolute()
+    ref = ref_dpath.absolute()
+    print(f'dst={dst}')
+    print(f'ref={ref}')
     # dst = ub.Path('$HOME/tmp/test_assets/sm64-port-test').expand()
     # ref = ub.Path('$HOME/code/sm64-port').expand()
     # asset_metadata_fpath = ub.Path('$HOME/code/sm64-random-assets/asset_metadata.json').expand()
