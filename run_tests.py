@@ -2,8 +2,8 @@
 if __name__ == '__main__':
     import pytest
     import sys
-    package_name = 'sm64-random-assets'
-    mod_dpath = 'sm64-random-assets'
+    package_name = 'sm64_random_assets'
+    mod_dpath = 'sm64_random_assets'
     test_dpath = 'tests'
     pytest_args = [
         '--cov-config', 'pyproject.toml',

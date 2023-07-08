@@ -33,12 +33,12 @@ jobs:
     - name: Lint with flake8
       run: |-
         # stop the build if there are Python syntax errors or undefined names
-        flake8 ./sm64-random-assets --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ./sm64_random_assets --count --select=E9,F63,F7,F82 --show-source --statistics
     - name: Typecheck with mypy
       run: |-
         python -m pip install mypy
-        mypy --install-types --non-interactive ./sm64-random-assets
-        mypy ./sm64-random-assets
+        mypy --install-types --non-interactive ./sm64_random_assets
+        mypy ./sm64_random_assets
   build_and_test_sdist:
     ##
     # Build the pure python package from source and test it in the
@@ -67,7 +67,7 @@ jobs:
     - name: Install sdist
       run: |-
         ls -al ./wheelhouse
-        pip install --prefer-binary wheelhouse/sm64-random-assets*.tar.gz -v
+        pip install --prefer-binary wheelhouse/sm64_random_assets*.tar.gz -v
     - name: Test minimal loose sdist
       run: |-
         pwd
@@ -78,7 +78,7 @@ jobs:
         cd $WORKSPACE_DNAME
         # Run the tests
         # Get path to installed package
-        MOD_DPATH=$(python -c "import sm64-random-assets, os; print(os.path.dirname(sm64-random-assets.__file__))")
+        MOD_DPATH=$(python -c "import sm64_random_assets, os; print(os.path.dirname(sm64_random_assets.__file__))")
         echo "MOD_DPATH = $MOD_DPATH"
         python -m pytest --verbose --cov={self.mod_name} $MOD_DPATH ../tests
         cd ..
@@ -93,7 +93,7 @@ jobs:
         cd $WORKSPACE_DNAME
         # Run the tests
         # Get path to installed package
-        MOD_DPATH=$(python -c "import sm64-random-assets, os; print(os.path.dirname(sm64-random-assets.__file__))")
+        MOD_DPATH=$(python -c "import sm64_random_assets, os; print(os.path.dirname(sm64_random_assets.__file__))")
         echo "MOD_DPATH = $MOD_DPATH"
         python -m pytest --verbose --cov={self.mod_name} $MOD_DPATH ../tests
         cd ..
@@ -141,7 +141,7 @@ jobs:
       name: Upload wheels artifact
       with:
         name: wheels
-        path: ./wheelhouse/sm64-random-assets*.whl
+        path: ./wheelhouse/sm64_random_assets*.whl
   test_purepy_wheels:
     name: ${{ matrix.python-version }} on ${{ matrix.os }}, arch=${{ matrix.arch }} with ${{ matrix.install-extras }}
     runs-on: ${{ matrix.os }}
@@ -298,9 +298,9 @@ jobs:
         echo "Installing helpers"
         pip install setuptools>=0.8 setuptools_scm wheel build -U
         pip install tomli pkginfo
-        export WHEEL_FPATH=$(python -c "import pathlib; print(str(sorted(pathlib.Path('wheelhouse').glob('sm64-random-assets*.whl'))[-1]).replace(chr(92), chr(47)))")
+        export WHEEL_FPATH=$(python -c "import pathlib; print(str(sorted(pathlib.Path('wheelhouse').glob('sm64_random_assets*.whl'))[-1]).replace(chr(92), chr(47)))")
         export MOD_VERSION=$(python -c "from pkginfo import Wheel; print(Wheel('$WHEEL_FPATH').version)")
-        pip install --prefer-binary "sm64-random-assets[$INSTALL_EXTRAS]==$MOD_VERSION" -f wheelhouse
+        pip install --prefer-binary "sm64_random_assets[$INSTALL_EXTRAS]==$MOD_VERSION" -f wheelhouse
         echo "Install finished."
     - name: Test wheel ${{ matrix.install-extras }}
       shell: bash
@@ -316,7 +316,7 @@ jobs:
         pwd
         ls -altr
         # Get the path to the installed package and run the tests
-        export MOD_DPATH=$(python -c "import sm64-random-assets, os; print(os.path.dirname(sm64-random-assets.__file__))")
+        export MOD_DPATH=$(python -c "import sm64_random_assets, os; print(os.path.dirname(sm64_random_assets.__file__))")
         echo "
         ---
         MOD_DPATH = $MOD_DPATH
@@ -324,7 +324,7 @@ jobs:
         running the pytest command inside the workspace
         ---
         "
-        python -m pytest --verbose -p pytester -p no:doctest --xdoctest --cov-config ../pyproject.toml --cov-report term --cov="sm64-random-assets" "$MOD_DPATH" ../tests
+        python -m pytest --verbose -p pytester -p no:doctest --xdoctest --cov-config ../pyproject.toml --cov-report term --cov="sm64_random_assets" "$MOD_DPATH" ../tests
         echo "pytest command finished, moving the coverage file to the repo root"
         ls -al
         # Move coverage file to a new name

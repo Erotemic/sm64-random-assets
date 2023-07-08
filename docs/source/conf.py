@@ -17,7 +17,7 @@ Notes:
     # need to edit the conf.py
 
     cd ~/code/sm64-random-assets/docs
-    sphinx-apidoc --private -f -o ~/code/sm64-random-assets/docs/source ~/code/sm64-random-assets/sm64-random-assets --separate
+    sphinx-apidoc --private -f -o ~/code/sm64-random-assets/docs/source ~/code/sm64-random-assets/sm64_random_assets --separate
     make html
 
     git add source/*.rst
@@ -110,7 +110,7 @@ def parse_version(fpath):
 project = 'sm64-random-assets'
 copyright = '2023, Jon Crall'
 author = 'Jon Crall'
-modname = 'sm64-random-assets'
+modname = 'sm64_random_assets'
 
 modpath = join(dirname(dirname(dirname(__file__))), modname, '__init__.py')
 release = parse_version(modpath)

@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-xdoctest sm64-random-assets --style=google all "$@"
+xdoctest sm64_random_assets --style=google all "$@"
