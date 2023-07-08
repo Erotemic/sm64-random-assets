@@ -76,29 +76,36 @@ import aifc
 import kwimage
 import json
 import os
+import scriptconfig as scfg
+import rich
 
 
-def main():
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--dst', default=None, help=(
-        'Path to the sm64-port repo to generate assets for.'))
-    parser.add_argument('--reference', default=None, help=(
-        'A reference to a directory with a different set of assets to '
-        'compare against for debugging.'
-    ))
-    parser.add_argument('--reference-config', default=None, help=(
-        'YAML config for reference'
-    ))
-    parser.add_argument('--manifest_fpath', default=None, help=(
-        'Path to the asset manifest to use. If unspecified, attempts '
-        'to use the one in this repo'))
-    parser.add_argument('--hybrid_mode', default=None, action='store_true', help=(
-        'hybrid_mode'))
-    parser.add_argument('--compare', default=None, action='store_true', help=(
-        'run the compare debug tool'))
-    args = parser.parse_args()
-    print('args.__dict__ = {}'.format(ub.repr2(args.__dict__, nl=1)))
+class GenerateAssetsConfig(scfg.DataConfig):
+    """
+    Generates non-copyrighted assets for SM64
+    """
+    dst = scfg.Value(None, help=ub.paragraph(
+            '''
+            Path to the sm64-port repo to generate assets for.
+            '''))
+    reference = scfg.Value(None, help=ub.paragraph(
+            '''
+            A reference to a directory with a different set of assets to
+            compare against for debugging.
+            '''))
+    reference_config = scfg.Value(None, help='YAML config for reference')
+    manifest_fpath = scfg.Value(None, help=ub.paragraph(
+            '''
+            Path to the asset manifest to use. If unspecified, attempts
+            to use the one in this repo
+            '''))
+    hybrid_mode = scfg.Value(None, isflag=True, help='hybrid_mode')
+    compare = scfg.Value(None, isflag=True, help='run the compare debug tool')
+
+
+def main(cmdline=1, **kwargs):
+    args = GenerateAssetsConfig.cli(cmdline=cmdline, data=kwargs)
+    rich.print('args = {}'.format(ub.urepr(args, nl=1)))
 
     # Path to the clone of sm64-port we will generate assets for.
     if args.dst is None:

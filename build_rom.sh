@@ -3,6 +3,15 @@ __doc__="
 Build the ROM in this repo
 "
 
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+    # Use bash magic to get the path to this file if running as a script
+    THIS_DPATH=$(python -c "import pathlib; print(pathlib.Path('${BASH_SOURCE[0]}'))")
+    echo "THIS_DPATH = $THIS_DPATH"
+else
+    # Assume CWD
+    THIS_DPATH="."
+fi
+
 # ROM-only dependencies
 #sudo apt install -y binutils-mips-linux-gnu build-essential git libcapstone-dev pkgconf python3
 
@@ -25,19 +34,36 @@ git submodule update --init tpl/sm64
 #python "$CODE_DPATH/sm64-random-assets/generate_assets.py" --dst "$CODE_DPATH/sm64-random-assets/tpl/sm64"
 
 
+HYBRID_MODE=1
+NUM_CPUS=$(nproc --all)
+if [[ "$HYBRID_MODE" == "1" ]]; then
+    REFERENCE_DPATH="$THIS_DPATH/tpl/sm64-ref"
+    git clone "$THIS_DPATH"/tpl/sm64/.git "$REFERENCE_DPATH"
 
-git clone ./tpl/sm64/.git ./tpl/sm64-ref
+    # Dont do this unless we have a proper copy, which we cannot provide here.
+    # The correct baserom should have a sha256sum of
+    # 17ce077343c6133f8c9f2d6d6d9a4ab62c8cd2aa57c40aea1f490b4c8bb21d91
+    if type load_secrets; then
+        load_secrets
+        SM64_CID=$(load_secret_var sm64_cid)
+        echo "SM64_CID = $SM64_CID"
+        ipfs get "$SM64_CID" -o "$REFERENCE_DPATH/baserom.us.z64"
+    fi
 
-#(cd ./tpl/sm64-ref &&
-# ipfs get ... -o "baserom.us.z64" && \
-#make
-#)
+    if test -f "$REFERENCE_DPATH/baserom.us.z64" ; then
+        (cd "$REFERENCE_DPATH" && make "-j$NUM_CPUS")
+    else
+        echo "Reference ROM does not exist, cannot make reference build"
+    fi
+else
+    REFERENCE_DPATH=None
+fi
 
-#python3 ./generate_assets.py --dst "tpl/sm64" --help
+
 python3 ./generate_assets.py --dst "tpl/sm64" \
-    --reference "./tpl/sm64-ref" \
-    --hybrid_mode \
-    --compare \
+    --reference "$REFERENCE_DPATH" \
+    --hybrid_mode=$HYBRID_MODE \
+    --compare=$HYBRID_MODE \
     --reference-config "
         png: 0
         aiff: 1

@@ -133,3 +133,7 @@ Resources
 * The SM64 Decomp: https://github.com/n64decomp/sm64
 
 * The SM64 Decomp Discord: https://discord.gg/DuYH3Fh
+
+* Kaze Emanuar ROM Hacks: https://www.notabug.org/anomie/kaze-emanuar-romhacks
+
+* High resolution redrawn textures: https://github.com/TechieAndroid/sm64redrawn

@@ -1,6 +1,7 @@
+#!/usr/bin/env python3
 """
-This populates the initial metadata information in the repo.
-It does not need to be run by an end user.
+Development helper script.  This populates the initial metadata information in
+the repo.  It does not need to be run by an end user.
 """
 import ubelt as ub
 import aifc
