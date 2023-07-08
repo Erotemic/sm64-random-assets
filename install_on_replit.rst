@@ -1,3 +1,9 @@
+.. .. posted questions on fixing this in:
+.. .. https://ask.replit.com/t/installing-the-mips-binutils-toolchain/42490
+.. .. https://stackoverflow.com/questions/76528113/mips-binutils-on-nixos
+
+
+
 Replit Instructions
 -------------------
 
@@ -27,6 +33,7 @@ In the ``deps`` section add:
         pkgs.python310Packages.pkgconfig
         pkgs.binutils
         pkgs.binutils-unwrapped-all-targets
+        pkgsCross.mipsel-linux-gnu.buildPackages.bintools
 
 
 The full config should look like this:
@@ -83,6 +90,7 @@ if we try to use it. A quick patch makes this error go away.
 
    pip install kwimage[headless]
 
+   # Normally you only need the above line, but this patches an issue on replit
    SITE_PACKAGE_DPATH=$(python -c "import sysconfig; print(sysconfig.get_paths()['platlib'])")
    cat $SITE_PACKAGE_DPATH/cv2/__init__.py
    sed -i "s|LOADER_DIR =.*|LOADER_DIR = '$SITE_PACKAGE_DPATH/cv2'|" $SITE_PACKAGE_DPATH/cv2/__init__.py
