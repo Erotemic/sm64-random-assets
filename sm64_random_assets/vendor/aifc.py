@@ -1,4 +1,9 @@
 """
+Vendored Version of the aifc module that was removed from the Python standard
+library in Python 3.13. Copying it here so we can keep using it when it gets
+removed. See the original `LICENSE
+<https://github.com/python/cpython/blob/main/LICENSE>`_.
+
 Stuff to parse AIFF-C and AIFF files.
 
 Unless explicitly stated otherwise, the description below is true
@@ -140,9 +145,6 @@ import builtins
 import warnings
 
 __all__ = ["Error", "open"]
-
-
-warnings._deprecated(__name__, remove=(3, 13))
 
 
 class Error(Exception):
