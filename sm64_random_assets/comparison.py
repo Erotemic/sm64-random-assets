@@ -17,14 +17,14 @@ def is_headless():
     """
     import sys
     import os
-    if sys.platfrom.startswith('win32'):
-        return True
+    if sys.platform.startswith('win32'):
+        return False
     else:
         DISPLAY = os.environ.get('DISPLAY', '')
-        return bool(DISPLAY)
+        return len(DISPLAY) == 0
 
 
-def compare(ref_dpath, output_dpath, asset_metadata_fpath):
+def compare(ref_dpath, output_dpath, asset_metadata_fpath, include=None, exclude=None):
     """
     Developer scratchpad
     """
@@ -68,6 +68,19 @@ def compare(ref_dpath, output_dpath, asset_metadata_fpath):
     if not is_headless():
         xdev.view_directory(compare_dpath)
 
+    from kwutil.util_pattern import MultiPattern
+    if include is not None:
+        # include = [
+        #     '*bitfs*.png',
+        #     '*bowser*.png',
+        #     '*skybox*.png',
+        # ]
+        print('include = {}'.format(ub.urepr(include, nl=1)))
+        include = MultiPattern.coerce(include)
+    if exclude is not None:
+        print('exclude = {}'.format(ub.urepr(exclude, nl=1)))
+        exclude = MultiPattern.coerce(exclude)
+
     for key, subinfo in ub.ProgIter(subinfos.items(), desc='compare'):
 
         compare_fpath = compare_dpath / key.replace('/', '_') + '.png'
@@ -98,8 +111,24 @@ def compare(ref_dpath, output_dpath, asset_metadata_fpath):
 
         cells = []
         for info in group:
+            if exclude is not None:
+                if exclude.match(info['fname']):
+                    continue
+            if include is not None:
+                if not include.match(info['fname']):
+                    continue
+
             fpath1 = ref / info['fname']
             fpath2 = dst / info['fname']
+
+            nbytes1 = fpath1.stat().st_size
+            nbytes2 = fpath2.stat().st_size
+            # print(nbytes1, nbytes2, info['fname'])
+            # if 0:
+            #     from PIL import Image
+            #     pil_img1 = Image.open(fpath1)
+            #     pil_img2 = Image.open(fpath2)
+
             # Remove alpha channel
             img1 = kwimage.imread(fpath1, backend='pil')
             img2 = kwimage.imread(fpath2, backend='pil')
@@ -129,15 +158,17 @@ def compare(ref_dpath, output_dpath, asset_metadata_fpath):
 
             cell = kwimage.stack_images([img1, img2], axis=1, pad=4, bg_value='purple')
             text = str(str(fpath2.name).split('.')[0:2])
+            text = text + f'\n s1={nbytes1} s2={nbytes2}'
             cell = kwimage.draw_header_text(cell, text, fit=True)
             cells.append(cell)
 
-        canvas = kwimage.stack_images_grid(cells, pad=16, bg_value='green', chunksize=8)
-        canvas = kwimage.normalize(canvas)
+        if len(cells):
+            canvas = kwimage.stack_images_grid(cells, pad=16, bg_value='green', chunksize=8)
+            canvas = kwimage.normalize(canvas)
 
-        canvas = kwimage.ensure_uint255(canvas)
-        canvas = kwimage.draw_header_text(canvas, key)
-        kwimage.imwrite(compare_fpath, canvas)
+            canvas = kwimage.ensure_uint255(canvas)
+            canvas = kwimage.draw_header_text(canvas, key)
+            kwimage.imwrite(compare_fpath, canvas)
 
         # import kwplot
         # kwplot.autompl()

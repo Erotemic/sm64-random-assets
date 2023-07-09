@@ -94,7 +94,7 @@ class GenerateAssetsConfig(scfg.DataConfig):
             to use the one in this module directory.
             '''))
     hybrid_mode = scfg.Value(None, isflag=True, help='hybrid_mode')
-    compare = scfg.Value(None, isflag=True, help='run the compare debug tool')
+    compare = scfg.Value(None, isflag=True, help='run the compare debug tool. Can also be a YAML configuration')
 
     reference_config = scfg.Value(None, help=ub.paragraph(
         '''
@@ -136,6 +136,18 @@ class GenerateAssetsConfig(scfg.DataConfig):
             else:
                 raise Exception(f'Unknown value {v=} for {k=}')
         self.reference_config = reference_config
+
+        compare = Yaml.coerce(self.compare)
+        if compare is False:
+            compare = None
+        if isinstance(compare, int):
+            compare = {} if compare > 0 else None
+        if compare is not None:
+            default_compare = ub.udict({
+                'include': '*',
+            })
+            compare = default_compare | compare
+        self.compare = compare
 
 
 def main(cmdline=1, **kwargs):
@@ -195,12 +207,17 @@ def main(cmdline=1, **kwargs):
         # If we don't have a refernce make sure that we didn't set any flags
         # that require it.
         for k, v in args.reference_config.items():
-            if v in {'reference', 'hybrid'}:
-                raise Exception(
-                    'Reference config might want a reference asset, '
-                    'but the path to the reference directory was not set.')
+            if k == 'never_generate':
+                if v:
+                    raise Exception(
+                        'Reference config might want a reference asset, '
+                        'but the path to the reference directory was not set.')
+            else:
+                if v in {'reference', 'hybrid'}:
+                    raise Exception(
+                        'Reference config might want a reference asset, '
+                        'but the path to the reference directory was not set.')
 
-    # Generate randomized / custom versions for each asset
     """
     Note: on my older processor machine, the game freezes after the startup
     splash screen fade to black and never gets to the mario head.
@@ -229,7 +246,6 @@ def main(cmdline=1, **kwargs):
     from sm64_random_assets import image_generator
     from sm64_random_assets import audio_generator
     from sm64_random_assets import binary_generator
-
     from kwutil.util_pattern import MultiPattern
     nevergen_pat = MultiPattern.coerce(args.reference_config['never_generate'])
 
@@ -243,61 +259,49 @@ def main(cmdline=1, **kwargs):
     # List to keep track of what we did
     results = []
 
-    key = 'png'
-    for info in ub.ProgIter(ext_to_info['.' + key], desc=key):
-        use_ref, is_hybrid = check_ref_config('png', info)
-        out = ub.udict({'status': None}) | info
-        if use_ref != "reference":
-            out |= image_generator.generate_image(output_dpath, info)
-        if use_ref == 'reference' or (is_hybrid and out['status'] != 'generated'):
-            copied = copy_reference(output_dpath, info, ref_dpath)
-            if copied:
-                out['status'] = 'copied_reference'
-            else:
-                out['status'] = 'no-reference'
-        results.append(out)
+    # Generate randomized / custom versions for each asset
+    key_to_asset_generator = {
+        'png': image_generator.generate_image,
+        'aiff': audio_generator.generate_audio,
+        'm64': binary_generator.generate_binary,
+        'bin': binary_generator.generate_binary,
+    }
 
-    key = 'aiff'
-    for info in ub.ProgIter(ext_to_info['.' + key], desc=key):
-        use_ref, is_hybrid = check_ref_config(key, info)
-        out = ub.udict({'status': None}) | info
-        if use_ref != "reference":
-            out |= audio_generator.generate_audio(output_dpath, info)
-        if use_ref == 'reference' or (is_hybrid and out['status'] != 'generated'):
-            copied = copy_reference(output_dpath, info, ref_dpath)
-            if copied:
-                out['status'] = 'copied_reference'
-            else:
-                out['status'] = 'no-reference'
-        results.append(out)
+    async def delete(fpath):
+        ub.Path(fpath).delete()
 
-    key = 'm64'
-    for info in ub.ProgIter(ext_to_info['.' + key], desc=key):
-        use_ref, is_hybrid = check_ref_config(key, info)
-        out = ub.udict({'status': None}) | info
-        if use_ref != "reference":
-            out |= binary_generator.generate_binary(output_dpath, info)
-        if use_ref == 'reference' or (is_hybrid and out['status'] != 'generated'):
-            copied = copy_reference(output_dpath, info, ref_dpath)
-            if copied:
-                out['status'] = 'copied_reference'
-            else:
-                out['status'] = 'no-reference'
-        results.append(out)
+    for key, generate_asset in key_to_asset_generator.items():
+        for info in ub.ProgIter(ext_to_info['.' + key], desc=key):
+            use_ref, is_hybrid = check_ref_config('png', info)
+            out = ub.udict({'status': None}) | info
+            if use_ref != "reference":
+                out |= generate_asset(output_dpath, info)
+            if use_ref == 'reference' or (is_hybrid and out['status'] != 'generated'):
+                copied = copy_reference(output_dpath, info, ref_dpath)
+                if copied:
+                    out['status'] = 'copied_reference'
+                else:
+                    out['status'] = 'no-reference'
 
-    key = 'bin'
-    for info in ub.ProgIter(ext_to_info['.' + key], desc=key):
-        use_ref, is_hybrid = check_ref_config(key, info)
-        out = ub.udict({'status': None}) | info
-        if use_ref != "reference":
-            out |= binary_generator.generate_binary(output_dpath, info)
-        if use_ref == 'reference' or (is_hybrid and out['status'] != 'generated'):
-            copied = copy_reference(output_dpath, info, ref_dpath)
-            if copied:
-                out['status'] = 'copied_reference'
-            else:
-                out['status'] = 'no-reference'
-        results.append(out)
+            out_fpath = output_dpath / info['fname']
+            out['out_fpath'] = out_fpath
+
+            ub.Executor()
+
+            if 1:
+                # Delete the associate build file
+                # to speedup make?
+                build_dpath = output_dpath / 'build/us'
+                if not build_dpath.exists():
+                    build_dpath = output_dpath / 'build/us_pc'
+                if build_dpath.exists():
+                    build_rel_fname = ub.Path(info['fname']).augment(ext='.inc.c', multidot=False)
+                    build_fpath = build_dpath / build_rel_fname
+
+                    if build_fpath.exists():
+                        build_fpath.delete()
+
+            results.append(out)
 
     # Print out some statistics about what we did
     ext_status_hist = ub.dict_hist([(r['ext'], r['region'], r['status']) for r in results])
@@ -324,7 +328,7 @@ def main(cmdline=1, **kwargs):
     assets_fpath = output_dpath / '.assets-local.txt'
     assets_fpath.write_text(text)
 
-    if args.compare:
+    if args.compare is not None:
         from sm64_random_assets.comparison import compare
         compare(ref_dpath, output_dpath, asset_metadata_fpath)
 

@@ -5,13 +5,18 @@ import kwimage
 
 def generate_image(output_dpath, info):
     """
-    Different texture types
 
-    ia1
-    ia4
-    ia8
-    ia16
-    rgba16
+    Returns:
+        dict: containing keys:
+            status
+
+    Notes:
+        Different texture types
+        ia1
+        ia4
+        ia8
+        ia16
+        rgba16
     """
     if info.get('shape', None) is None:
         return {'status': 'value-error: image has no shape'}
@@ -53,6 +58,11 @@ def generate_image(output_dpath, info):
             new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
         else:
             new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+
+        # Reduce the size of textures
+        smaller = kwimage.imresize(new_data, scale=0.5, interpolation='nearest')
+        new_data = kwimage.imresize(smaller, dsize=shape[0:2][::-1], interpolation='nearest')
+
         # new_data[..., 0:3] = 0
         # new_data[..., 3] = 0
         out = {'status': 'randomized'}
@@ -62,6 +72,7 @@ def generate_image(output_dpath, info):
     # kwimage.imwrite(out_fpath, new_data, backend='gdal')
     # kwimage.imwrite(out_fpath, new_data, backend='pil')
     kwimage.imwrite(out_fpath, new_data, backend='pil')
+    out['out_fpath'] = out_fpath
     return out
 
 
@@ -332,6 +343,9 @@ name_to_text_lut = build_char_name_map()
 #         xdev.Pattern.coerce('actors/power_meter').match(fname)
 
 class PowerMeter:
+    """
+    Helper to draw something useful for the power/health meter
+    """
 
     def match(self, fname):
         return 'actors/power_meter/power_meter_' in fname
@@ -377,6 +391,9 @@ class PowerMeter:
 
 
 def handle_special_texture(fname, shape):
+    """
+    Can programatically generate nicer-than-random textures for some assets.
+    """
     import numpy as np
     fname = str(fname)
 
@@ -392,16 +409,32 @@ def handle_special_texture(fname, shape):
                 return generated
 
     generated = None
+    import ubelt as ub
     if fname == 'levels/intro/2_copyright.rgba16.png':
         generated = kwimage.draw_text_on_image(
-            None, 'For Educational Use Only', color='skyblue')
+            None, ub.codeblock(
+                '''
+                For Educational Use Only.
+                Mario is owned by Nintendo.
+                Please support the official release.
+                '''), color='skyblue', halign='center')
+
     if fname == 'levels/intro/3_tm.rgba16.png':
         generated = kwimage.draw_text_on_image(
             None, 'TM', color='white')
     if 'actors/blue_fish' in fname:
         generated = kwimage.draw_text_on_image(
             None, 'blue\nfish', color='blue')
-    if 'eyes' in fname:
+
+    if 'flame' in fname:
+        generated = kwimage.draw_text_on_image(
+            img={'color': (0, 0, 0, 0)},
+            text='flame', color='yellow')
+
+    if 'eyebrow' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, 'eyebrow', color='brown')
+    elif 'eyes' in fname:
         generated = kwimage.draw_text_on_image(
             None, 'eyes', color='gray')
     elif 'eye' in fname:
@@ -419,6 +452,23 @@ def handle_special_texture(fname, shape):
     elif 'thwomp_face' in fname:
         generated = kwimage.draw_text_on_image(
             {'color': 'lightblue'}, ':(', color='black')
+
+    if generated is None:
+        needs_nbytes_reduction = {
+            'textures/skyboxes',
+            'levels/bowser',
+            'bowser_shell_edge',
+            'bowser_nostrils',
+            'bowser_hair',
+        }
+        for cand in needs_nbytes_reduction:
+            if cand in fname:
+                # Still randomize, but reduce the compressed PNG size
+                new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+                generated = kwimage.imresize(new_data[::4, ::4, :],
+                                             dsize=shape[0:2][::-1],
+                                             interpolation='nearest')
+                generated[:, :, 3] = 255
 
     if generated is not None:
         generated = kwimage.imresize(generated, dsize=shape[0:2][::-1])
