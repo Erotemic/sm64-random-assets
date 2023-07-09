@@ -15,3 +15,5 @@ numpy>=1.19.3  ; python_version < '3.10' and python_version >= '3.9'   # Python 
 numpy>=1.19.2  ; python_version < '3.9' and python_version >= '3.8'    # Python 3.8
 numpy>=1.19.2  ; python_version < '3.8' and python_version >= '3.7'    # Python 3.7
 numpy>=1.19.2  ; python_version < '3.7' and python_version >= '3.6'    # Python 3.6
+
+parse>=1.14.0
