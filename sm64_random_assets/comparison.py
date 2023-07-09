@@ -100,7 +100,7 @@ def compare(ref_dpath, output_dpath, asset_metadata_fpath, include=None, exclude
     if not is_headless():
         view_directory(compare_dpath)
 
-    from kwutil.util_pattern import MultiPattern
+    from sm64_random_assets.util.util_pattern import MultiPattern
     if include is not None:
         # include = [
         #     '*bitfs*.png',

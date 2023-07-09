@@ -116,7 +116,6 @@ class Pattern(PatternBase, ub.NiceRepr):
         Returns an equivalent pattern with the regular expression backend
 
         Example:
-            >>> from kwutil.util_pattern import *  # NOQA
             >>> globpat = Pattern.coerce('foo*', 'glob')
             >>> strictpat = Pattern.coerce('foo*', 'strict')
             >>> repat1 = strictpat.to_regex()
@@ -159,7 +158,6 @@ class Pattern(PatternBase, ub.NiceRepr):
     def coerce_backend(cls, data, hint='auto'):
         """
         Example:
-            >>> from kwutil.util_pattern import *  # NOQA
             >>> assert Pattern.coerce_backend('foo', hint='auto') == 'strict'
             >>> assert Pattern.coerce_backend('foo*', hint='auto') == 'glob'
             >>> assert Pattern.coerce_backend(re.compile('foo*'), hint='auto') == 'regex'
