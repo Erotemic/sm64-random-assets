@@ -431,9 +431,45 @@ def handle_special_texture(fname, shape):
             img={'color': (0, 0, 0, 0)},
             text='flame', color='yellow')
 
-    if 'eyebrow' in fname:
+    if 'unused' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, 'unused', color='red')
+    elif 'eyebrow' in fname:
         generated = kwimage.draw_text_on_image(
             None, 'eyebrow', color='brown')
+    elif 'mips_eyes' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, 'QQ', color='gray')
+    elif 'eyes_center' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, 'O O', color='gray')
+    elif 'eyes_closed' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, '_ _', color='gray')
+    elif 'eyes_dead' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, 'X X', color='gray')
+    elif 'eye_mostly_open' in fname or 'iris_mostly_open' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, '_ye', color='gray')
+    elif 'goomba_face_blink' in fname:
+        generated = kwimage.draw_text_on_image(
+            {'color': 'brown'}, '- -', color='black')
+    elif 'goomba_face' in fname:
+        generated = kwimage.draw_text_on_image(
+            {'color': 'brown'}, 'O O', color='black')
+    elif 'eye_mostly_closed' in fname or 'iris_mostly_closed' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, '_y_', color='gray')
+    elif 'eye_closed' in fname or 'iris_closed' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, '___', color='gray')
+    elif 'eye_angry' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, ' < ', color='gray')
+    elif 'eye_half_closed' in fname:
+        generated = kwimage.draw_text_on_image(
+            None, '_y_', color='gray')
     elif 'eyes' in fname:
         generated = kwimage.draw_text_on_image(
             None, 'eyes', color='gray')

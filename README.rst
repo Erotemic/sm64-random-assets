@@ -128,8 +128,9 @@ original PNG textures are optimized to reduce their memory usage by having
 large continuous sections of the same color. Naively randomizing every pixel
 does not generate data well suited for PNG compression.
 
-I have tested that I can complete a 16 star run on the original hardware, so I
-think all of the crashes have been resolved by reducing texture sizes.
+I have verified that I cen enter every major stage and complete every bowser
+fight, so I think all of the crashes have been resolved by reducing texture
+sizes. I have completed a 16 star run on real N64 hardware with this.
 
 
 Development
