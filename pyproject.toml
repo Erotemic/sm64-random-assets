@@ -21,7 +21,7 @@ license = "Apache 2"
 dev_status = "planning"
 remote_host = "https://github.com"
 remote_group = "Erotemic"
-url = "git@github.com:Erotemic/sm64-random-assets.git"
+url = "https://github.com/Erotemic/sm64-random-assets"
 ci_pypy_versions = []
 
 [tool.xcookie.package_data]

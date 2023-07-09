@@ -232,7 +232,7 @@ if __name__ == "__main__":
     setupkw["version"] = VERSION
     setupkw["author"] = "Jon Crall"
     setupkw["author_email"] = "erotemic@gmail.com"
-    setupkw["url"] = "git@github.com:Erotemic/sm64-random-assets.git"
+    setupkw["url"] = "https://github.com/Erotemic/sm64-random-assets"
     setupkw["description"] = "The sm64-random-assets module"
     setupkw["long_description"] = parse_description()
     setupkw["long_description_content_type"] = "text/x-rst"
