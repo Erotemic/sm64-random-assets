@@ -24,12 +24,44 @@ def is_headless():
         return len(DISPLAY) == 0
 
 
+def view_directory(dpath=None, verbose=False):
+    """
+    View a directory in the operating system file browser. Currently supports
+    windows explorer, mac open, and linux nautlius.
+
+    Copied from xdev
+
+    Args:
+        dpath (PathLike | None): directory name
+        verbose (bool): verbosity
+    """
+    import os
+    from os.path import exists
+    if dpath is None:
+        dpath = os.getcwd()
+    dpath = os.path.normpath(dpath)
+    if verbose:
+        print('[xdev] view_directory({!r}) '.format(dpath))
+    if not exists(dpath):
+        raise Exception('Cannot view nonexistant directory: {!r}'.format(dpath))
+    if ub.LINUX:
+        info = ub.cmd(('nautilus', dpath), detach=True, verbose=verbose)
+    elif ub.DARWIN:
+        info = ub.cmd(('open', dpath), detach=True, verbose=verbose)
+    elif ub.WIN32:
+        info = ub.cmd(('explorer.exe', dpath), detach=True, verbose=verbose)
+    else:
+        raise RuntimeError('Unknown Platform')
+    if info is not None:
+        if not info['proc']:
+            raise Exception('startfile failed')
+
+
 def compare(ref_dpath, output_dpath, asset_metadata_fpath, include=None, exclude=None):
     """
     Developer scratchpad
     """
     import parse
-    import xdev
     print(f'asset_metadata_fpath={asset_metadata_fpath}')
     print(f'output_dpath={output_dpath}')
     print(f'ref_dpath={ref_dpath}')
@@ -66,7 +98,7 @@ def compare(ref_dpath, output_dpath, asset_metadata_fpath, include=None, exclude
     compare_dpath = (dst / 'asset_compare').ensuredir()
 
     if not is_headless():
-        xdev.view_directory(compare_dpath)
+        view_directory(compare_dpath)
 
     from kwutil.util_pattern import MultiPattern
     if include is not None:

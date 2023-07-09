@@ -6,12 +6,12 @@ build-backend = "setuptools.build_meta"
 ignore_missing_imports = true
 
 [tool.xcookie]
-tags = [ "github", "erotemic", "purepy",]
+tags = [ "github", "erotemic", "purepy", "cv2"]
 mod_name = "sm64_random_assets"
 repo_name = "sm64-random-assets"
 rel_mod_parent_dpath = "."
 os = [ "linux", "osx", "win",]
-min_python = 3.7
+min_python = 3.8
 version = "{mod_dpath}/__init__.py::__version__"
 author = "Jon Crall"
 author_email = "erotemic@gmail.com"
@@ -20,6 +20,7 @@ license = "Apache 2"
 dev_status = "planning"
 remote_host = "https://github.com"
 remote_group = "Erotemic"
+url = "git@github.com:Erotemic/sm64-random-assets.git"
 
 [tool.pytest.ini_options]
 addopts = "-p no:doctest --xdoctest --xdoctest-style=google --ignore-glob=setup.py --ignore-glob=dev --ignore-glob=docs"

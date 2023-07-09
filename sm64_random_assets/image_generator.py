@@ -5,10 +5,12 @@ import kwimage
 
 def generate_image(output_dpath, info):
     """
+    Args:
+        output_dpath (Path): where to write the generated image file
+        info (dict): a dictionary from asset_metadata.json
 
     Returns:
-        dict: containing keys:
-            status
+        dict: containing keys: status, out_fpath
 
     Notes:
         Different texture types
@@ -17,6 +19,19 @@ def generate_image(output_dpath, info):
         ia8
         ia16
         rgba16
+
+    Example:
+        >>> from sm64_random_assets.image_generator import generate_image
+        >>> import ubelt as ub
+        >>> dpath = ub.Path.appdir('sm64-random-assets/tests')
+        >>> output_dpath = dpath / 'test-output'
+        >>> info = {
+        >>>     "fname": "actors/blue_coin_switch/blue_coin_switch_side.rgba16.png",
+        >>>     "shape": [16, 32, 4]
+        >>> }
+        >>> out = generate_image(output_dpath, info)
+        >>> assert out['status'] == 'generated'
+        >>> assert out['out_fpath'].exists()
     """
     if info.get('shape', None) is None:
         return {'status': 'value-error: image has no shape'}

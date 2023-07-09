@@ -196,7 +196,7 @@ def parse_requirements(fname="requirements.txt", versions=False):
 
 
 NAME = "sm64-random-assets"
-INIT_PATH = "sm64-random-assets/__init__.py"
+INIT_PATH = "sm64_random_assets/__init__.py"
 VERSION = parse_version(INIT_PATH)
 
 if __name__ == "__main__":
@@ -238,14 +238,13 @@ if __name__ == "__main__":
     setupkw["long_description_content_type"] = "text/x-rst"
     setupkw["license"] = "Apache 2"
     setupkw["packages"] = find_packages(".")
-    setupkw["python_requires"] = ">=3.7"
+    setupkw["python_requires"] = ">=3.8"
     setupkw["classifiers"] = [
         "Development Status :: 1 - Planning",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Utilities",
         "License :: OSI Approved :: Apache Software License",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",

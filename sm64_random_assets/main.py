@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
-"""
+r"""
 Generates non-copyrighted assets for SM64
 
 Ignore:
@@ -13,7 +13,7 @@ Usage:
     python generate_assets.py --dst <PATH-TO-SM64-PORT-CHECKOUT>
 
 
-Example:
+CommandLine:
 
     # Make a temporary directory
     rm -rf $HOME/tmp/test_assets
