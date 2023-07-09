@@ -140,6 +140,7 @@ changed by calling aiff() or aifc() before the first writeframes or
 writeframesraw.
 """
 
+from collections import namedtuple
 import struct
 import builtins
 import warnings
@@ -150,7 +151,9 @@ __all__ = ["Error", "open"]
 class Error(Exception):
     pass
 
+
 _AIFC_version = 0xA2805140     # Version 1 of AIFF-C
+
 
 def _read_long(file):
     try:
@@ -158,11 +161,13 @@ def _read_long(file):
     except struct.error:
         raise EOFError from None
 
+
 def _read_ulong(file):
     try:
         return struct.unpack('>L', file.read(4))[0]
     except struct.error:
         raise EOFError from None
+
 
 def _read_short(file):
     try:
@@ -170,11 +175,13 @@ def _read_short(file):
     except struct.error:
         raise EOFError from None
 
+
 def _read_ushort(file):
     try:
         return struct.unpack('>H', file.read(2))[0]
     except struct.error:
         raise EOFError from None
+
 
 def _read_string(file):
     length = ord(file.read(1))
@@ -183,19 +190,21 @@ def _read_string(file):
     else:
         data = file.read(length)
     if length & 1 == 0:
-        dummy = file.read(1)
+        dummy = file.read(1)  # NOQA
     return data
 
-_HUGE_VAL = 1.79769313486231e+308 # See <limits.h>
 
-def _read_float(f): # 10 bytes
-    expon = _read_short(f) # 2 bytes
+_HUGE_VAL = 1.79769313486231e+308  # See <limits.h>
+
+
+def _read_float(f):  # 10 bytes
+    expon = _read_short(f)  # 2 bytes
     sign = 1
     if expon < 0:
         sign = -1
         expon = expon + 0x8000
-    himant = _read_ulong(f) # 4 bytes
-    lomant = _read_ulong(f) # 4 bytes
+    himant = _read_ulong(f)  # 4 bytes
+    lomant = _read_ulong(f)  # 4 bytes
     if expon == himant == lomant == 0:
         f = 0.0
     elif expon == 0x7FFF:
@@ -205,17 +214,22 @@ def _read_float(f): # 10 bytes
         f = (himant * 0x100000000 + lomant) * pow(2.0, expon - 63)
     return sign * f
 
+
 def _write_short(f, x):
     f.write(struct.pack('>h', x))
+
 
 def _write_ushort(f, x):
     f.write(struct.pack('>H', x))
 
+
 def _write_long(f, x):
     f.write(struct.pack('>l', x))
 
+
 def _write_ulong(f, x):
     f.write(struct.pack('>L', x))
+
 
 def _write_string(f, s):
     if len(s) > 255:
@@ -224,6 +238,7 @@ def _write_string(f, s):
     f.write(s)
     if len(s) & 1 == 0:
         f.write(b'\x00')
+
 
 def _write_float(f, x):
     import math
@@ -238,8 +253,8 @@ def _write_float(f, x):
         lomant = 0
     else:
         fmant, expon = math.frexp(x)
-        if expon > 16384 or fmant >= 1 or fmant != fmant: # Infinity or NaN
-            expon = sign|0x7FFF
+        if expon > 16384 or fmant >= 1 or fmant != fmant:  # Infinity or NaN
+            expon = sign | 0x7FFF
             himant = 0
             lomant = 0
         else:                   # Finite
@@ -258,10 +273,10 @@ def _write_float(f, x):
     _write_ulong(f, himant)
     _write_ulong(f, lomant)
 
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", DeprecationWarning)
     from chunk import Chunk
-from collections import namedtuple
 
 _aifc_params = namedtuple('_aifc_params',
                           'nchannels sampwidth framerate nframes comptype compname')
@@ -332,7 +347,7 @@ class Aifc_read:
             raise Error('not an AIFF or AIFF-C file')
         self._comm_chunk_read = 0
         self._ssnd_chunk = None
-        while 1:
+        while True:
             self._ssnd_seek_needed = 1
             try:
                 chunk = Chunk(self._file)
@@ -344,7 +359,7 @@ class Aifc_read:
                 self._comm_chunk_read = 1
             elif chunkname == b'SSND':
                 self._ssnd_chunk = chunk
-                dummy = chunk.read(8)
+                dummy = chunk.read(8)  # NOQA
                 self._ssnd_seek_needed = 0
             elif chunkname == b'FVER':
                 self._version = _read_ulong(chunk)
@@ -359,7 +374,7 @@ class Aifc_read:
             file_object = builtins.open(f, 'rb')
             try:
                 self.initfp(file_object)
-            except:
+            except BaseException:
                 file_object.close()
                 raise
         else:
@@ -409,8 +424,8 @@ class Aifc_read:
     def getcompname(self):
         return self._compname
 
-##  def getversion(self):
-##      return self._version
+# def getversion(self):
+# return self._version
 
     def getparams(self):
         return _aifc_params(self.getnchannels(), self.getsampwidth(),
@@ -437,7 +452,7 @@ class Aifc_read:
     def readframes(self, nframes):
         if self._ssnd_seek_needed:
             self._ssnd_chunk.seek(0)
-            dummy = self._ssnd_chunk.read(8)
+            dummy = self._ssnd_chunk.read(8)  # NOQA
             pos = self._soundpos * self._framesize
             if pos:
                 self._ssnd_chunk.seek(pos + 8)
@@ -494,22 +509,22 @@ class Aifc_read:
             raise Error('bad # of channels')
         self._framesize = self._nchannels * self._sampwidth
         if self._aifc:
-            #DEBUG: SGI's soundeditor produces a bad size :-(
+            # DEBUG: SGI's soundeditor produces a bad size :-(
             kludge = 0
             if chunk.chunksize == 18:
                 kludge = 1
                 warnings.warn('Warning: bad COMM chunk size')
                 chunk.chunksize = 23
-            #DEBUG end
+            # DEBUG end
             self._comptype = chunk.read(4)
-            #DEBUG start
+            # DEBUG start
             if kludge:
                 length = ord(chunk.file.read(1))
                 if length & 1 == 0:
                     length = length + 1
                 chunk.chunksize = chunk.chunksize + length
                 chunk.file.seek(-1, 1)
-            #DEBUG end
+            # DEBUG end
             self._compname = _read_string(chunk)
             if self._comptype != b'NONE':
                 if self._comptype == b'G722':
@@ -546,6 +561,7 @@ class Aifc_read:
                  (len(self._markers), '' if len(self._markers) == 1 else 's',
                   nmarkers))
             warnings.warn(w)
+
 
 class Aifc_write:
     # Variables used in this class:
@@ -584,7 +600,7 @@ class Aifc_write:
             file_object = builtins.open(f, 'wb')
             try:
                 self.initfp(file_object)
-            except:
+            except BaseException:
                 file_object.close()
                 raise
 
@@ -693,10 +709,10 @@ class Aifc_write:
     def getcompname(self):
         return self._compname
 
-##  def setversion(self, version):
-##      if self._nframeswritten:
-##          raise Error, 'cannot change parameters after starting to write'
-##      self._version = version
+# def setversion(self, version):
+# if self._nframeswritten:
+# raise Error, 'cannot change parameters after starting to write'
+# self._version = version
 
     def setparams(self, params):
         nchannels, sampwidth, framerate, nframes, comptype, compname = params
@@ -758,7 +774,7 @@ class Aifc_write:
     def writeframes(self, data):
         self.writeframesraw(data)
         if self._nframeswritten != self._nframes or \
-              self._datalength != self._datawritten:
+                self._datalength != self._datawritten:
             self._patchheader()
 
     def close(self):
@@ -772,8 +788,8 @@ class Aifc_write:
                 self._datawritten = self._datawritten + 1
             self._writemarkers()
             if self._nframeswritten != self._nframes or \
-                  self._datalength != self._datawritten or \
-                  self._marklength:
+                    self._datalength != self._datawritten or \
+                    self._marklength:
                 self._patchheader()
         finally:
             # Prevent ref cycles
@@ -816,8 +832,8 @@ class Aifc_write:
     def _ensure_header_written(self, datasize):
         if not self._nframeswritten:
             if self._comptype in (b'ULAW', b'ulaw',
-                b'ALAW', b'alaw', b'G722',
-                b'sowt', b'SOWT'):
+                                  b'ALAW', b'alaw', b'G722',
+                                  b'sowt', b'SOWT'):
                 if not self._sampwidth:
                     self._sampwidth = 2
                 if self._sampwidth != 2:
@@ -902,7 +918,7 @@ class Aifc_write:
         else:
             commlength = 18
             verslength = 0
-        _write_ulong(self._file, 4 + verslength + self._marklength + \
+        _write_ulong(self._file, 4 + verslength + self._marklength +
                      8 + commlength + 16 + datalength)
         return commlength
 
@@ -914,12 +930,12 @@ class Aifc_write:
         else:
             datalength = self._datawritten
         if datalength == self._datalength and \
-              self._nframes == self._nframeswritten and \
-              self._marklength == 0:
+                self._nframes == self._nframeswritten and \
+                self._marklength == 0:
             self._file.seek(curpos, 0)
             return
         self._file.seek(self._form_length_pos, 0)
-        dummy = self._write_form_length(datalength)
+        dummy = self._write_form_length(datalength)  # NOQA
         self._file.seek(self._nframes_pos, 0)
         _write_ulong(self._file, self._nframeswritten)
         self._file.seek(self._ssnd_length_pos, 0)
@@ -946,6 +962,7 @@ class Aifc_write:
             _write_short(self._file, id)
             _write_ulong(self._file, pos)
             _write_string(self._file, name)
+
 
 def open(f, mode=None):
     if mode is None:
@@ -979,7 +996,7 @@ if __name__ == '__main__':
             print("Writing", gn)
             with open(gn, 'w') as g:
                 g.setparams(f.getparams())
-                while 1:
+                while True:
                     data = f.readframes(1024)
                     if not data:
                         break
