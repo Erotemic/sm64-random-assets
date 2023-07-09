@@ -111,7 +111,7 @@ class GenerateAssetsConfig(scfg.DataConfig):
         '''))
 
     def __post_init__(self):
-        from kwutil.util_yaml import Yaml
+        from sm64_random_assets.util.util_yaml import Yaml
         reference_config = Yaml.coerce(self.reference_config)
         if reference_config is None:
             reference_config = {}
@@ -153,6 +153,11 @@ class GenerateAssetsConfig(scfg.DataConfig):
 def main(cmdline=1, **kwargs):
     args = GenerateAssetsConfig.cli(cmdline=cmdline, data=kwargs)
     rich.print('args = {}'.format(ub.urepr(args, nl=2)))
+
+    from sm64_random_assets import image_generator
+    from sm64_random_assets import audio_generator
+    from sm64_random_assets import binary_generator
+    from sm64_random_assets.util.util_pattern import MultiPattern
 
     # Path to the clone of sm64-port we will generate assets for.
     output_dpath = ub.Path(args.dst).expand()
@@ -243,10 +248,6 @@ def main(cmdline=1, **kwargs):
     resulting binary
     """
 
-    from sm64_random_assets import image_generator
-    from sm64_random_assets import audio_generator
-    from sm64_random_assets import binary_generator
-    from kwutil.util_pattern import MultiPattern
     nevergen_pat = MultiPattern.coerce(args.reference_config['never_generate'])
 
     def check_ref_config(key, info):

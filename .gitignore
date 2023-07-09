@@ -6,3 +6,4 @@ tpl/sm64-ref
 tpl/sm64-port-ref
 sm64_save_file.bin
 sm64config.txt
+.coverage
