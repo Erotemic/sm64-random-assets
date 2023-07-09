@@ -1,3 +1,4 @@
+#  type: ignore
 """
 An encapsulation of regex and glob (and maybe other) patterns.
 

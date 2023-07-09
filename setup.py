@@ -195,7 +195,7 @@ def parse_requirements(fname="requirements.txt", versions=False):
 #     return requirements
 
 
-NAME = "sm64-random-assets"
+NAME = "sm64_random_assets"
 INIT_PATH = "sm64_random_assets/__init__.py"
 VERSION = parse_version(INIT_PATH)
 
@@ -250,4 +250,5 @@ if __name__ == "__main__":
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
     ]
+    setupkw["package_data"] = {"sm64_random_assets": ["asset_metadata.json"]}
     setup(**setupkw)
