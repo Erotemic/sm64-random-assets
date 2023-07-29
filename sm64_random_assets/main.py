@@ -81,8 +81,8 @@ class GenerateAssetsConfig(scfg.DataConfig):
     """
     dst = scfg.Value(None, help=ub.paragraph(
             '''
-            Path to the sm64-port repo to generate assets for.
-            '''))
+            Path to the sm64-based repository to generate assets for.
+            '''), position=1)
     reference = scfg.Value(None, help=ub.paragraph(
             '''
             A reference to a directory with a different set of assets to

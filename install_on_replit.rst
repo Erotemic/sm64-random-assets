@@ -28,12 +28,16 @@ In the ``deps`` section add:
 
 .. code::
 
-        pkgs.capstone
-        pkgs.pkg-config
-        pkgs.python310Packages.pkgconfig
-        pkgs.binutils
-        #pkgs.binutils-unwrapped-all-targets
-        #pkgsCross.mipsel-linux-gnu.buildPackages.bintools
+    pkgs.capstone
+    pkgs.pkg-config
+    pkgs.binutils
+    pkgs.libusb1
+    pkgs.util-linux
+    pkgs.SDL2
+    pkgs.xorg.libX11.dev
+    pkgs.xorg.libXrandr.dev
+    pkgs.alsa-lib
+    pkgs.libpulseaudio
 
 
 The full config should look like this:
@@ -43,23 +47,19 @@ The full config should look like this:
 
     { pkgs }: {
       deps = [
-        pkgs.python310Full
-        pkgs.replitPackages.prybar-python310
-        pkgs.replitPackages.stderred
-        pkgs.capstone
-        pkgs.pkg-config
-        pkgs.python310Packages.pkgconfig
-        pkgs.binutils
-        pkgs.libusb1
-        pkgs.util-linux
-        pkgs.SDL2
-        #pkgs.libX11
-        pkgs.libXrandr
-        pkgs.xorg.libX11.dev
-        #pkgs.xorg.libXrandr.dev
-        pkgs.alsa-lib
-        #pkgs.X11
-        #pkgs.binutils-unwrapped-all-targets
+          pkgs.python310Full
+          pkgs.replitPackages.prybar-python310
+          pkgs.replitPackages.stderred
+          pkgs.capstone
+          pkgs.pkg-config
+          pkgs.binutils
+          pkgs.libusb1
+          pkgs.util-linux
+          pkgs.SDL2
+          pkgs.xorg.libX11.dev
+          pkgs.xorg.libXrandr.dev
+          pkgs.alsa-lib
+          pkgs.libpulseaudio
       ];
       env = {
         PYTHON_LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
@@ -91,22 +91,7 @@ Now that we have updated our environment, click the "+" icon to create a new
 Install the Prerequisites
 =========================
 
-In our new configured shell we will install the prerequisites. Due to some
-weirdness with Replit, opencv fails to find its config, which causes an error
-if we try to use it. A quick patch makes this error go away.
-
-.. code:: bash
-
-   pip install kwimage[headless] rich
-
-   # Normally you only need the above line, but this patches an issue on replit
-   SITE_PACKAGE_DPATH=$(python -c "import sysconfig; print(sysconfig.get_paths()['platlib'])")
-   cat $SITE_PACKAGE_DPATH/cv2/__init__.py
-   sed -i "s|LOADER_DIR =.*|LOADER_DIR = '$SITE_PACKAGE_DPATH/cv2'|" $SITE_PACKAGE_DPATH/cv2/__init__.py
-
-
-Now we are going to download the code for generating random assets and the sm64
-code itself.
+In our new configured shells, we are going to download the code for generating random assets and the sm64 code itself.
 
 .. code:: bash
 
@@ -124,6 +109,24 @@ code itself.
    git submodule update --init tpl/sm64-port
 
 
+We will now install the dependencies of the random asset generator.
+
+.. code:: bash
+
+   # In the sm64-random-assets repo root
+   pip install -e .[headless]
+
+Due to some weirdness with Replit, opencv fails to find its config, which
+causes an error if we try to use it. A quick patch makes this error go away.
+
+.. code:: bash
+
+   # Normally you only need the above line, but this patches an issue on replit
+   SITE_PACKAGE_DPATH=$(python -c "import sysconfig; print(sysconfig.get_paths()['platlib'])")
+   cat $SITE_PACKAGE_DPATH/cv2/__init__.py
+   sed -i "s|LOADER_DIR =.*|LOADER_DIR = '$SITE_PACKAGE_DPATH/cv2'|" $SITE_PACKAGE_DPATH/cv2/__init__.py
+
+
 Now we can use the asset autogeneration code to populate the assets in the main repo.
 
 .. code:: bash
@@ -134,6 +137,16 @@ Now we can use the asset autogeneration code to populate the assets in the main 
 
 Now we are ready to build the game. We move into the sm64 directory and run
 ``make`` with a few environment variables.
+
+
+.. code:: bash
+
+   # OPTIONAL: custom code
+   CODE_DPATH=${CODE_DPATH:-$HOME/$REPL_SLUG/code}
+   cd $CODE_DPATH/sm64-random-assets/tpl/sm64-port
+   git remote add Erotemic https://github.com/Erotemic/sm64-port
+   git fetch Erotemic
+   git checkout config_draw_dist
 
 .. code:: bash
 
