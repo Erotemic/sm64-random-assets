@@ -154,6 +154,9 @@ Now we are ready to build the game. We move into the sm64 directory and run
    CODE_DPATH=${CODE_DPATH:-$HOME/$REPL_SLUG/code}
    cd $CODE_DPATH/sm64-random-assets/tpl/sm64-port
 
+   # There is a small patch we have to apply to make this work in Replit's NIX
+   # environment
+
    # Compile
    NOEXTRACT=1 COMPARE=0 NON_MATCHING=0 VERSION=us make
 
@@ -164,3 +167,67 @@ If all goes well, the final compiled exe will live in:
 .. code::
 
    build/us_pc/sm64.us
+
+
+Debugging, adding ``pkgs.valgrind`` to deps.
+
+
+.. code:: bash
+
+   CODE_DPATH=${CODE_DPATH:-$HOME/$REPL_SLUG/code}
+   cd $CODE_DPATH/sm64-random-assets/tpl/sm64-port
+
+   valgrind --track-origins=yes --dsymutil=yes build/us_pc/sm64.us
+
+
+Current problem
+
+.. code:: bash
+
+   ==262== Invalid read of size 2
+   ==262==    at 0x484FEA0: memmove (in /nix/store/qmdp39yy74091vlrvrj39c8rzbslhci8-valgrind-3.19.0/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+   ==262==    by 0x4AFC41: osPiStartDma (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x4A08C6: audio_dma_copy_immediate (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x4A117D: bank_load_immediate (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x4A1646: load_banks_immediate (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x4A17ED: load_sequence_internal (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x4A1906: load_sequence (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x49CF3C: seq_player_play_sequence (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x43FE00: thread5_game_loop (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x4AFBB8: main_func (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x404B18: main (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==  Address 0x11b011e01200114 is not stack'd, malloc'd or (recently) free'd
+   ==262==
+   ==262==
+   ==262== Process terminating with default action of signal 11 (SIGSEGV): dumping core
+   ==262==  General Protection Fault
+   ==262==    at 0x484FEA0: memmove (in /nix/store/qmdp39yy74091vlrvrj39c8rzbslhci8-valgrind-3.19.0/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+   ==262==    by 0x4AFC41: osPiStartDma (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x4A08C6: audio_dma_copy_immediate (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x4A117D: bank_load_immediate (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x4A1646: load_banks_immediate (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x4A17ED: load_sequence_internal (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x4A1906: load_sequence (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x49CF3C: seq_player_play_sequence (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x43FE00: thread5_game_loop (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x4AFBB8: main_func (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==    by 0x404B18: main (in /home/runner/TestV3/code/sm64-random-assets/tpl/sm64-port/build/us_pc/sm64.us)
+   ==262==
+   ==262== HEAP SUMMARY:
+   ==262==     in use at exit: 14,429,598 bytes in 60,207 blocks
+   ==262==   total heap usage: 126,183 allocs, 65,976 frees, 58,647,530 bytes allocated
+   ==262==
+   ==262== LEAK SUMMARY:
+   ==262==    definitely lost: 640 bytes in 1 blocks
+   ==262==    indirectly lost: 0 bytes in 0 blocks
+   ==262==      possibly lost: 7,816,068 bytes in 50,499 blocks
+   ==262==    still reachable: 6,612,890 bytes in 9,707 blocks
+   ==262==         suppressed: 0 bytes in 0 blocks
+   ==262== Rerun with --leak-check=full to see details of leaked memory
+   ==262==
+   ==262== For lists of detected and suppressed errors, rerun with: -s
+   ==262== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
+   Segmentation fault (core dumped)
+
+Solved by adding "-static" to the opt flags. Also a good idea to remove "-g"
+and add "-O" for speed.
