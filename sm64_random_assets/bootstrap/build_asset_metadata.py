@@ -10,9 +10,9 @@ Usage:
     python -m sm64_random_assets.bootstrap.build_asset_metadata
 """
 import ubelt as ub
-import aifc
 import json
 import kwimage
+from sm64_random_assets.vendor import aifc
 
 
 def main():

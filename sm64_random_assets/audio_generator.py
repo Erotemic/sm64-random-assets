@@ -1,8 +1,8 @@
-import aifc
 import os
 
 
 def generate_audio(output_dpath, info):
+    from sm64_random_assets.vendor import aifc
     if info.get('params', None) is None:
         return {'status': 'value-error: audio has no params'}
     params_dict = info['params'].copy()

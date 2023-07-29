@@ -29,7 +29,7 @@ To run the asset generation script, the following requirements are needed.
 
 .. code:: bash
 
-   pip install kwimage opencv-python-headless ubelt numpy
+   pip install kwimage opencv-python-headless ubelt numpy ruamel.yaml PyYAML scriptconfig rich parse
 
 
 PC Port Example Usage

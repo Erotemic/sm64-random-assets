@@ -195,8 +195,8 @@ def parse_requirements(fname="requirements.txt", versions=False):
 #     return requirements
 
 
-NAME = "sm64-random-assets"
-INIT_PATH = "sm64-random-assets/__init__.py"
+NAME = "sm64_random_assets"
+INIT_PATH = "sm64_random_assets/__init__.py"
 VERSION = parse_version(INIT_PATH)
 
 if __name__ == "__main__":
@@ -232,23 +232,23 @@ if __name__ == "__main__":
     setupkw["version"] = VERSION
     setupkw["author"] = "Jon Crall"
     setupkw["author_email"] = "erotemic@gmail.com"
-    setupkw["url"] = "git@github.com:Erotemic/sm64-random-assets.git"
+    setupkw["url"] = "https://github.com/Erotemic/sm64-random-assets"
     setupkw["description"] = "The sm64-random-assets module"
     setupkw["long_description"] = parse_description()
     setupkw["long_description_content_type"] = "text/x-rst"
     setupkw["license"] = "Apache 2"
     setupkw["packages"] = find_packages(".")
-    setupkw["python_requires"] = ">=3.7"
+    setupkw["python_requires"] = ">=3.8"
     setupkw["classifiers"] = [
         "Development Status :: 1 - Planning",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Utilities",
         "License :: OSI Approved :: Apache Software License",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
     ]
+    setupkw["package_data"] = {"sm64_random_assets": ["asset_metadata.json"]}
     setup(**setupkw)

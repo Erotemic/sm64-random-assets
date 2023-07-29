@@ -58,6 +58,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install --prefer-binary -r requirements/tests.txt
         python -m pip install --prefer-binary -r requirements/runtime.txt
+        python -m pip install --prefer-binary -r requirements/headless.txt
     - name: Build sdist
       shell: bash
       run: |-
@@ -86,7 +87,7 @@ jobs:
       run: |-
         pwd
         ls -al
-        true
+        python -m pip install --prefer-binary -r requirements/headless.txt
         # Run in a sandboxed directory
         WORKSPACE_DNAME="testsrcdir_full_${CI_PYTHON_VERSION}_${GITHUB_RUN_ID}_${RUNNER_OS}"
         mkdir -p $WORKSPACE_DNAME
@@ -152,120 +153,84 @@ jobs:
         # Xcookie generates an explicit list of environments that will be used
         # for testing instead of using the more concise matrix notation.
         include:
-        - python-version: '3.7'
-          install-extras: tests-strict,runtime-strict
+        - python-version: '3.8'
+          install-extras: tests-strict,runtime-strict,headless-strict
           os: ubuntu-latest
           arch: auto
-        - python-version: '3.7'
-          install-extras: tests-strict,runtime-strict
+        - python-version: '3.8'
+          install-extras: tests-strict,runtime-strict,headless-strict
           os: macOS-latest
           arch: auto
-        - python-version: '3.7'
-          install-extras: tests-strict,runtime-strict
+        - python-version: '3.8'
+          install-extras: tests-strict,runtime-strict,headless-strict
           os: windows-latest
           arch: auto
         - python-version: '3.11'
-          install-extras: tests-strict,runtime-strict,optional-strict
+          install-extras: tests-strict,runtime-strict,optional-strict,headless-strict
           os: ubuntu-latest
           arch: auto
         - python-version: '3.11'
-          install-extras: tests-strict,runtime-strict,optional-strict
+          install-extras: tests-strict,runtime-strict,optional-strict,headless-strict
           os: macOS-latest
           arch: auto
         - python-version: '3.11'
-          install-extras: tests-strict,runtime-strict,optional-strict
+          install-extras: tests-strict,runtime-strict,optional-strict,headless-strict
           os: windows-latest
           arch: auto
         - python-version: '3.11'
-          install-extras: tests
+          install-extras: tests,headless
           os: windows-latest
           arch: auto
         - python-version: '3.11'
-          install-extras: tests
-          os: windows-latest
-          arch: auto
-        - python-version: '3.7'
-          install-extras: tests,optional
+          install-extras: tests,headless
           os: windows-latest
           arch: auto
         - python-version: '3.8'
-          install-extras: tests,optional
+          install-extras: tests,optional,headless
           os: windows-latest
           arch: auto
         - python-version: '3.9'
-          install-extras: tests,optional
+          install-extras: tests,optional,headless
           os: windows-latest
           arch: auto
         - python-version: '3.10'
-          install-extras: tests,optional
+          install-extras: tests,optional,headless
           os: windows-latest
           arch: auto
         - python-version: '3.11'
-          install-extras: tests,optional
-          os: windows-latest
-          arch: auto
-        - python-version: pypy-3.7
-          install-extras: tests,optional
-          os: windows-latest
-          arch: auto
-        - python-version: '3.7'
-          install-extras: tests,optional
+          install-extras: tests,optional,headless
           os: windows-latest
           arch: auto
         - python-version: '3.8'
-          install-extras: tests,optional
+          install-extras: tests,optional,headless
           os: windows-latest
           arch: auto
         - python-version: '3.9'
-          install-extras: tests,optional
+          install-extras: tests,optional,headless
           os: windows-latest
           arch: auto
         - python-version: '3.10'
-          install-extras: tests,optional
+          install-extras: tests,optional,headless
           os: windows-latest
           arch: auto
         - python-version: '3.11'
-          install-extras: tests,optional
-          os: windows-latest
-          arch: auto
-        - python-version: pypy-3.7
-          install-extras: tests,optional
-          os: windows-latest
-          arch: auto
-        - python-version: '3.7'
-          install-extras: tests,optional
+          install-extras: tests,optional,headless
           os: windows-latest
           arch: auto
         - python-version: '3.8'
-          install-extras: tests,optional
+          install-extras: tests,optional,headless
           os: windows-latest
           arch: auto
         - python-version: '3.9'
-          install-extras: tests,optional
+          install-extras: tests,optional,headless
           os: windows-latest
           arch: auto
         - python-version: '3.10'
-          install-extras: tests,optional
+          install-extras: tests,optional,headless
           os: windows-latest
           arch: auto
         - python-version: '3.11'
-          install-extras: tests,optional
-          os: windows-latest
-          arch: auto
-        - python-version: pypy-3.7
-          install-extras: tests,optional
-          os: windows-latest
-          arch: auto
-        - python-version: pypy-3.7
-          install-extras: tests,optional
-          os: windows-latest
-          arch: auto
-        - python-version: pypy-3.7
-          install-extras: tests,optional
-          os: windows-latest
-          arch: auto
-        - python-version: pypy-3.7
-          install-extras: tests,optional
+          install-extras: tests,optional,headless
           os: windows-latest
           arch: auto
     steps:
@@ -373,7 +338,7 @@ jobs:
     - name: Sign and Publish
       env:
         TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
-        TWINE_USERNAME: __user__
+        TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.TEST_TWINE_PASSWORD }}
         CI_SECRET: ${{ secrets.CI_SECRET }}
       run: |-
@@ -417,7 +382,7 @@ jobs:
     - name: Sign and Publish
       env:
         TWINE_REPOSITORY_URL: https://upload.pypi.org/legacy/
-        TWINE_USERNAME: __user__
+        TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         CI_SECRET: ${{ secrets.CI_SECRET }}
       run: |-
