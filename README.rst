@@ -179,3 +179,5 @@ Resources
 * SM64 plus: https://github.com/MorsGames/sm64plus
 
 * SM64 ex: https://github.com/sm64pc/sm64ex
+
+* SM64 PC Subreddit: https://www.reddit.com/r/SM64PC/
