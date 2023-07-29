@@ -6,3 +6,6 @@
 	path = tpl/sm64-port
 	url = https://github.com/sm64-port/sm64-port
 	ignore = untracked
+[submodule "tpl/sm64ex"]
+	path = tpl/sm64ex
+	url = https://github.com/sm64pc/sm64ex.git

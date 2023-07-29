@@ -173,3 +173,9 @@ Resources
 * High resolution redrawn textures: https://github.com/TechieAndroid/sm64redrawn
 
 * SM64 Randomizer: https://github.com/andrelikesdogs/sm64-randomizer
+
+* List of SM64 Hacks and Ports: https://en.wikipedia.org/wiki/List_of_Super_Mario_64_ROM_hacks,_mods_and_ports
+
+* SM64 plus: https://github.com/MorsGames/sm64plus
+
+* SM64 ex: https://github.com/sm64pc/sm64ex
