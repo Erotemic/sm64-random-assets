@@ -181,3 +181,5 @@ Resources
 * SM64 ex: https://github.com/sm64pc/sm64ex
 
 * SM64 PC Subreddit: https://www.reddit.com/r/SM64PC/
+
+* libsm64 - https://github.com/libsm64/libsm64
