@@ -47,18 +47,18 @@ The following instructions were written on an Ubuntu 22.04 PC
     CODE_DPATH=$HOME/code
 
     # Ensure your code directory exists
-    mkdir -p $CODE_DPATH
+    mkdir -p "$CODE_DPATH"
 
     # Clone this repo
     git clone https://github.com/Erotemic/sm64-random-assets.git $CODE_DPATH/sm64-random-assets
 
     # Move into the root of this repo and initialize the sm64-port submodule,
     # which will clone the official PC port repo.
-    cd $CODE_DPATH/sm64-random-assets
+    cd "$CODE_DPATH"/sm64-random-assets
     git submodule update --init tpl/sm64-port
 
     # Run the asset generator
-    python $CODE_DPATH/sm64-random-assets/generate_assets.py --dst $CODE_DPATH/sm64-random-assets/tpl/sm64-port
+    python "$CODE_DPATH"/sm64-random-assets/generate_assets.py --dst $CODE_DPATH/sm64-random-assets/tpl/sm64-port
 
     # Move into the PC port directory
     cd $CODE_DPATH/sm64-random-assets/tpl/sm64-port
