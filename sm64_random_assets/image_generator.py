@@ -360,10 +360,80 @@ name_to_text_lut = build_char_name_map()
 class PowerMeter:
     """
     Helper to draw something useful for the power/health meter
+
+    Example:
+        >>> from sm64_random_assets.image_generator import *  # NOQA
+        >>> self = PowerMeter()
+        >>> canvas1 = self.draw(power=8)
+        >>> canvas2 = self.draw(power=5)
+        >>> canvas3 = self.draw(power=2)
+        >>> # xdoctest: +REQUIRES(--show)
+        >>> import kwplot
+        >>> kwplot.autompl()
+        >>> kwplot.imshow(canvas1, pnum=(1, 3, 1))
+        >>> kwplot.imshow(canvas2, pnum=(1, 3, 2))
+        >>> kwplot.imshow(canvas3, pnum=(1, 3, 3))
     """
 
     def match(self, fname):
         return 'actors/power_meter/power_meter_' in fname
+
+    def draw(self, power):
+        power_to_color = {
+            8: kwimage.Color.coerce('water blue'),
+            7: kwimage.Color.coerce('water blue'),
+            6: kwimage.Color.coerce('vibrant green'),
+            5: kwimage.Color.coerce('vibrant green'),
+            4: kwimage.Color.coerce('yellow'),
+            3: kwimage.Color.coerce('yellow'),
+            2: kwimage.Color.coerce('red'),
+            1: kwimage.Color.coerce('red'),
+            0: kwimage.Color.coerce('brown'),
+        }
+        if power in power_to_color:
+            color = power_to_color[power]
+        else:
+            color1 = power_to_color[power + 1]
+            color2 = power_to_color[power - 1]
+            color = color1.interpolate(color2, alpha=0.5)
+
+        tau = 2 * np.pi
+
+        def circle_segment(total_segments, filled_segments, start_theta=0):
+            resolution = 64
+            r = 32
+            xy = (32, 32)
+            theta = np.linspace(start_theta, start_theta + tau, resolution)
+            start = 0
+            stop = int(resolution * (filled_segments / total_segments))
+            sub_theta = theta[start:stop + 1]
+
+            y_offset = np.sin(sub_theta) * r
+            x_offset = np.cos(sub_theta) * r
+            center = np.array(xy)
+            xcoords = center[0] + x_offset
+            ycoords = center[1] + y_offset
+            if stop == 32:
+                ...
+            else:
+                xcoords = np.concatenate([xcoords, [center[0]]], axis=0)
+                ycoords = np.concatenate([ycoords, [center[1]]], axis=0)
+            exterior = np.stack([xcoords.ravel(), ycoords.ravel()], axis=1)
+            poly = kwimage.Polygon(exterior=exterior)
+            poly.draw(setlim=1)
+            return poly
+
+        total_segments = 8
+        filled_segments = power
+        start_theta = -tau / 4
+        poly = circle_segment(total_segments, filled_segments, start_theta)
+
+        canvas = np.zeros((64, 64, 4), dtype=np.float32)
+        # poly = kwimage.Polygon.circle(xy=(32, 32), r=32)
+        canvas = poly.draw_on(canvas, color=color)
+        canvas = canvas.clip(0, 1)
+        return canvas
+        # kwplot.imshow(canvas)
 
     def generate(self, fname):
         pat = parse.Parser('actors/power_meter/power_meter_{type}.rgba16.png')
@@ -379,30 +449,18 @@ class PowerMeter:
             'two_segments': 2,
             'one_segment': 1,
         }
-        power = mapping.get(result.named['type'], None)
-        if power is None:
-            return None
-        else:
-            power_to_color = {
-                8: kwimage.Color.coerce('lightblue'),
-                6: kwimage.Color.coerce('lightgreen'),
-                4: kwimage.Color.coerce('yellow'),
-                2: kwimage.Color.coerce('red'),
-                1: kwimage.Color.coerce('brown'),
-            }
-            if power in power_to_color:
-                color = power_to_color[power]
-            else:
-                color1 = power_to_color[power + 1]
-                color2 = power_to_color[power - 1]
-                color = color1.interpolate(color2, alpha=0.5)
 
+        if result.named['type'] == 'left_side':
             canvas = np.zeros((64, 64, 4), dtype=np.float32)
-            circle = kwimage.Polygon.circle((32, 32), 32)
-            canvas = circle.draw_on(canvas, color=color)
-            canvas = canvas.clip(0, 1)
-            return canvas
-            # kwplot.imshow(canvas)
+        elif result.named['type'] == 'right_side':
+            canvas = np.zeros((64, 64, 4), dtype=np.float32)
+        else:
+            power = mapping.get(result.named['type'], None)
+            if power is None:
+                canvas = None
+            else:
+                canvas = self.draw(power)
+        return canvas
 
 
 def handle_special_texture(fname, shape):
@@ -494,12 +552,18 @@ def handle_special_texture(fname, shape):
     elif 'bubble' in fname:
         generated = kwimage.draw_text_on_image(
             None, 'bubble', color='lightblue')
-    elif 'coin' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, '$', color='yellow')
-        # TODO: fix when background color has alpha
+    elif 'coin_side' in fname:
         # generated = kwimage.draw_text_on_image(
-        #     {'color': (0.0, 0.0, 0.0, 0.0)}, '$', color='yellow')
+        #     None, '$', color='yellow')
+        # TODO: fix when background color has alpha
+        generated = kwimage.draw_text_on_image(
+            {'color': (0.0, 0.0, 0.0, 0.0)}, '|', color='yellow')
+    elif 'coin' in fname:
+        # generated = kwimage.draw_text_on_image(
+        #     None, '$', color='yellow')
+        # TODO: fix when background color has alpha
+        generated = kwimage.draw_text_on_image(
+            {'color': (0.0, 0.0, 0.0, 0.0)}, '$', color='yellow')
     elif 'thwomp_face' in fname:
         generated = kwimage.draw_text_on_image(
             {'color': 'lightblue'}, ':(', color='black')
