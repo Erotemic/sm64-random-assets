@@ -7,6 +7,8 @@ This directory contains two git submodules:
 
 * ``sm64-port``, which is the sm64 decomplation with extra code to run it on a PC.
 
+* ``sm64ex``, an extension of sm64-port with extra features.
+
 
 This repo does not require you to have these repos checked out as submodules;
 the scripts can point at independent clones of either, but having them

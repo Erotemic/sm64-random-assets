@@ -15,7 +15,12 @@ To build a PC port with original assets
 
 .. code:: bash
 
-    export EXTERNAL_ROM_FPATH=sm64.us.z64
+    # Replace this with some method to ensure a reference baserom exists if you
+    # manually place the baserom in the cwd with this path then you can remove
+    # this line.
+    ./dev/grab_reference_baserom.sh ./baserom.us.z64
+
+    export EXTERNAL_ROM_FPATH=baserom.us.z64
     export REFERENCE_CONFIG='
         png: reference
         aiff: reference
@@ -179,14 +184,8 @@ if [[ "$BUILD_REFERENCE" == "1" ]]; then
             # Externally supplied path to personal copy of the ROM
             echo "Copying personal copy of the ROM to the reference path"
             cp "$EXTERNAL_ROM_FPATH" "$REFERENCE_BASEROM_FPATH"
-        elif type -P secret_loader.sh; then
-            echo "Checking local IPFS for baserom"
-            # Developer testing with known secret path to a personal copy of the ROM
-            # shellcheck disable=SC1090
-            source "$(secret_loader.sh)"
-            SM64_CID=$(load_secret_var sm64_us_cid)
-            echo "SM64_CID = $SM64_CID"
-            ipfs get "$SM64_CID" -o "$REFERENCE_BASEROM_FPATH"
+        else
+            echo "ERROR: Specify EXTERNAL_ROM_FPATH"
         fi
     else
         echo "Reference repo already had a baserom"

@@ -11,6 +11,9 @@ These instructions are written to use system packages, which may not be the
 best idea.  It requires us to disable readonly mode, which may not be safe,
 then we can install system packages.
 
+NOTE: THIS DOES NOT WORK YET. For something that does:
+See ./dockerfiles/steamdeck_sm64_referenced_assets.Dockerfile
+
 .. code:: bash
 
     sudo steamos-readonly disable
