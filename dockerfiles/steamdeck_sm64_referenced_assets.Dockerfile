@@ -96,15 +96,7 @@ echo "
 
     cd ~/code/sm64-random-assets
 
-    if type -P secret_loader.sh; then
-        # shellcheck disable=SC1090
-        source "$(secret_loader.sh)"
-        SM64_CID=$(load_secret_var sm64_us_cid)
-        echo "SM64_CID = $SM64_CID"
-        ipfs get "$SM64_CID" -o sm64.us.z64
-    else
-        echo "Need to manually get the baserom"
-    fi
+    ./dev/grab_reference_baserom.sh sm64.us.z64
 
     # Build the sm64-random-assets image
     DOCKER_BUILDKIT=1 docker build --progress=plain \
