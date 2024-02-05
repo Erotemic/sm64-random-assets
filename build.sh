@@ -1,6 +1,30 @@
 #!/bin/bash
 __doc__="
 Generate randomized assets and build the ROM.
+
+
+To build an end-to-end randomized executable:
+
+.. code:: bash
+
+    ./build.sh
+
+
+To build a PC port with original assets
+(requires personal copy of the original ROM):
+
+.. code:: bash
+
+    export EXTERNAL_ROM_FPATH=sm64.us.z64
+    export REFERENCE_CONFIG='
+        png: reference
+        aiff: reference
+        m64: reference
+        bin: reference
+    '
+    export BUILD_REFERENCE=1
+    ./build.sh
+
 "
 
 echo '
@@ -24,6 +48,8 @@ BUILD=${BUILD:=1}
 
 BUILD_REFERENCE=${BUILD_REFERENCE:=0}
 
+EXTERNAL_ROM_FPATH=${EXTERNAL_ROM_FPATH:=""}
+
 # TARGET can be rom or pc
 #TARGET=${TARGET:="rom"}
 TARGET=${TARGET:="pc"}
@@ -36,7 +62,10 @@ EMULATOR=${EMULATOR:=m64py}
 
 EVERDRIVE_DPATH=${EVERDRIVE_DPATH:=/media/$USER/9DC3-BFF3}
 
-REFERENCE_CONFIG="
+
+# This config is passed to sm64_random_assets/main.py
+# and controls how assets will be generated
+DEFAULT_REFERENCE_CONFIG="
     png: generate
 
     aiff: generate
@@ -51,6 +80,7 @@ REFERENCE_CONFIG="
     #  - '*bowser_flame*png'
     #  #- '*bowser*png'
 "
+REFERENCE_CONFIG=${REFERENCE_CONFIG:=$DEFAULT_REFERENCE_CONFIG}
 
 python3 -c "if 1:
     import ubelt as ub
@@ -72,6 +102,7 @@ python3 -c "if 1:
     TEST_LOCALLY=$TEST_LOCALLY
 
     BUILD_REFERENCE=$BUILD_REFERENCE
+    EXTERNAL_ROM_FPATH=$EXTERNAL_ROM_FPATH
     COMPARE=$COMPARE
     REFERENCE_CONFIG=\"$REFERENCE_CONFIG
     \"
@@ -89,6 +120,22 @@ python3 -c "if 1:
 
 # ROM-only dependencies
 #sudo apt install -y binutils-mips-linux-gnu build-essential git libcapstone-dev pkgconf python3
+
+
+if [[ "$EXTERNAL_ROM_FPATH" != "" ]]; then
+    echo "User specified an external ROM with original assets"
+    echo "Checking external ROM hash"
+    echo "$EXTERNAL_ROM_FPATH"
+    echo "17ce077343c6133f8c9f2d6d6d9a4ab62c8cd2aa57c40aea1f490b4c8bb21d91 $EXTERNAL_ROM_FPATH" | sha256sum --check --status
+    _RESULT=$?
+    if [[ "$_RESULT" == "0" ]]; then
+        echo "Externally specified ROM has the expected hash"
+    else
+        echo "WARNING: Externally specified ROM has an UNEXPECTED hash!"
+        sha256sum "$EXTERNAL_ROM_FPATH"
+    fi
+fi
+
 
 # Initialize the sm64 submodule, which clones the official ROM-only sm64 repo.
 
@@ -116,25 +163,39 @@ if [[ "$BUILD_REFERENCE" == "1" ]]; then
     echo "Handle building the reference"
 
     if ! test -d "$REFERENCE_DPATH" ; then
+        echo "Need to clone the reference repo"
         git clone "$SM64_REPO_DPATH"/.git "$REFERENCE_DPATH"
+    else
+        echo "Reference repo is already cloned"
     fi
 
     if ! test -f "$REFERENCE_BASEROM_FPATH" ; then
+        echo "Reference repo does not have the baserom, need to copy it"
         # Dont do this unless we have a proper copy, which we cannot provide here.
         # The correct us baserom should have a sha256sum of
         # 17ce077343c6133f8c9f2d6d6d9a4ab62c8cd2aa57c40aea1f490b4c8bb21d91
-        if type -P secret_loader.sh; then
+
+        if [[ "$EXTERNAL_ROM_FPATH" != "" ]]; then
+            # Externally supplied path to personal copy of the ROM
+            echo "Copying personal copy of the ROM to the reference path"
+            cp "$EXTERNAL_ROM_FPATH" "$REFERENCE_BASEROM_FPATH"
+        elif type -P secret_loader.sh; then
+            echo "Checking local IPFS for baserom"
+            # Developer testing with known secret path to a personal copy of the ROM
             # shellcheck disable=SC1090
             source "$(secret_loader.sh)"
             SM64_CID=$(load_secret_var sm64_us_cid)
             echo "SM64_CID = $SM64_CID"
             ipfs get "$SM64_CID" -o "$REFERENCE_BASEROM_FPATH"
         fi
+    else
+        echo "Reference repo already had a baserom"
     fi
 
     if ! test -f "$REFERENCE_BINARY_FPATH" ; then
 
         if test -f "$REFERENCE_BASEROM_FPATH" ; then
+            echo "Building the reference binary"
             (cd "$REFERENCE_DPATH" && make "-j$NUM_CPUS")
         else
             echo "Reference ROM does not exist, cannot make reference build"
