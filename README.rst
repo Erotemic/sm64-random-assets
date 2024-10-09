@@ -21,6 +21,9 @@ Future work will support configurable and procedural generation of assets.
 
 .. image:: https://i.imgur.com/jlXDyMJ.png
 
+Slides:
+
+https://docs.google.com/presentation/d/1Ab8wlJfT7b7TlbOohgvsX43TqSAYQQ3azuJTkNdaB0c/edit?pli=1#slide=id.p
 
 Python Requirements
 -------------------
