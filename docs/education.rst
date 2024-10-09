@@ -9,5 +9,4 @@ Slides
 ------
 
 A list of slide decks will
-
-https://docs.google.com/presentation/d/1brvtmAbgENPvVnWT7loNQ9SpUord4oov9nwA4X5B5Go/edit#slide=id.p
+ https://docs.google.com/presentation/d/1Ab8wlJfT7b7TlbOohgvsX43TqSAYQQ3azuJTkNdaB0c/edit?pli=1#slide=id.p

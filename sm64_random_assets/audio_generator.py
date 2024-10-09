@@ -23,8 +23,20 @@ def generate_audio(output_dpath, info):
         new_data = b'\x00' * info['size']
         out = {'status': 'zeroed'}
     else:
+        import numpy as np
         # Random new sound (this works surprisingly well)
-        new_data = os.urandom(info['size'])
+        n_consecutive = 16
+        n_consecutive = 1
+        if n_consecutive > 1:
+            # Make a bit less random so it can be compressed
+            size = params.nframes * params.nchannels
+            samples = np.random.randint(-32768, 32767, size, dtype=np.int16)
+            for i in range(0, len(samples), n_consecutive):
+                value = samples[i]
+                samples[i:i + n_consecutive] = value
+            new_data = samples.tobytes()
+        else:
+            new_data = os.urandom(info['size'])
         out = {'status': 'randomized'}
 
     out_fpath = output_dpath / info['fname']

@@ -119,7 +119,7 @@ class GenerateAssetsConfig(scfg.DataConfig):
             reference_config = {}
         default_reference_config = ub.udict({
             'png': 'generate',
-            'aiff': 'zero',
+            'aiff': 'generate',
             'm64': 'generate',
             'bin': 'generate',
             'never_generate': [],
