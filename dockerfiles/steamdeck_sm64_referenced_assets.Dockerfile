@@ -109,12 +109,12 @@ echo "
     # Copy the build out of the container
     docker cp steamdeck_sm64_refassets_container:/root/code/sm64-random-assets/tpl/sm64-port/build/us_pc ./sm64refassets_us_pc_steamdeck
 
-    # Stop and remove container
-    docker stop steamdeck_sm64_refassets_container
-
     # Copy the build to the steamdeck (if built on a different PC)
     # Note: dont copy directly into the home folder, otherwise
     # rsync might mess up home directory permissions and lock you out of ssh
     rsync -avrPR ./sm64refassets_us_pc_steamdeck steamdeck:data/games
+
+    # Stop and remove container
+    docker stop steamdeck_sm64_refassets_container
 "
 EOF

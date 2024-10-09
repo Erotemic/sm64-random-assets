@@ -5,6 +5,10 @@ import kwimage
 
 def generate_image(output_dpath, info):
     """
+    Driver function used to generate an image and determine which specialized
+    generator function needs to be called. If you want to write your own custom
+    logic to generate an asset, then you need to register it here.
+
     Args:
         output_dpath (Path): where to write the generated image file
         info (dict): a dictionary from asset_metadata.json

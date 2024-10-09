@@ -2,6 +2,14 @@ import os
 
 
 def generate_audio(output_dpath, info):
+    """
+    Generates a valid audio file based on info.
+
+    Args:
+        output_path (str | PathLike):
+        info (dict):
+
+    """
     from sm64_random_assets.vendor import aifc
     if info.get('params', None) is None:
         return {'status': 'value-error: audio has no params'}
@@ -10,11 +18,14 @@ def generate_audio(output_dpath, info):
     params_dict['compname'] = params_dict['compname'].encode()
     params = aifc._aifc_params(**params_dict)
 
-    # Random new sound (this works surprisingly well)
-    new_data = os.urandom(info['size'])
-
-    # Zero out all sounds
-    # new_data = b'\x00' * len(data)
+    if info['use_ref'] == 'zero':
+        # Zero out all sounds
+        new_data = b'\x00' * info['size']
+        out = {'status': 'zeroed'}
+    else:
+        # Random new sound (this works surprisingly well)
+        new_data = os.urandom(info['size'])
+        out = {'status': 'randomized'}
 
     out_fpath = output_dpath / info['fname']
     out_fpath.parent.ensuredir()
@@ -24,6 +35,4 @@ def generate_audio(output_dpath, info):
         new_file.setparams(params)
         new_file.writeframes(new_data)
 
-    # out = {'status': 'zeroed'}
-    out = {'status': 'randomized'}
     return out

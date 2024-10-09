@@ -79,9 +79,11 @@ class GenerateAssetsConfig(scfg.DataConfig):
     """
     Generates non-copyrighted assets for SM64
     """
-    dst = scfg.Value(None, help=ub.paragraph(
+    dst = scfg.Value('tpl/sm64-port', help=ub.paragraph(
             '''
             Path to the sm64-based repository to generate assets for.
+            This should be a path to a repo that expects assets in the tpl
+            directly (e.g. ./tpl/sm64)
             '''), position=1)
     reference = scfg.Value(None, help=ub.paragraph(
             '''
@@ -117,7 +119,7 @@ class GenerateAssetsConfig(scfg.DataConfig):
             reference_config = {}
         default_reference_config = ub.udict({
             'png': 'generate',
-            'aiff': 'generate',
+            'aiff': 'zero',
             'm64': 'generate',
             'bin': 'generate',
             'never_generate': [],
@@ -133,6 +135,8 @@ class GenerateAssetsConfig(scfg.DataConfig):
                 reference_config[k] = 'generate'
             elif str(v) in {"hybrid"}:
                 reference_config[k] = 'hybrid'
+            elif str(v) in {"zero"}:
+                reference_config[k] = 'zero'
             else:
                 raise Exception(f'Unknown value {v=} for {k=}')
         self.reference_config = reference_config
@@ -268,12 +272,10 @@ def main(cmdline=1, **kwargs):
         'bin': binary_generator.generate_binary,
     }
 
-    async def delete(fpath):
-        ub.Path(fpath).delete()
-
     for key, generate_asset in key_to_asset_generator.items():
         for info in ub.ProgIter(ext_to_info['.' + key], desc=key):
-            use_ref, is_hybrid = check_ref_config('png', info)
+            use_ref, is_hybrid = check_ref_config(key, info)
+            info['use_ref'] = use_ref
             out = ub.udict({'status': None}) | info
             if use_ref != "reference":
                 out |= generate_asset(output_dpath, info)
@@ -286,8 +288,6 @@ def main(cmdline=1, **kwargs):
 
             out_fpath = output_dpath / info['fname']
             out['out_fpath'] = out_fpath
-
-            ub.Executor()
 
             if 1:
                 # Delete the associate build file
