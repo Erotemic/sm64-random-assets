@@ -1,5 +1,5 @@
 #!/bin/bash
-ROM_FPATH=${ROM_FPATH:=${1:="baserom.us.z64"}}
+ROM_FPATH=${ROM_FPATH:=baserom.us.z64}
 if type -P secret_loader.sh; then
     # Developer testing with known secret path to a personal copy of the ROM
     # shellcheck disable=SC1090

@@ -5,6 +5,7 @@ import json
 import ubelt as ub
 import numpy as np
 import kwimage
+import kwarray
 
 
 def is_headless():
@@ -96,6 +97,7 @@ def compare(ref_dpath, output_dpath, asset_metadata_fpath, include=None, exclude
     # relevant = [x for x in ext_to_info['.png'] if x['fname'].endswith('.ia8.png')]
 
     compare_dpath = (dst / 'asset_compare').ensuredir()
+    image_compare_dpath = (compare_dpath / 'images').ensuredir()
 
     if not is_headless():
         view_directory(compare_dpath)
@@ -115,7 +117,7 @@ def compare(ref_dpath, output_dpath, asset_metadata_fpath, include=None, exclude
 
     for key, subinfo in ub.ProgIter(subinfos.items(), desc='compare'):
 
-        compare_fpath = compare_dpath / key.replace('/', '_') + '.png'
+        compare_fpath = image_compare_dpath / key.replace('/', '_') + '.png'
 
         group = subinfo
 
@@ -196,7 +198,7 @@ def compare(ref_dpath, output_dpath, asset_metadata_fpath, include=None, exclude
 
         if len(cells):
             canvas = kwimage.stack_images_grid(cells, pad=16, bg_value='green', chunksize=8)
-            canvas = kwimage.normalize(canvas)
+            canvas = kwarray.normalize(canvas)
 
             canvas = kwimage.ensure_uint255(canvas)
             canvas = kwimage.draw_header_text(canvas, key)
@@ -206,6 +208,123 @@ def compare(ref_dpath, output_dpath, asset_metadata_fpath, include=None, exclude
         # kwplot.autompl()
         # kwplot.imshow(canvas)
 
+    # Sound comparison
+    audio_compare_dpath = (compare_dpath / 'audio').ensuredir()
+    for info in ext_to_info['.aiff']:
+        key = info['fname']
+        fpath1 = ref / info['fname']
+        fpath2 = dst / info['fname']
+
+        disksize1 = byte_str(fpath1.stat().st_size)
+        disksize2 = byte_str(fpath2.stat().st_size)
+
+        spectrogram1 = draw_audio(fpath1, title=f'reference: {disksize1}')
+        spectrogram2 = draw_audio(fpath2, title=f'generated: {disksize2}')
+        canvas = kwimage.stack_images([spectrogram1, spectrogram2], axis=0, pad=4, bg_value='purple')
+        compare_fpath = audio_compare_dpath / key.replace('/', '_') + '.png'
+        kwimage.imwrite(compare_fpath, canvas)
+
     # fname = 'levels/castle_grounds/5.ia8.png'
     # shape = (32, 64, 4)
     # info = name_to_text_lut[fname]
+
+
+def draw_audio(aiff_fpath, title=''):
+    """
+    Partially generated via ChatGPT
+    """
+    import kwplot
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from sm64_random_assets.vendor import aifc
+
+    # Load the AIFF file
+    with open(aiff_fpath, 'rb') as file:
+        with aifc.open(file, 'rb') as audio_file:
+            # Get audio parameters
+            n_channels = audio_file.getnchannels()
+            # sample_width = audio_file.getsampwidth()  # Should be 2
+            frame_rate = audio_file.getframerate()
+            n_frames = audio_file.getnframes()
+
+            # Read the audio data
+            audio_data = audio_file.readframes(n_frames)
+
+    # Convert the audio data to a numpy array
+    # If sample width is 2 bytes (16 bits), then use np.int16. For 4 bytes (32 bits), use np.int32
+    audio_signal = np.frombuffer(audio_data, dtype=np.int16)
+
+    # If stereo, take only one channel for simplicity
+    if n_channels > 1:
+        audio_signal = audio_signal[::n_channels]
+
+    # Generate time axis in seconds
+    time_axis = np.linspace(0, n_frames / frame_rate, num=n_frames)
+
+    # Plot the waveform
+    fig = plt.figure(figsize=(10, 4))
+    # plt.plot(time_axis, audio_signal, color='blue')
+    plt.specgram(audio_signal, Fs=frame_rate, NFFT=1024, noverlap=512, cmap='viridis')
+    plt.xlabel('Time (seconds)')
+    plt.ylabel('Frequency (Hz)')
+    plt.title(title)
+    plt.grid()
+    plt.colorbar(label='Intensity (dB)')
+    plt.tight_layout()
+    specto_canvas = kwplot.render_figure_to_image(fig)
+
+    fig = plt.figure(figsize=(10, 4))
+    plt.plot(time_axis, audio_signal, color='blue')
+    plt.xlabel('Time (seconds)')
+    plt.ylabel('Amplitude')
+    plt.title('Waveform of AIFF Audio')
+    plt.grid()
+    plt.tight_layout()
+    waveform_canvas = kwplot.render_figure_to_image(fig)
+    canvas = kwimage.stack_images([specto_canvas, waveform_canvas], axis=1)
+
+    return canvas
+
+
+def byte_str(num, unit='auto', precision=2):
+    """
+    Automatically chooses relevant unit (KB, MB, or GB) for displaying some
+    number of bytes.
+
+    Args:
+        num (int): number of bytes
+        unit (str): which unit to use, can be auto, B, KB, MB, GB, or TB
+
+    References:
+        .. [WikiOrdersOfMag] https://en.wikipedia.org/wiki/Orders_of_magnitude_(data)
+
+    Returns:
+        str: string representing the number of bytes with appropriate units
+    """
+    abs_num = abs(num)
+    if unit == 'auto':
+        if abs_num < 2.0 ** 10:
+            unit = 'KB'
+        elif abs_num < 2.0 ** 20:
+            unit = 'KB'
+        elif abs_num < 2.0 ** 30:
+            unit = 'MB'
+        elif abs_num < 2.0 ** 40:
+            unit = 'GB'
+        else:
+            unit = 'TB'
+    if unit.lower().startswith('b'):
+        num_unit = num
+    elif unit.lower().startswith('k'):
+        num_unit =  num / (2.0 ** 10)
+    elif unit.lower().startswith('m'):
+        num_unit =  num / (2.0 ** 20)
+    elif unit.lower().startswith('g'):
+        num_unit = num / (2.0 ** 30)
+    elif unit.lower().startswith('t'):
+        num_unit = num / (2.0 ** 40)
+    else:
+        raise ValueError('unknown num={!r} unit={!r}'.format(num, unit))
+    fmtstr = ('{:.' + str(precision) + 'f} {}')
+    res = fmtstr.format(num_unit, unit)
+    return res

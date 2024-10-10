@@ -98,25 +98,24 @@ class GenerateAssetsConfig(scfg.DataConfig):
     hybrid_mode = scfg.Value(None, isflag=True, help='hybrid_mode')
     compare = scfg.Value(None, isflag=True, help='run the compare debug tool. Can also be a YAML configuration')
 
-    reference_config = scfg.Value(None, help=ub.paragraph(
+    asset_config = scfg.Value(None, help=ub.paragraph(
         '''
-        A YAML config that allow for fine grained control over which which
-        assets should use references and which should be generated. The
-        following keys can be set to 1, "ref", or "reference" to specify they
-        should use the reference, or "0, "gen", or "generate" to specify they
-        should be generated. Can also be "hybrid" to force hybrid mode for
-        a particular key.
+        A YAML config that allow for fine grained control over how  assets
+        should be generated. The following keys can be set to "ref", or
+        "reference" to specify they should use the reference, or "gen", or
+        "generate" to specify they should be generated. Can also be "hybrid" to
+        force hybrid mode for a particular key.
 
         Available keys are: png, aiff, bin, m64. Can also specify a key
         never_generate as a list of glob patterns to always use the reference
         for.
-        '''))
+        '''), alias=['reference_config'])
 
     def __post_init__(self):
         from sm64_random_assets.util.util_yaml import Yaml
-        reference_config = Yaml.coerce(self.reference_config)
-        if reference_config is None:
-            reference_config = {}
+        asset_config = Yaml.coerce(self.asset_config)
+        if asset_config is None:
+            asset_config = {}
         default_reference_config = ub.udict({
             'png': 'generate',
             'aiff': 'generate',
@@ -124,22 +123,22 @@ class GenerateAssetsConfig(scfg.DataConfig):
             'bin': 'generate',
             'never_generate': [],
         })
-        reference_config = default_reference_config | reference_config
+        asset_config = default_reference_config | asset_config
 
-        for k, v in reference_config.items():
+        for k, v in asset_config.items():
             if k == 'never_generate':
                 continue
-            if str(v) in {"0", "ref", "reference"}:
-                reference_config[k] = 'reference'
-            elif str(v) in {"1", "gen", "generate"}:
-                reference_config[k] = 'generate'
+            if str(v) in {"ref", "reference"}:
+                asset_config[k] = 'reference'
+            elif str(v) in {"gen", "generate"}:
+                asset_config[k] = 'generate'
             elif str(v) in {"hybrid"}:
-                reference_config[k] = 'hybrid'
+                asset_config[k] = 'hybrid'
             elif str(v) in {"zero"}:
-                reference_config[k] = 'zero'
+                asset_config[k] = 'zero'
             else:
                 raise Exception(f'Unknown value {v=} for {k=}')
-        self.reference_config = reference_config
+        self.asset_config = asset_config
 
         compare = Yaml.coerce(self.compare)
         if compare is False:
@@ -215,7 +214,7 @@ def main(cmdline=1, **kwargs):
     if ref_dpath is None:
         # If we don't have a refernce make sure that we didn't set any flags
         # that require it.
-        for k, v in args.reference_config.items():
+        for k, v in args.asset_config.items():
             if k == 'never_generate':
                 if v:
                     raise Exception(
@@ -252,10 +251,10 @@ def main(cmdline=1, **kwargs):
     resulting binary
     """
 
-    nevergen_pat = MultiPattern.coerce(args.reference_config['never_generate'])
+    nevergen_pat = MultiPattern.coerce(args.asset_config['never_generate'])
 
     def check_ref_config(key, info):
-        use_ref = args.reference_config[key]
+        use_ref = args.asset_config[key]
         if nevergen_pat.match(info['fname']):
             use_ref = 'reference'
         is_hybrid = (args.hybrid_mode or use_ref == 'hybrid')
