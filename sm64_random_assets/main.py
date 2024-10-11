@@ -79,23 +79,28 @@ class GenerateAssetsConfig(scfg.DataConfig):
     Generates non-copyrighted assets for SM64
     """
     dst = scfg.Value('tpl/sm64-port', help=ub.paragraph(
-            '''
-            Path to the sm64-based repository to generate assets for.
-            This should be a path to a repo that expects assets in the tpl
-            directly (e.g. ./tpl/sm64)
-            '''), position=1)
+        '''
+        Path to the sm64-based repository to generate assets for.
+        This should be a path to a repo that expects assets in the tpl
+        directly (e.g. ./tpl/sm64)
+        '''), position=1)
     reference = scfg.Value(None, help=ub.paragraph(
-            '''
-            A reference to a directory with a different set of assets to
-            compare against for debugging.
-            '''))
+        '''
+        A reference to a directory with a different set of assets to
+        compare against for debugging.
+        '''))
     manifest_fpath = scfg.Value('auto', help=ub.paragraph(
-            '''
-            Path to the asset manifest to use. If "auto", attempts
-            to use the one in this module directory.
-            '''))
+        '''
+        Path to the ``asset_metadata.json`` asset manifest to use. This is
+        the file that specifies the expected size of each asset as well as
+        the format. If "auto", attempts to use the one in this module
+        directory.
+        '''))
     hybrid_mode = scfg.Value(None, isflag=True, help='hybrid_mode. DEPRECATED. Set the appropriate key in the asset_config to hybrid')
-    compare = scfg.Value(None, isflag=True, help='run the compare debug tool. Can also be a YAML configuration')
+    compare = scfg.Value(None, isflag=True, help=ub.paragraph(
+        '''
+        run the compare debug tool. Can also be a YAML configuration'
+        '''))
 
     asset_config = scfg.Value(None, help=ub.paragraph(
         '''
@@ -106,10 +111,11 @@ class GenerateAssetsConfig(scfg.DataConfig):
         never_generate as a list of glob patterns to always use the reference
         for.
 
-        The following values of each key can be set to "ref", or "reference" to
-        specify they should use the reference, or "gen", or "generate" to
-        specify they should be generated. Can also be "hybrid" to force hybrid
-        mode for a particular key.
+        The following values of each key can be set to:
+        * "ref", or "reference" to specify they should use the reference,
+        * "gen", or "generate" to specify they should be generated.
+        * "hybrid" to force hybrid mode for a particular key.
+        * "skip" to skip a particular key (useful for debugging assuming it already was generated)
 
         '''))
 
@@ -138,6 +144,8 @@ class GenerateAssetsConfig(scfg.DataConfig):
                 asset_config[k] = 'hybrid'
             elif str(v) in {"zero"}:
                 asset_config[k] = 'zero'
+            elif str(v) in {"skip"}:
+                asset_config[k] = 'skip'
             else:
                 raise Exception(f'Unknown value {v=} for {k=}')
         self.asset_config = asset_config
@@ -276,6 +284,8 @@ def main(cmdline=1, **kwargs):
     for key, generate_asset in key_to_asset_generator.items():
         for info in ub.ProgIter(ext_to_info['.' + key], desc=key):
             use_ref, is_hybrid = check_ref_config(key, info)
+            if use_ref == 'skip':
+                continue
             info['use_ref'] = use_ref
             out = ub.udict({'status': None}) | info
             if use_ref != "reference":

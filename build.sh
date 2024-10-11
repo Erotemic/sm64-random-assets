@@ -21,11 +21,14 @@ To build a PC port with original assets
     ./dev/grab_reference_baserom.sh ./baserom.us.z64
 
     export EXTERNAL_ROM_FPATH=baserom.us.z64
+    export TARGET=pc
+    export COMPARE=0
+    export NUM_CPUS=1
     export ASSET_CONFIG='
-        png: reference
+        png: generate
         aiff: reference
-        m64: reference
-        bin: reference
+        m64: generate
+        bin: generate
     '
     export BUILD_REFERENCE=1
     ./build.sh
