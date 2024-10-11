@@ -7,9 +7,9 @@ import ubelt as ub
 repo_dpath = ub.Path('~/code/sm64-random-assets').expanduser()
 
 ub.cmd('git submodule update --init tpl/sm64', cwd=repo_dpath, verbose=3)
-ub.cmd('git clone sm64/.git clean_reference_sm64', cwd=repo_dpath / 'tpl', verbose=3)
+ub.cmd('git clone sm64/.git sm64-ref', cwd=repo_dpath / 'tpl', verbose=3)
 
-reference_dpath = (repo_dpath / 'tpl/clean_reference_sm64')
+reference_dpath = (repo_dpath / 'tpl/sm64-ref')
 
 cand = repo_dpath / 'baserom.us.z64'
 if cand.exists():
@@ -30,7 +30,7 @@ Now we can generate with references
 
 python $HOME/code/sm64-random-assets/generate_assets.py \
     --dst $HOME/code/sm64-random-assets/tpl/sm64-port \
-    --reference $HOME/code/sm64-random-assets/tpl/clean_reference_sm64 \
+    --reference $HOME/code/sm64-random-assets/tpl/sm64-ref \
     --compare
 
 """

@@ -76,7 +76,7 @@ ls -al
 
 export BUILD_REFERENCE=1
 export EXTERNAL_ROM_FPATH=baserom.us.z64
-export REFERENCE_CONFIG='
+export ASSET_CONFIG='
     png: reference
     aiff: reference
     m64: reference

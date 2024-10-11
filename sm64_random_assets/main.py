@@ -57,7 +57,6 @@ Ignore:
         --dst $HOME/tmp/test_assets/sm64-port-test \
         --reference $HOME/code/sm64-port \
         --compare
-    #--hybrid_mode
 
     # Compile
     make clean && make VERSION=us -j9
@@ -95,35 +94,38 @@ class GenerateAssetsConfig(scfg.DataConfig):
             Path to the asset manifest to use. If "auto", attempts
             to use the one in this module directory.
             '''))
-    hybrid_mode = scfg.Value(None, isflag=True, help='hybrid_mode')
+    hybrid_mode = scfg.Value(None, isflag=True, help='hybrid_mode. DEPRECATED. Set the appropriate key in the asset_config to hybrid')
     compare = scfg.Value(None, isflag=True, help='run the compare debug tool. Can also be a YAML configuration')
 
     asset_config = scfg.Value(None, help=ub.paragraph(
         '''
-        A YAML config that allow for fine grained control over how  assets
-        should be generated. The following keys can be set to "ref", or
-        "reference" to specify they should use the reference, or "gen", or
-        "generate" to specify they should be generated. Can also be "hybrid" to
-        force hybrid mode for a particular key.
+        A YAML config that allow for fine grained control over how assets
+        should be generated.
 
         Available keys are: png, aiff, bin, m64. Can also specify a key
         never_generate as a list of glob patterns to always use the reference
         for.
-        '''), alias=['reference_config'])
+
+        The following values of each key can be set to "ref", or "reference" to
+        specify they should use the reference, or "gen", or "generate" to
+        specify they should be generated. Can also be "hybrid" to force hybrid
+        mode for a particular key.
+
+        '''))
 
     def __post_init__(self):
         from sm64_random_assets.util.util_yaml import Yaml
         asset_config = Yaml.coerce(self.asset_config)
         if asset_config is None:
             asset_config = {}
-        default_reference_config = ub.udict({
+        default_asset_config = ub.udict({
             'png': 'generate',
             'aiff': 'generate',
             'm64': 'generate',
             'bin': 'generate',
             'never_generate': [],
         })
-        asset_config = default_reference_config | asset_config
+        asset_config = default_asset_config | asset_config
 
         for k, v in asset_config.items():
             if k == 'never_generate':

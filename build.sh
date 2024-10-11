@@ -21,7 +21,7 @@ To build a PC port with original assets
     ./dev/grab_reference_baserom.sh ./baserom.us.z64
 
     export EXTERNAL_ROM_FPATH=baserom.us.z64
-    export REFERENCE_CONFIG='
+    export ASSET_CONFIG='
         png: reference
         aiff: reference
         m64: reference
@@ -70,9 +70,8 @@ EVERDRIVE_DPATH=${EVERDRIVE_DPATH:=/media/$USER/9DC3-BFF3}
 
 # This config is passed to sm64_random_assets/main.py
 # and controls how assets will be generated
-DEFAULT_REFERENCE_CONFIG="
+DEFAULT_ASSET_CONFIG="
     png: generate
-
     aiff: generate
     m64: generate
     bin: generate
@@ -85,7 +84,7 @@ DEFAULT_REFERENCE_CONFIG="
     #  - '*bowser_flame*png'
     #  #- '*bowser*png'
 "
-REFERENCE_CONFIG=${REFERENCE_CONFIG:=$DEFAULT_REFERENCE_CONFIG}
+ASSET_CONFIG=${ASSET_CONFIG:=$DEFAULT_ASSET_CONFIG}
 
 python3 -c "if 1:
     import ubelt as ub
@@ -109,7 +108,7 @@ python3 -c "if 1:
     BUILD_REFERENCE=$BUILD_REFERENCE
     EXTERNAL_ROM_FPATH=$EXTERNAL_ROM_FPATH
     COMPARE=$COMPARE
-    REFERENCE_CONFIG=\"$REFERENCE_CONFIG
+    ASSET_CONFIG=\"$ASSET_CONFIG
     \"
 
     '''), lexer_name='bash'))
@@ -223,7 +222,7 @@ python3 -m sm64_random_assets \
     --reference "$REFERENCE_DPATH" \
     --hybrid_mode="0" \
     --compare="$COMPARE" \
-    --reference_config "$REFERENCE_CONFIG"
+    --asset_config "$ASSET_CONFIG"
 
 
 # Compile
