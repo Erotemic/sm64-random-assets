@@ -156,6 +156,17 @@ The following are several common examples:
    # Build and run the ROM in an emulator (m64py)
    TEST_LOCALLY=1 TARGET=rom EMULATOR=m64py ./build.sh
 
+
+Specialized Install Documentation
+---------------------------------
+
+See specialized install docs for:
+
+* `Windows <docs/source/manual/install_docs/install-on-windows.rst>`_
+* `Replit <docs/source/manual/install_docs/install_on_replit.rst>`_
+* `SteamDeck <docs/source/manual/install_docs/install_on_steamdeck.rst>`_.
+
+
 Resources
 ---------
 
