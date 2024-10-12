@@ -24,7 +24,7 @@ To build a PC port with original assets
     export TARGET=pc
     export BUILD_REFERENCE=1
     export COMPARE=1
-    export NUM_CPUS=1
+    export NUM_CPUS=all
     export ASSET_CONFIG='
         png: generate
         aiff: generate
@@ -51,7 +51,7 @@ else
     THIS_DPATH=$(python3 -c "import pathlib; print(pathlib.Path('.').parent.absolute())")
 fi
 
-NUM_CPUS=${NUM_CPUS:=$(nproc --all)}
+NUM_CPUS=${NUM_CPUS:=}
 BUILD=${BUILD:=1}
 
 BUILD_REFERENCE=${BUILD_REFERENCE:=0}
@@ -69,6 +69,10 @@ COMPARE=${COMPARE:=0}
 EMULATOR=${EMULATOR:=m64py}
 
 EVERDRIVE_DPATH=${EVERDRIVE_DPATH:=/media/$USER/9DC3-BFF3}
+
+if [[ "$NUM_CPUS" == "all" ]]; then
+    NUM_CPUS=$(nproc --all)
+fi
 
 
 # This config is passed to sm64_random_assets/main.py

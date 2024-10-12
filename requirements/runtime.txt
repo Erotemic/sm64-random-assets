@@ -19,3 +19,4 @@ numpy>=1.19.2  ; python_version < '3.7' and python_version >= '3.6'    # Python 
 parse>=1.19.0
 
 matplotlib>=3.4.0
+colorama >= 0.4.1;platform_system=="Windows"
