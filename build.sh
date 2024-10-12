@@ -26,10 +26,10 @@ To build a PC port with original assets
     export COMPARE=1
     export NUM_CPUS=1
     export ASSET_CONFIG='
-        png: skip
+        png: generate
         aiff: generate
-        m64: skip
-        bin: skip
+        m64: generate
+        bin: generate
     '
     ./build.sh
 

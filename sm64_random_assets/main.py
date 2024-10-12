@@ -277,7 +277,7 @@ def main(cmdline=1, **kwargs):
     key_to_asset_generator = {
         'png': image_generator.generate_image,
         'aiff': audio_generator.generate_audio,
-        'm64': binary_generator.generate_binary,
+        'm64': binary_generator.generate_binary,  # these are music files for the game.
         'bin': binary_generator.generate_binary,
     }
 

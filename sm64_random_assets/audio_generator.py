@@ -1,14 +1,17 @@
-import os
+from sm64_random_assets.util import util_random
 
 
 def generate_audio(output_dpath, info):
     """
-    Generates a valid audio file based on info.
+    Generates a valid audio file based on info and writes it to disk.
 
     Args:
         output_path (str | PathLike):
-        info (dict):
 
+        info (dict): contains parameters for how data should be generated
+
+    Returns:
+        Dict: metadata containing status
     """
     from sm64_random_assets.vendor import aifc
     if info.get('params', None) is None:
@@ -18,10 +21,8 @@ def generate_audio(output_dpath, info):
     params_dict['compname'] = params_dict['compname'].encode()
     params = aifc._aifc_params(**params_dict)
 
-    import kwarray
-    import ubelt as ub
     # Seed the rng based on the filename to get some determinism for debugging
-    rng = kwarray.ensure_rng(int(ub.hash_data(info['fname'])[0:8], 16))
+    rng = util_random.ensure_rng(info['fname'])
 
     if info['use_ref'] == 'zero':
         # Zero out all sounds
@@ -30,18 +31,15 @@ def generate_audio(output_dpath, info):
     else:
         import numpy as np
         # Random new sound (this works surprisingly well)
-        n_consecutive = 256
+        n_consecutive = 256  # todo: parameterize
         # n_consecutive = 1
-        if n_consecutive > 1:
-            # Make a bit less random so it can be compressed
-            size = params.nframes * params.nchannels
-            samples = rng.randint(-32768, 32767, size, dtype=np.int16)
-            for i in range(0, len(samples), n_consecutive):
-                value = samples[i]
-                samples[i:i + n_consecutive] = value
-            new_data = samples.tobytes()
-        else:
-            new_data = os.urandom(info['size'])
+        # Make a bit less random so it can be compressed
+        size = params.nframes * params.nchannels
+        samples = rng.randint(-32768, 32767, size, dtype=np.int16)
+        for i in range(0, len(samples), n_consecutive):
+            value = samples[i]
+            samples[i:i + n_consecutive] = value
+        new_data = samples.tobytes()
         out = {'status': 'randomized'}
 
     out_fpath = output_dpath / info['fname']

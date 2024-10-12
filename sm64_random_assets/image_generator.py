@@ -1,6 +1,7 @@
 import numpy as np
 import parse
 import kwimage
+from sm64_random_assets.util import util_random
 
 
 def generate_image(output_dpath, info):
@@ -47,50 +48,39 @@ def generate_image(output_dpath, info):
         shape = list(shape)
         # shape[2] = 4
 
+    # Create a determenistic random state based on the filename.
+    rng = util_random.ensure_rng(info['fname'])
+
     out_fpath = output_dpath / info['fname']
     out_fpath.parent.ensuredir()
 
-    new_data = handle_special_texture(info['fname'], shape)
+    new_data = handle_special_texture(info['fname'], shape, rng)
     if new_data is None:
         if out_fpath.name.endswith('.ia1.png'):
-            new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+            new_data = (rng.rand(*shape) * 255).astype(np.uint8)
             # new_data[new_data < 127] = 0
             # new_data[new_data >= 127] = 255
             # new_data[:] = 0
         elif out_fpath.name.endswith('.ia4.png'):
-            new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+            new_data = (rng.rand(*shape) * 255).astype(np.uint8)
             # new_data[new_data < 127] = 0
             # new_data[new_data >= 127] = 255
             # new_data[:] = 0
         elif out_fpath.name.endswith('.ia8.png'):
             # Its just these ones that cause the game to freeze
             # on my older CPU when there is too much variation in the data
-            new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+            new_data = (rng.rand(*shape) * 255).astype(np.uint8)
             new_data[new_data < 127] = 0
             new_data[new_data >= 127] = 255
             new_data[:] = 0
         elif out_fpath.name.endswith('.ia16.png'):
-            """
-            TODO: Fixme
-            Converting: actors/coin/coin_front.ia16.png -> build/us_pc/actors/coin/coin_front.ia16.inc.c
-            Warning: averaging RGB PNG to create IA
-            Converting: actors/coin/coin_side.ia16.png -> build/us_pc/actors/coin/coin_side.ia16.inc.c
-            Warning: averaging RGB PNG to create IA
-            Converting: actors/coin/coin_tilt_left.ia16.png -> build/us_pc/actors/coin/coin_tilt_left.ia16.inc.c
-            Warning: averaging RGB PNG to create IA
-            Converting: actors/coin/coin_tilt_right.ia16.png -> build/us_pc/actors/coin/coin_tilt_right.ia16.inc.c
-            Warning: averaging RGB PNG to create IA
-
-            Not sure why this is. The images are generated with shape 32,32,2
-            but it looks like they are stored as color anyway?
-            """
-            new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+            new_data = (rng.rand(*shape) * 255).astype(np.uint8)
             # new_data[new_data < 127] = 0
             # new_data[new_data >= 127] = 255
         elif out_fpath.name.endswith('.rgba16.png'):
-            new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+            new_data = (rng.rand(*shape) * 255).astype(np.uint8)
         else:
-            new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+            new_data = (rng.rand(*shape) * 255).astype(np.uint8)
 
         # Reduce the size of textures
         smaller = kwimage.imresize(new_data, scale=0.5, interpolation='nearest')
@@ -481,7 +471,7 @@ class PowerMeter:
         return canvas
 
 
-def handle_special_texture(fname, shape):
+def handle_special_texture(fname, shape, rng):
     """
     Can programatically generate nicer-than-random textures for some assets.
     """
