@@ -534,7 +534,7 @@ class Aifc_read:
                 elif self._comptype in (b'sowt', b'SOWT'):
                     self._convert = self._sowt2lin
                 else:
-                    raise Error('unsupported compression type')
+                    raise Error(f'unsupported compression type: {self._comptype}')
                 self._sampwidth = 2
         else:
             self._comptype = b'NONE'

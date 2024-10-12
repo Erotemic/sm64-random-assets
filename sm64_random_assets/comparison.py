@@ -115,7 +115,7 @@ def compare(ref_dpath, output_dpath, asset_metadata_fpath, include=None, exclude
         print('exclude = {}'.format(ub.urepr(exclude, nl=1)))
         exclude = MultiPattern.coerce(exclude)
 
-    for key, subinfo in ub.ProgIter(subinfos.items(), desc='compare'):
+    for key, subinfo in ub.ProgIter(subinfos.items(), desc='gen image comparisons'):
 
         compare_fpath = image_compare_dpath / key.replace('/', '_') + '.png'
 
@@ -210,7 +210,7 @@ def compare(ref_dpath, output_dpath, asset_metadata_fpath, include=None, exclude
 
     # Sound comparison
     audio_compare_dpath = (compare_dpath / 'audio').ensuredir()
-    for info in ext_to_info['.aiff']:
+    for info in ub.ProgIter(ext_to_info['.aiff'], desc='gen audio comparisons'):
         key = info['fname']
         fpath1 = ref / info['fname']
         fpath2 = dst / info['fname']
@@ -232,6 +232,9 @@ def compare(ref_dpath, output_dpath, asset_metadata_fpath, include=None, exclude
 def draw_audio(aiff_fpath, title=''):
     """
     Partially generated via ChatGPT
+
+    Notes:
+        https://github.com/mkst/sm64-port/issues/63
     """
     import kwplot
     import numpy as np
@@ -262,7 +265,8 @@ def draw_audio(aiff_fpath, title=''):
     time_axis = np.linspace(0, n_frames / frame_rate, num=n_frames)
 
     # Plot the waveform
-    fig = plt.figure(figsize=(10, 4))
+    fig = plt.figure(num=1, figsize=(10, 4))
+    fig.clf()
     # plt.plot(time_axis, audio_signal, color='blue')
     plt.specgram(audio_signal, Fs=frame_rate, NFFT=1024, noverlap=512, cmap='viridis')
     plt.xlabel('Time (seconds)')
@@ -273,7 +277,8 @@ def draw_audio(aiff_fpath, title=''):
     plt.tight_layout()
     specto_canvas = kwplot.render_figure_to_image(fig)
 
-    fig = plt.figure(figsize=(10, 4))
+    fig = plt.figure(num=1, figsize=(10, 4))
+    fig.clf()
     plt.plot(time_axis, audio_signal, color='blue')
     plt.xlabel('Time (seconds)')
     plt.ylabel('Amplitude')

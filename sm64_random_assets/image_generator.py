@@ -70,6 +70,20 @@ def generate_image(output_dpath, info):
             new_data[new_data >= 127] = 255
             new_data[:] = 0
         elif out_fpath.name.endswith('.ia16.png'):
+            """
+            TODO: Fixme
+            Converting: actors/coin/coin_front.ia16.png -> build/us_pc/actors/coin/coin_front.ia16.inc.c
+            Warning: averaging RGB PNG to create IA
+            Converting: actors/coin/coin_side.ia16.png -> build/us_pc/actors/coin/coin_side.ia16.inc.c
+            Warning: averaging RGB PNG to create IA
+            Converting: actors/coin/coin_tilt_left.ia16.png -> build/us_pc/actors/coin/coin_tilt_left.ia16.inc.c
+            Warning: averaging RGB PNG to create IA
+            Converting: actors/coin/coin_tilt_right.ia16.png -> build/us_pc/actors/coin/coin_tilt_right.ia16.inc.c
+            Warning: averaging RGB PNG to create IA
+
+            Not sure why this is. The images are generated with shape 32,32,2
+            but it looks like they are stored as color anyway?
+            """
             new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
             # new_data[new_data < 127] = 0
             # new_data[new_data >= 127] = 255
@@ -590,6 +604,10 @@ def handle_special_texture(fname, shape):
                 generated[:, :, 3] = 255
 
     if generated is not None:
+        if len(shape) == 3:
+            if generated.shape[2] > shape[2]:
+                # Fix ia16 images:
+                generated = generated[:, :, -shape[2]:]
         generated = kwimage.imresize(generated, dsize=shape[0:2][::-1])
         if generated.dtype.kind == 'f':
             generated = generated.clip(0, 1)

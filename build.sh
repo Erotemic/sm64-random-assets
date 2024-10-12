@@ -22,15 +22,15 @@ To build a PC port with original assets
 
     export EXTERNAL_ROM_FPATH=baserom.us.z64
     export TARGET=pc
-    export COMPARE=0
+    export BUILD_REFERENCE=1
+    export COMPARE=1
     export NUM_CPUS=1
     export ASSET_CONFIG='
-        png: generate
-        aiff: reference
-        m64: generate
-        bin: generate
+        png: skip
+        aiff: generate
+        m64: skip
+        bin: skip
     '
-    export BUILD_REFERENCE=1
     ./build.sh
 
 "

@@ -18,6 +18,11 @@ def generate_audio(output_dpath, info):
     params_dict['compname'] = params_dict['compname'].encode()
     params = aifc._aifc_params(**params_dict)
 
+    import kwarray
+    import ubelt as ub
+    # Seed the rng based on the filename to get some determinism for debugging
+    rng = kwarray.ensure_rng(int(ub.hash_data(info['fname'])[0:8], 16))
+
     if info['use_ref'] == 'zero':
         # Zero out all sounds
         new_data = b'\x00' * info['size']
@@ -30,7 +35,7 @@ def generate_audio(output_dpath, info):
         if n_consecutive > 1:
             # Make a bit less random so it can be compressed
             size = params.nframes * params.nchannels
-            samples = np.random.randint(-32768, 32767, size, dtype=np.int16)
+            samples = rng.randint(-32768, 32767, size, dtype=np.int16)
             for i in range(0, len(samples), n_consecutive):
                 value = samples[i]
                 samples[i:i + n_consecutive] = value
