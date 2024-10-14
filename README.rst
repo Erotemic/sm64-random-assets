@@ -170,33 +170,62 @@ See specialized install docs for:
 Resources
 ---------
 
-
 * Learning the basics slides: https://docs.google.com/presentation/d/1Ab8wlJfT7b7TlbOohgvsX43TqSAYQQ3azuJTkNdaB0c/edit?pli=1#slide=id.p
-
-* Mupen64Plus Emulator: https://wiki.debian.org/Mupen64Plus
-
-* Python Frontend for Mupen64Plus: https://github.com/mupen64plus/mupen64plus-ui-python
-
-* Everdrive 64 X7: https://krikzz.com/our-products/cartridges/ed64x7.html
-
-* The SM64 Port: https://github.com/sm64-port/sm64-port
-
-* The SM64 Decomp: https://github.com/n64decomp/sm64
-
-* The SM64 Decomp Discord: https://discord.gg/DuYH3Fh
-
-* Kaze Emanuar ROM Hacks: https://www.notabug.org/anomie/kaze-emanuar-romhacks
 
 * High resolution redrawn textures: https://github.com/TechieAndroid/sm64redrawn
 
 * SM64 Randomizer: https://github.com/andrelikesdogs/sm64-randomizer
 
-* List of SM64 Hacks and Ports: https://en.wikipedia.org/wiki/List_of_Super_Mario_64_ROM_hacks,_mods_and_ports
-
-* SM64 plus: https://github.com/MorsGames/sm64plus
-
-* SM64 ex: https://github.com/sm64pc/sm64ex
-
 * SM64 PC Subreddit: https://www.reddit.com/r/SM64PC/
 
+
+N64 Stuff
+~~~~~~~~~
+
+* Everdrive 64 X7: https://krikzz.com/our-products/cartridges/ed64x7.html
+
+Emulator Stuff
+~~~~~~~~~~~~~~
+
+* Mupen64Plus Emulator: https://wiki.debian.org/Mupen64Plus
+
+* Python Frontend for Mupen64Plus: https://github.com/mupen64plus/mupen64plus-ui-python
+
+Rom Stuff
+~~~~~~~~~
+
+* Kaze Emanuar ROM Hacks: https://www.notabug.org/anomie/kaze-emanuar-romhacks
+
+* List of SM64 Hacks and Ports: https://en.wikipedia.org/wiki/List_of_Super_Mario_64_ROM_hacks,_mods_and_ports
+
+PC Port Extension Repos
+~~~~~~~~~~~~~~~~~~~~~~~
+
+* SM64: https://github.com/n64decomp/sm64 - the original decomp
+
+* SM64-Port: https://github.com/sm64-port/sm64-port - the basic port
+
+* SM64-Plus: https://github.com/MorsGames/sm64plus
+
+* SM64ex: https://github.com/sm64pc/sm64ex
+
 * libsm64 - https://github.com/libsm64/libsm64
+
+* Sm64ex-alo - https://github.com/AloUltraExt/sm64ex-alo
+
+* Render96ex - https://github.com/Render96/Render96ex - actively developed in 2024
+
+* SM64CoopDX - https://github.com/coop-deluxe/sm64coopdx - actively developed in 2024
+
+SM64-Port, SM64-Plus, SM64ex, Render96ex Sm64ex-alo, SM64CoopDX, etc etc
+
+
+
+Videos
+~~~~~~
+
+
+Other
+~~~~~~
+
+* The SM64 Decomp Discord: https://discord.gg/DuYH3Fh

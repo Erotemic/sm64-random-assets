@@ -3,7 +3,7 @@
 """
 Forwards to the real main script for backwards comaptability
 """
-from sm64_random_assets.main import main
+from sm64_random_assets.cli import generate
 
 
 if __name__ == '__main__':
@@ -14,4 +14,4 @@ if __name__ == '__main__':
         make VERSION=us -j16
         build/us_pc/sm64.us
     """
-    main()
+    generate.__cli__.main()

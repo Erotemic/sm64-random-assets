@@ -150,13 +150,23 @@ fi
 
 # Initialize the sm64 submodule, which clones the official ROM-only sm64 repo.
 
-if [[ "$TARGET" == "rom" ]]; then
+if [[ "$TARGET" == "rom" || "$TARGET" == "sm64" ]]; then
     SM64_REPO_DPATH="$THIS_DPATH"/tpl/sm64
     BINARY_TYPE="ROM"
     BINARY_FPATH="$SM64_REPO_DPATH"/build/us/sm64.us.z64
     REFERENCE_BINARY_FPATH="$REFERENCE_DPATH"/build/us/sm64.us.z64
-elif [[ "$TARGET" == "pc" ]]; then
+elif [[ "$TARGET" == "pc" || "$TARGET" == "sm64-port" ]]; then
     SM64_REPO_DPATH="$THIS_DPATH"/tpl/sm64-port
+    BINARY_TYPE="executable"
+    BINARY_FPATH="$SM64_REPO_DPATH"/build/us_pc/sm64.us
+    REFERENCE_BINARY_FPATH="$REFERENCE_DPATH"/build/us_pc/sm64.us
+elif [[ "$TARGET" == "SM64CoopDX" ]]; then
+    SM64_REPO_DPATH="$THIS_DPATH"/tpl/sm64coopdx
+    BINARY_TYPE="executable"
+    BINARY_FPATH="$SM64_REPO_DPATH"/build/us_pc/sm64.us
+    REFERENCE_BINARY_FPATH="$REFERENCE_DPATH"/build/us_pc/sm64.us
+elif [[ "$TARGET" == "Render96ex" ]]; then
+    SM64_REPO_DPATH="$THIS_DPATH"/tpl/Render96ex
     BINARY_TYPE="executable"
     BINARY_FPATH="$SM64_REPO_DPATH"/build/us_pc/sm64.us
     REFERENCE_BINARY_FPATH="$REFERENCE_DPATH"/build/us_pc/sm64.us

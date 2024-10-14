@@ -180,3 +180,17 @@ After the new GCC update, some repositories may fail to compile. So instead of w
     gcc --version
 
 5. After you confirm that the correct version is installed, reopen sm64pcbuilder2 and start compiling."
+
+
+Other Useful MinGW Packages
+---------------------------
+
+
+
+.. code:: bash
+
+    # the vim package includes xxd for hex display
+    pacman --sync --noconfirm msys/vim
+
+    # for making tools compile easier
+    pacman --sync --noconfirm mingw64/mingw-w64-x86_64-capstone

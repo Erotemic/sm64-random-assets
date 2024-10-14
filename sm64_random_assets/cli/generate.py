@@ -78,6 +78,8 @@ class GenerateAssetsConfig(scfg.DataConfig):
     """
     Generates non-copyrighted assets for SM64
     """
+    __command__ = 'generate'
+
     dst = scfg.Value('tpl/sm64-port', help=ub.paragraph(
         '''
         Path to the sm64-based repository to generate assets for.
@@ -167,9 +169,9 @@ def main(cmdline=1, **kwargs):
     args = GenerateAssetsConfig.cli(cmdline=cmdline, data=kwargs)
     rich.print('args = {}'.format(ub.urepr(args, nl=2)))
 
-    from sm64_random_assets import image_generator
-    from sm64_random_assets import audio_generator
-    from sm64_random_assets import binary_generator
+    from sm64_random_assets.generators import image_generator
+    from sm64_random_assets.generators import audio_generator
+    from sm64_random_assets.generators import binary_generator
     from sm64_random_assets.util.util_pattern import MultiPattern
 
     # Path to the clone of sm64-port we will generate assets for.
@@ -178,7 +180,7 @@ def main(cmdline=1, **kwargs):
     # Find the path to the asset mainfest, which contains a list of what data
     # to be generated.
     if args.manifest_fpath == "auto":
-        mod_dpath = ub.Path(__file__).parent
+        mod_dpath = ub.Path(__file__).parent.parent
         asset_metadata_fpath = mod_dpath / 'asset_metadata.json'
     else:
         asset_metadata_fpath = ub.Path(args.manifest_fpath).expand()
@@ -368,6 +370,9 @@ def copy_reference(output_dpath, info, ref_dpath):
     return copied
 
 
+__cli__ = GenerateAssetsConfig
+__cli__.main = main
+
 if __name__ == '__main__':
     """
     CommandLine:
@@ -376,4 +381,4 @@ if __name__ == '__main__':
         make VERSION=us -j16
         build/us_pc/sm64.us
     """
-    main()
+    __cli__.main()

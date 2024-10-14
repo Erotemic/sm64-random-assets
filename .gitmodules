@@ -9,3 +9,9 @@
 [submodule "tpl/sm64ex"]
 	path = tpl/sm64ex
 	url = https://github.com/sm64pc/sm64ex.git
+[submodule "tpl/sm64coopdx"]
+	path = tpl/sm64coopdx
+	url = https://github.com/coop-deluxe/sm64coopdx
+[submodule "tpl/Render96ex"]
+	path = tpl/Render96ex
+	url = https://github.com/Render96/Render96ex

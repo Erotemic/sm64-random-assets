@@ -26,7 +26,7 @@ def generate_image(output_dpath, info):
         rgba16
 
     Example:
-        >>> from sm64_random_assets.image_generator import generate_image
+        >>> from sm64_random_assets.generators.image_generator import *  # NOQA
         >>> import ubelt as ub
         >>> dpath = ub.Path.appdir('sm64-random-assets/tests')
         >>> output_dpath = dpath / 'test-output'
@@ -370,7 +370,7 @@ class PowerMeter:
     Helper to draw something useful for the power/health meter
 
     Example:
-        >>> from sm64_random_assets.image_generator import *  # NOQA
+        >>> from sm64_random_assets.generators.image_generator import *  # NOQA
         >>> self = PowerMeter()
         >>> canvas1 = self.draw(power=8)
         >>> canvas2 = self.draw(power=5)
