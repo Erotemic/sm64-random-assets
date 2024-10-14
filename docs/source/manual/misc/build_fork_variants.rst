@@ -17,7 +17,9 @@ sm64ex
        m64: generate
        bin: generate
    '
-   TARGET=sm64ex ./build.sh
+   export NUM_CPUS=all
+   export TARGET=sm64ex
+   ./build.sh
 
 
 Render96ex
@@ -32,7 +34,9 @@ Render96ex
        m64: generate
        bin: generate
    '
-   TARGET=Render96ex ./build.sh
+   export NUM_CPUS=all
+   export TARGET=Render96ex
+   ./build.sh
 
 
 SM64CoopDX
@@ -47,4 +51,6 @@ SM64CoopDX
        m64: generate
        bin: generate
    '
-   TARGET=SM64CoopDX ./build.sh
+   export NUM_CPUS=all
+   export TARGET=SM64CoopDX
+   ./build.sh
