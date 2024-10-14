@@ -4542,7 +4542,12 @@
         ]
     },
     {
-        "fname": "levels/ending/cake_eu.png"
+        "fname": "levels/ending/cake_eu.png",
+        "shape": [
+            224,
+            320,
+            4
+        ]
     },
     {
         "fname": "levels/ending/eu_023000.rgba16.png"
