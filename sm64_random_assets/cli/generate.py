@@ -167,7 +167,8 @@ class GenerateAssetsConfig(scfg.DataConfig):
 
 def main(cmdline=1, **kwargs):
     args = GenerateAssetsConfig.cli(cmdline=cmdline, data=kwargs)
-    rich.print('args = {}'.format(ub.urepr(args, nl=2)))
+    from rich.markup import escape
+    rich.print('args = ' + escape(ub.urepr(args, nl=2)))
 
     from sm64_random_assets.generators import image_generator
     from sm64_random_assets.generators import audio_generator
@@ -180,8 +181,8 @@ def main(cmdline=1, **kwargs):
     # Find the path to the asset mainfest, which contains a list of what data
     # to be generated.
     if args.manifest_fpath == "auto":
-        mod_dpath = ub.Path(__file__).parent.parent
-        asset_metadata_fpath = mod_dpath / 'asset_metadata.json'
+        from sm64_random_assets.rc.registry import find_resource_path
+        asset_metadata_fpath = find_resource_path('asset_metadata.json')
     else:
         asset_metadata_fpath = ub.Path(args.manifest_fpath).expand()
 
@@ -343,7 +344,7 @@ def main(cmdline=1, **kwargs):
     assets_fpath.write_text(text)
 
     if args.compare is not None:
-        from sm64_random_assets.comparison import compare
+        from sm64_random_assets.debug.comparison import compare
         compare(ref_dpath, output_dpath, asset_metadata_fpath)
 
 

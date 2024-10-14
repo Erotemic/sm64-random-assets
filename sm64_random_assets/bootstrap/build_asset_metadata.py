@@ -54,6 +54,7 @@ def main():
     for fname in asset_fpaths:
         ext = fname.suffix
         if ext == '.aiff':
+            # These are short sound effects
             info = parse_audio_info(input_dpath, fname)
             if info is not None:
                 metadata.append(info)
@@ -62,6 +63,7 @@ def main():
                     'fname': str(fname),
                 })
         elif ext == '.png':
+            # These are the textures
             in_fpath = input_dpath / fname
             if in_fpath.exists():
                 info = parse_image_info(input_dpath, fname)
@@ -72,6 +74,7 @@ def main():
                 })
         elif ext == '.m64':
             # I have no idea what these files are. Zeroing them seems to work fine.
+            # NOTE: These are the music files!
             in_fpath = input_dpath / fname
             if in_fpath.exists():
                 orig = in_fpath.read_bytes()

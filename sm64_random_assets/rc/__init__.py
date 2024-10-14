@@ -1,0 +1,3 @@
+"""
+Module rc (resource) directory
+"""
