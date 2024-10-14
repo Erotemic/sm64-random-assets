@@ -148,31 +148,40 @@ if [[ "$EXTERNAL_ROM_FPATH" != "" ]]; then
 fi
 
 
-# Initialize the sm64 submodule, which clones the official ROM-only sm64 repo.
-
 if [[ "$TARGET" == "rom" || "$TARGET" == "sm64" ]]; then
     SM64_REPO_DPATH="$THIS_DPATH"/tpl/sm64
     BINARY_TYPE="ROM"
     BINARY_FPATH="$SM64_REPO_DPATH"/build/us/sm64.us.z64
     REFERENCE_BINARY_FPATH="$REFERENCE_DPATH"/build/us/sm64.us.z64
+    EXECUTE_INVOCATION="$EMULATOR $BINARY_FPATH"
 elif [[ "$TARGET" == "pc" || "$TARGET" == "sm64-port" ]]; then
     SM64_REPO_DPATH="$THIS_DPATH"/tpl/sm64-port
     BINARY_TYPE="executable"
     BINARY_FPATH="$SM64_REPO_DPATH"/build/us_pc/sm64.us
     REFERENCE_BINARY_FPATH="$REFERENCE_DPATH"/build/us_pc/sm64.us
+    EXECUTE_INVOCATION="$BINARY_FPATH"
+elif [[ "$TARGET" == "sm64ex" ]]; then
+    SM64_REPO_DPATH="$THIS_DPATH"/tpl/sm64ex
+    BINARY_TYPE="executable"
+    BINARY_FPATH="$SM64_REPO_DPATH"/build/us_pcsm64.us.f3dex2e
+    REFERENCE_BINARY_FPATH="$REFERENCE_DPATH"/build/us_pc/sm64.us.f3dex2e
+    EXECUTE_INVOCATION="$BINARY_FPATH"
+elif [[ "$TARGET" == "Render96ex" ]]; then
+    SM64_REPO_DPATH="$THIS_DPATH"/tpl/Render96ex
+    BINARY_TYPE="executable"
+    BINARY_FPATH="$SM64_REPO_DPATH"/build/us_pc/sm64.us.f3dex2e
+    REFERENCE_BINARY_FPATH="$REFERENCE_DPATH"/build/us_pc/sm64.us.f3dex2e
+    EXECUTE_INVOCATION="$BINARY_FPATH"
 elif [[ "$TARGET" == "SM64CoopDX" ]]; then
     SM64_REPO_DPATH="$THIS_DPATH"/tpl/sm64coopdx
     BINARY_TYPE="executable"
     BINARY_FPATH="$SM64_REPO_DPATH"/build/us_pc/sm64.us
     REFERENCE_BINARY_FPATH="$REFERENCE_DPATH"/build/us_pc/sm64.us
-elif [[ "$TARGET" == "Render96ex" ]]; then
-    SM64_REPO_DPATH="$THIS_DPATH"/tpl/Render96ex
-    BINARY_TYPE="executable"
-    BINARY_FPATH="$SM64_REPO_DPATH"/build/us_pc/sm64.us
-    REFERENCE_BINARY_FPATH="$REFERENCE_DPATH"/build/us_pc/sm64.us
+    EXECUTE_INVOCATION="$BINARY_FPATH"
 fi
 
-echo "Ensure sm64 submodule exists"
+# Initialize the specific sm64 submodule variant you want to build against
+echo "Ensure the sm64 variant ($TARGET) submodule exists"
 git submodule update --init "$SM64_REPO_DPATH"
 
 REFERENCE_DPATH="${SM64_REPO_DPATH}-ref"
@@ -234,7 +243,7 @@ python3 -c "if 1:
     '''), 'green'))
 "
 
-python3 -m sm64_random_assets \
+python3 -m sm64_random_assets generate \
     --dst "$SM64_REPO_DPATH" \
     --reference "$REFERENCE_DPATH" \
     --hybrid_mode="0" \
@@ -299,18 +308,9 @@ if [[ "$TARGET" == "rom" ]]; then
 fi
 
 echo "To execute locally use: "
-if [[ "$TARGET" == "rom" ]]; then
-    echo "$EMULATOR" "$BINARY_FPATH"
-elif [[ "$TARGET" == "pc" ]]; then
-    echo "$BINARY_FPATH"
-fi
+echo "$EXECUTE_INVOCATION"
 
 if [[ "$TEST_LOCALLY" == "1" ]]; then
-    if [[ "$TARGET" == "rom" ]]; then
-        echo "Testing on emulator"
-        "$EMULATOR" "$BINARY_FPATH"
-    elif [[ "$TARGET" == "pc" ]]; then
-        echo "Testing PC port"
-        "$BINARY_FPATH"
-    fi
+    echo "Testing locally"
+    $EXECUTE_INVOCATION
 fi

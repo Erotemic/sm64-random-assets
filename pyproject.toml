@@ -28,7 +28,7 @@ ci_pypy_versions = []
 skip_autogen = ['publish.sh', 'run_linter.sh', 'MANIFEST.in', 'run_tests.py', 'run_doctests.sh']
 
 [tool.xcookie.package_data]
-sm64_random_assets = ["asset_metadata.json"]
+sm64_random_assets.rc = ["asset_metadata.json"]
 
 [tool.xcookie.entry_points]
 console_scripts = [

@@ -217,13 +217,6 @@ PC Port Extension Repos
 
 * SM64CoopDX - https://github.com/coop-deluxe/sm64coopdx - actively developed in 2024
 
-SM64-Port, SM64-Plus, SM64ex, Render96ex Sm64ex-alo, SM64CoopDX, etc etc
-
-
-
-Videos
-~~~~~~
-
 
 Other
 ~~~~~~

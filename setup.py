@@ -255,7 +255,7 @@ if __name__ == "__main__":
     ]
     setupkw["package_data"] = {
         "": ["requirements/*.txt"],
-        "sm64_random_assets": ["asset_metadata.json"],
+        "sm64_random_assets.rc": ["asset_metadata.json"],
     }
     setupkw["entry_points"] = {
         "console_scripts": [

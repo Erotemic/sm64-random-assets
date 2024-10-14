@@ -11,6 +11,7 @@ def main(cmdline=True, **kw):
     """
     modnames = [
         'generate',
+        'grab_baserom',
     ]
     module_lut = {}
     for name in modnames:
