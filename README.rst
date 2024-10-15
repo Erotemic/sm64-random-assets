@@ -1,13 +1,13 @@
 SM64 Randomized Asset Generator
 ===============================
 
-Generates non-copyrighted randomized assets so sm64 and sm64-port can be used
+Generates non-copyrighted randomized assets so `sm64 <https://github.com/n64decomp/sm64>`_ and `sm64-port <https://github.com/sm64-port/sm64-port>`_ can be used
 for educational purposes.
 
 This has only been tested for building the US variant, and only on Linux.
 
-For each asset it generates a random texture, except in special cases like text
-where it was possible to generate reasonable textures with open source tools.
+For each asset in the game, this system generates a random texture, except in special cases like text
+where it is possible to generate reasonable textures with open source tools.
 The result is surprisingly playable.
 
 Future work will support configurable and procedural generation of assets.
@@ -49,7 +49,7 @@ The following instructions were written on an Ubuntu 22.04 PC
     # this repo - to be somewhere convenient for you
     CODE_DPATH=$HOME/code
 
-    # Ensure your code directory exists
+    # Ensure your "code" directory exists
     mkdir -p "$CODE_DPATH"
 
     # Clone this repo
@@ -90,7 +90,7 @@ Headless ROM Usage
     # this repo - to be somewhere convenient for you
     CODE_DPATH=$HOME/code
 
-    # Ensure your code directory exists
+    # Ensure your "code" directory exists
     mkdir -p $CODE_DPATH
 
     # Clone this repo
@@ -113,7 +113,7 @@ Headless ROM Usage
 
     # The compiled ROM is: build/us/sm64.us.z64
 
-This ROM can now be flashed on an N64 cartage, copied onto an Everdrive, or run
+This ROM can now be flashed on an N64 cartridge, copied onto an Everdrive, or run
 using an N64 emulator (like Mupen64Plus). For instance, if you have Mupen64Plus
 installed (e.g. ``sudo apt install mupen64plus-qt``) you can run:
 
@@ -131,7 +131,7 @@ original PNG textures are optimized to reduce their memory usage by having
 large continuous sections of the same color. Naively randomizing every pixel
 does not generate data well suited for PNG compression.
 
-I have verified that I cen enter every major stage and complete every bowser
+I have verified that I can enter every major stage and complete every Bowser
 fight, so I think all of the crashes have been resolved by reducing texture
 sizes. I have completed a 16 star run on real N64 hardware with this.
 
@@ -143,7 +143,7 @@ While I'll try to keep the above instructions working / maintained, the
 ``build.sh`` script is the end-to-end entry point for developers. Starting from
 a fresh repo, the ``build.sh`` script will take care of the entire process from
 initializing submodules, generating assets, compiling the binaries, and even
-running them with the pc-port, in an emulator, or copying ROMs to an EverDrive.
+running them with the PC port, in an emulator, or copying ROMs to an EverDrive.
 Environment variables can be used to control the build.sh behavior.
 
 The following are several common examples:
