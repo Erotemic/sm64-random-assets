@@ -164,7 +164,7 @@ See specialized install docs for:
 
 * `Windows <docs/source/manual/install_docs/install-on-windows.rst>`_
 * `Replit <docs/source/manual/install_docs/install_on_replit.rst>`_
-* `SteamDeck <docs/source/manual/install_docs/install_on_steamdeck.rst>`_.
+* `SteamDeck <docs/source/manual/install_docs/install_on_steamdeck.rst>`_
 
 
 Resources
@@ -209,13 +209,13 @@ PC Port Extension Repos
 
 * SM64ex: https://github.com/sm64pc/sm64ex
 
-* libsm64 - https://github.com/libsm64/libsm64
+* libsm64: https://github.com/libsm64/libsm64
 
-* Sm64ex-alo - https://github.com/AloUltraExt/sm64ex-alo
+* Sm64ex-alo: https://github.com/AloUltraExt/sm64ex-alo
 
-* Render96ex - https://github.com/Render96/Render96ex - actively developed in 2024
+* Render96ex: https://github.com/Render96/Render96ex - actively developed in 2024
 
-* SM64CoopDX - https://github.com/coop-deluxe/sm64coopdx - actively developed in 2024
+* SM64CoopDX: https://github.com/coop-deluxe/sm64coopdx - actively developed in 2024
 
 
 Other
