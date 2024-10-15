@@ -66,7 +66,13 @@ TEST_LOCALLY=${TEST_LOCALLY:=0}
 
 COMPARE=${COMPARE:=0}
 
-EMULATOR=${EMULATOR:=m64py}
+# Default to an existing emulator if possible
+if command -v mupen64plus &>/dev/null; then
+    # requires: sudo apt install mupen64plus-qt
+    EMULATOR=${EMULATOR:=mupen64plus}
+else
+    EMULATOR=${EMULATOR:=m64py}
+fi
 
 EVERDRIVE_DPATH=${EVERDRIVE_DPATH:=/media/$USER/9DC3-BFF3}
 

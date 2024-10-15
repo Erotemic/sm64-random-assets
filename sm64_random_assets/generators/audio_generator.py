@@ -31,8 +31,8 @@ def generate_audio(output_dpath, info):
     else:
         import numpy as np
         # Random new sound (this works surprisingly well)
-        n_consecutive = 256  # todo: parameterize
-        # n_consecutive = 1
+        # n_consecutive = 256  # todo: parameterize
+        n_consecutive = 1
         # Make a bit less random so it can be compressed
         size = params.nframes * params.nchannels
         samples = rng.randint(-32768, 32767, size, dtype=np.int16)
