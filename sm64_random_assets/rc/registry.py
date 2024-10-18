@@ -11,6 +11,7 @@ def requirement_path(fname):
         xdoctest -m kwcoco.rc.registry requirement_path
 
     Example:
+        >>> # xdoctest: +SKIP
         >>> from sm64_random_assets.rc.registry import requirement_path
         >>> fname = 'runtime.txt'
         >>> requirement_path(fname)
@@ -25,9 +26,12 @@ def find_resource_path(fname):
     """
     Robustly find the path to a module resource.
 
+    CommandLine:
+        xdoctest -m sm64_random_assets.rc.registry find_resource_path
+
     Example:
-        >>> from sm64_random_assets.rc.registry import resource_path
-        >>> print(resource_path('asset_metadata.json'))
+        >>> from sm64_random_assets.rc.registry import find_resource_path
+        >>> print(find_resource_path('asset_metadata.json'))
     """
     with importlib_resources.path('sm64_random_assets.rc', fname) as p:
         orig_pth = ub.Path(p)

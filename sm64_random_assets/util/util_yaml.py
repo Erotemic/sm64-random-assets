@@ -83,13 +83,7 @@ def _custom_new_ruaml_yaml_obj():
         https://stackoverflow.com/questions/528281/how-can-i-include-a-yaml-file-inside-another
         https://stackoverflow.com/questions/76870413/using-a-custom-loader-with-ruamel-yaml-0-15-0
 
-    CommandLine:
-        xdoctest -m kwutil.util_yaml _custom_new_ruaml_yaml_obj
-
     Example:
-        >>> from kwutil.util_yaml import *  # NOQA
-        >>> from kwutil.util_yaml import _custom_ruaml_loader, _custom_new_ruaml_yaml_obj, _custom_ruaml_dumper, _custom_pyaml_dumper
-        >>> from kwutil.util_yaml import _YamlRepresenter
         >>> # Test new load
         >>> import io
         >>> file = io.StringIO('[a, b, c]')
@@ -210,7 +204,6 @@ class Yaml:
             object
 
         Example:
-            >>> from kwutil.util_yaml import Yaml
             >>> import ubelt as ub
             >>> data = {
             >>>     'a': 'hello world',
@@ -311,7 +304,6 @@ class Yaml:
             https://stackoverflow.com/questions/528281/how-can-i-include-a-yaml-file-inside-another
 
         Example:
-            >>> from kwutil.util_yaml import Yaml
             >>> text = ub.codeblock(
                 '''
                 - !!float nan
