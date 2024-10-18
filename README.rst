@@ -1,6 +1,14 @@
 SM64 Randomized Asset Generator
 ===============================
 
+|Pypi| |PypiDownloads| |ReadTheDocs| |GithubActions| |Codecov|
+
++---------------+-----------------------------------------------------+
+| Read the Docs | http://sm64-random-assets.readthedocs.io/en/latest/ |
++---------------+-----------------------------------------------------+
+| Pypi          | https://pypi.org/project/sm64_random_assets         |
++---------------+-----------------------------------------------------+
+
 Generates non-copyrighted randomized assets so `sm64 <https://github.com/n64decomp/sm64>`_ and `sm64-port <https://github.com/sm64-port/sm64-port>`_ can be used
 for educational purposes.
 
@@ -222,3 +230,14 @@ Other
 ~~~~~~
 
 * The SM64 Decomp Discord: https://discord.gg/DuYH3Fh
+
+.. |Pypi| image:: https://img.shields.io/pypi/v/sm64-random-assets.svg
+    :target: https://pypi.python.org/pypi/sm64-random-assets
+.. |PypiDownloads| image:: https://img.shields.io/pypi/dm/sm64-random-assets.svg
+    :target: https://pypistats.org/packages/sm64-random-assets
+.. |ReadTheDocs| image:: https://readthedocs.org/projects/sm64-random-assets/badge/?version=latest
+    :target: http://sm64-random-assets.readthedocs.io/en/latest/
+.. |GithubActions| image:: https://github.com/Erotemic/sm64-random-assets/actions/workflows/tests.yml/badge.svg
+    :target: https://github.com/Erotemic/sm64-random-assets/actions?query=branch%3Amain
+.. |Codecov| image:: https://codecov.io/github/Erotemic/sm64-random-assets/badge.svg?branch=main&service=github
+    :target: https://codecov.io/github/Erotemic/sm64-random-assets?branch=main
