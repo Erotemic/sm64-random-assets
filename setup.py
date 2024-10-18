@@ -106,7 +106,7 @@ def parse_requirements(fname="requirements.txt", versions=False):
                 info["package"] = line.split("#egg=")[1]
             else:
                 if "--find-links" in line:
-                    # setuptools doesnt seem to handle find links
+                    # setuptools does not seem to handle find links
                     line = line.split("--find-links")[0]
                 if ";" in line:
                     pkgpart, platpart = line.split(";")
@@ -239,14 +239,13 @@ if __name__ == "__main__":
     setupkw["long_description_content_type"] = "text/x-rst"
     setupkw["license"] = "Apache 2"
     setupkw["packages"] = find_packages(".")
-    setupkw["python_requires"] = ">=3.8"
+    setupkw["python_requires"] = ">=3.9"
     setupkw["classifiers"] = [
         "Development Status :: 1 - Planning",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Utilities",
         "License :: OSI Approved :: Apache Software License",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
@@ -255,7 +254,7 @@ if __name__ == "__main__":
     ]
     setupkw["package_data"] = {
         "": ["requirements/*.txt"],
-        "sm64_random_assets.rc": ["asset_metadata.json"],
+        "sm64_random_assets": {"rc": ["asset_metadata.json"]},
     }
     setupkw["entry_points"] = {
         "console_scripts": [

@@ -12,7 +12,7 @@ repo_name = "sm64-random-assets"
 
 rel_mod_parent_dpath = "."
 os = [ "linux", "osx", "win",]
-min_python = '3.8'
+min_python = '3.9'
 version = "{mod_dpath}/__init__.py::__version__"
 author = "Jon Crall"
 author_email = "erotemic@gmail.com"
