@@ -15,6 +15,7 @@ os = [ "linux", "osx", "win",]
 min_python = '3.9'
 version = "{mod_dpath}/__init__.py::__version__"
 author = "Jon Crall"
+ci_cpython_versions = ['3.9', '3.10', '3.11', '3.12']
 author_email = "erotemic@gmail.com"
 description = "The sm64-random-assets module"
 license = "Apache 2"
