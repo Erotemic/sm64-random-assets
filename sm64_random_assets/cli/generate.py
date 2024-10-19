@@ -382,4 +382,4 @@ if __name__ == '__main__':
         make VERSION=us -j16
         build/us_pc/sm64.us
     """
-    __cli__.main()
+    main()
