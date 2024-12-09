@@ -180,6 +180,8 @@ Resources
 
 * Learning the basics slides: https://docs.google.com/presentation/d/1Ab8wlJfT7b7TlbOohgvsX43TqSAYQQ3azuJTkNdaB0c/edit?pli=1#slide=id.p
 
+* Educational Templates: https://github.com/Erotemic/cc_game_templates
+
 * High resolution redrawn textures: https://github.com/TechieAndroid/sm64redrawn
 
 * SM64 Randomizer: https://github.com/andrelikesdogs/sm64-randomizer
