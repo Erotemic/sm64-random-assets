@@ -15,6 +15,14 @@ def test_default_registry_prefers_semantic_for_power_meter_at_high_quality():
     assert realization.id == 'human.semantic'
 
 
+def test_default_registry_uses_pil_textures_for_generic_assets_at_high_quality():
+    policy = image_generator.build_realization_policy(target_quality=1.0)
+    info = {'fname': 'levels/bitdw/stone_floor.rgba16.png', 'shape': [32, 32, 4]}
+    identity = determine_asset_identity(info, name_to_text_lut=human_semantic.name_to_text_lut)
+    realization = policy.resolve(identity, info)
+    assert realization.id == 'openai.pil-textures'
+
+
 def test_validate_generated_image_enforces_shape_and_dtype():
     import numpy as np
     img = np.ones((8, 8, 1), dtype=np.float32)

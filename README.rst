@@ -289,3 +289,5 @@ The original zero-filled music behavior remains available::
 
 The generated music realization is registered as ``openai.simple-music`` with
 version ``1`` and estimated quality ``0.60``.
+
+At higher `--target_quality` values, unmatched PNG textures are now produced by a deterministic PIL-based procedural texture generator instead of pure random noise. Semantic human-authored glyph and HUD textures still take precedence when available.

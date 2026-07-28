@@ -12,6 +12,7 @@ from sm64_random_assets.realizations import (
 from sm64_random_assets.image_catalog import determine_asset_identity
 from sm64_random_assets.image_realizations.human_joncrall import random as human_random
 from sm64_random_assets.image_realizations.human_joncrall import semantic as human_semantic
+from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import pil_textures
 
 
 def _semantic_supports(identity, info):
@@ -42,6 +43,15 @@ def default_image_realization_registry():
             generator=human_semantic.generate_semantic_image_data,
             supports=_semantic_supports,
             notes='Original human-authored semantic and glyph generator.',
+        ))
+        registry.register(AssetRealization(
+            id='openai.pil-textures',
+            author='openai:gpt-5.6-thinking',
+            version=1,
+            estimated_quality=0.45,
+            generator=pil_textures.render_pil_texture,
+            families=frozenset({'*'}),
+            notes='Deterministic PIL-authored procedural textures for all remaining image assets.',
         ))
         _DEFAULT_IMAGE_REALIZATION_REGISTRY = registry
     return _DEFAULT_IMAGE_REALIZATION_REGISTRY
