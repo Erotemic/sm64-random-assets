@@ -18,6 +18,7 @@ def test_texture_subject_and_role_classification():
     assert classify_texture_subject('actors/yoshi_egg/yoshi_egg_0_unused.rgba16.png') == 'egg'
     assert classify_texture_subject('actors/coin/coin_front.ia16.png') == 'coin'
     assert classify_texture_subject('textures/generic/bob_textures.00000.rgba16.png') == 'grass'
+    assert classify_texture_subject('levels/bob/0.rgba16.png') == 'portrait'
     assert classify_texture_subject('actors/mario/mario_eyes_center.rgba16.png') == 'eye'
     assert classify_texture_role('actors/door/metal_door_overlay.rgba16.png') == 'overlay'
     assert classify_texture_role('actors/water_bubble/water_bubble.rgba16.png') == 'sprite'
@@ -35,6 +36,9 @@ def test_texture_intent_exposes_family_and_motif():
     assert water.motif == 'sea_water'
     grass = analyze_texture_intent('textures/grass/wf_textures.00000.rgba16.png')
     assert grass.motif == 'wildflower_grass'
+    bob_portrait = analyze_texture_intent('levels/bob/0.rgba16.png')
+    assert bob_portrait.role == 'portrait'
+    assert bob_portrait.motif == 'bobomb_battlefield_portrait'
 
 
 def test_render_pil_texture_is_deterministic_and_nontrivial():
@@ -92,3 +96,19 @@ def test_render_mario_eye_water_and_grass_have_semantic_structure():
     assert water[:, :, 2].mean() > water[:, :, 1].mean() > water[:, :, 0].mean()
     assert grass[:, :, 1].mean() > grass[:, :, 0].mean()
     assert grass[:, :, 1].std() > 10
+
+
+
+def test_render_bobomb_battlefield_portrait_is_scenic():
+    top = render_pil_texture('levels/bob/0.rgba16.png', (32, 32, 4), np.random.RandomState(0))
+    bottom = render_pil_texture('levels/bob/3.rgba16.png', (32, 32, 4), np.random.RandomState(0))
+    assert top.shape == (32, 32, 4)
+    assert bottom.shape == (32, 32, 4)
+    # Top panel should contain clear sky content and more than just monotone grass.
+    assert (top[:, :, 2] > top[:, :, 1]).mean() > 0.25
+    # Bottom panel should contain rich ground detail and be more varied than a simple filler texture.
+    lower = bottom[bottom.shape[0] // 2 :, :, :3]
+    assert lower[:, :, 1].mean() > lower[:, :, 2].mean() * 0.65
+    assert np.unique(bottom.reshape(-1, 4), axis=0).shape[0] > 20
+    # The two tiles should be meaningfully different parts of the portrait.
+    assert np.abs(top.astype(int) - bottom.astype(int)).mean() > 20

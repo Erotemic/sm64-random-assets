@@ -138,6 +138,7 @@ _PATTERN_RULES = [
     ('textures/generic/bob_textures.*', dict(subject='grass', motif='battlefield_grass')),
     ('textures/generic/*',         dict(subject='stone', motif='generic')),
     ('levels/bob/*',               dict(subject='grass', motif='battlefield_grass')),
+    ('levels/bob/*.rgba16.png',    dict(subject='portrait', role='portrait', motif='bobomb_battlefield_portrait')),
     ('textures/effect/lava_bubble*', dict(subject='lava', role='sprite', motif='bubble')),
     ('textures/effect/flower*',    dict(subject='flower', motif='flower')),
     # level-local fallbacks
@@ -217,7 +218,7 @@ def analyze_texture_intent(fname: str):
         defaults['subject'] = 'water'
     if 'lava' in low and defaults['subject'] == 'generic':
         defaults['subject'] = 'lava'
-    if (low.startswith('levels/bob/') or low.startswith('textures/generic/bob_textures.')) and defaults['subject'] in {'generic', 'stone'}:
+    if (low.startswith('levels/bob/') or low.startswith('textures/generic/bob_textures.')) and defaults['subject'] in {'generic', 'stone'} and defaults['role'] != 'portrait':
         defaults['subject'] = 'grass'
         defaults['motif'] = 'battlefield_grass'
     if family == 'coin' and defaults['subject'] == 'generic':
@@ -891,6 +892,135 @@ def _draw_tree_sprite(draw, w, h, colors, rng):
 # ---------------------------------
 
 
+
+def _portrait_tile_index(low: str):
+    stem = low.rsplit('/', 1)[-1].split('.', 1)[0]
+    try:
+        return int(stem)
+    except Exception:
+        return 0
+
+
+def _ellipse_xy(cx, cy, rx, ry):
+    return (int(cx - rx), int(cy - ry), int(cx + rx), int(cy + ry))
+
+
+def _draw_round_bomb(draw, cx, cy, scale, body, fuse, shoe, eye='dot'):
+    draw.ellipse(_ellipse_xy(cx, cy, 11 * scale, 11 * scale), fill=body, outline=(24, 24, 24), width=max(1, int(scale)))
+    # shoes
+    draw.ellipse(_ellipse_xy(cx - 6 * scale, cy + 10 * scale, 5 * scale, 3 * scale), fill=shoe, outline=(90, 70, 18))
+    draw.ellipse(_ellipse_xy(cx + 6 * scale, cy + 10 * scale, 5 * scale, 3 * scale), fill=shoe, outline=(90, 70, 18))
+    # wind-up key / fuse
+    draw.line((int(cx + 10 * scale), int(cy - 6 * scale), int(cx + 15 * scale), int(cy - 13 * scale)), fill=fuse, width=max(1, int(scale)))
+    draw.ellipse(_ellipse_xy(cx + 16 * scale, cy - 14 * scale, 2 * scale, 2 * scale), fill=(255, 212, 82), outline=(140, 90, 12))
+    # eyes
+    if eye == 'friendly':
+        draw.ellipse(_ellipse_xy(cx - 4 * scale, cy - 1 * scale, 1.4 * scale, 2.2 * scale), fill=(255, 255, 255))
+        draw.ellipse(_ellipse_xy(cx + 1 * scale, cy - 1 * scale, 1.4 * scale, 2.2 * scale), fill=(255, 255, 255))
+        draw.point((int(cx - 4 * scale), int(cy)), fill=(20, 20, 20))
+        draw.point((int(cx + 1 * scale), int(cy)), fill=(20, 20, 20))
+    else:
+        draw.ellipse(_ellipse_xy(cx - 4 * scale, cy - 1 * scale, 1.3 * scale, 2.1 * scale), fill=(255, 255, 255))
+        draw.ellipse(_ellipse_xy(cx + 1 * scale, cy - 1 * scale, 1.3 * scale, 2.1 * scale), fill=(255, 255, 255))
+        draw.polygon([(int(cx - 5 * scale), int(cy - 3 * scale)), (int(cx - 2 * scale), int(cy)), (int(cx - 5 * scale), int(cy + 2 * scale))], fill=(20, 20, 20))
+        draw.polygon([(int(cx + 3 * scale), int(cy - 3 * scale)), (int(cx), int(cy)), (int(cx + 3 * scale), int(cy + 2 * scale))], fill=(20, 20, 20))
+
+
+def _render_bobomb_battlefield_portrait_rgba(fname: str, shape, rng):
+    h, w = int(shape[0]), int(shape[1])
+    tile = _portrait_tile_index(fname.lower())
+    cols, rows = 3, 2
+    scene = Image.new('RGBA', (w * cols, h * rows), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(scene)
+    sw, sh = scene.size
+
+    # Sky gradient
+    for y in range(sh):
+        t = y / max(1, sh - 1)
+        if t < 0.58:
+            color = _mix((108, 177, 241), (211, 239, 255), t / 0.58)
+        else:
+            color = _mix((211, 239, 255), (164, 210, 126), (t - 0.58) / 0.42)
+        draw.line((0, y, sw, y), fill=color)
+
+    # clouds
+    for cx, cy, rx, ry in [
+        (sw * 0.18, sh * 0.17, sw * 0.10, sh * 0.07),
+        (sw * 0.65, sh * 0.14, sw * 0.12, sh * 0.08),
+        (sw * 0.87, sh * 0.24, sw * 0.08, sh * 0.05),
+    ]:
+        for dx, dy, sx, sy in [(-0.35, 0, 0.7, 0.6), (0, -0.08, 0.8, 0.7), (0.35, 0, 0.65, 0.55)]:
+            draw.ellipse(_ellipse_xy(cx + dx * rx, cy + dy * ry, rx * sx, ry * sy), fill=(255, 255, 255, 225))
+
+    # distant mountains / floating island
+    mountain = [(sw * 0.34, sh * 0.60), (sw * 0.52, sh * 0.18), (sw * 0.68, sh * 0.60)]
+    draw.polygon(mountain, fill=(127, 172, 88), outline=(78, 113, 59))
+    draw.polygon([(sw * 0.47, sh * 0.45), (sw * 0.52, sh * 0.29), (sw * 0.57, sh * 0.45)], fill=(170, 202, 116))
+    # floating island
+    island = [(sw * 0.73, sh * 0.31), (sw * 0.84, sh * 0.23), (sw * 0.94, sh * 0.30), (sw * 0.88, sh * 0.37), (sw * 0.76, sh * 0.36)]
+    draw.polygon(island, fill=(133, 177, 94), outline=(74, 103, 54))
+    draw.rectangle((int(sw * 0.81), int(sh * 0.18), int(sw * 0.82), int(sh * 0.28)), fill=(100, 70, 44))
+    draw.ellipse(_ellipse_xy(sw * 0.815, sh * 0.14, sw * 0.035, sh * 0.05), fill=(79, 138, 67), outline=(48, 88, 40))
+
+    # rolling hills
+    hill_specs = [
+        ((-sw * 0.05, sh * 0.50, sw * 0.40, sh * 1.02), (113, 176, 86)),
+        ((sw * 0.20, sh * 0.47, sw * 0.78, sh * 1.05), (106, 170, 78)),
+        ((sw * 0.58, sh * 0.50, sw * 1.08, sh * 1.04), (117, 181, 88)),
+    ]
+    for box, fill in hill_specs:
+        draw.ellipse(tuple(int(v) for v in box), fill=fill, outline=(64, 111, 46))
+
+    # path to mountain
+    path = [
+        (sw * 0.44, sh * 0.99), (sw * 0.57, sh * 0.99), (sw * 0.54, sh * 0.78),
+        (sw * 0.60, sh * 0.66), (sw * 0.55, sh * 0.54), (sw * 0.53, sh * 0.40),
+        (sw * 0.49, sh * 0.32), (sw * 0.44, sh * 0.42), (sw * 0.45, sh * 0.58),
+        (sw * 0.39, sh * 0.69), (sw * 0.42, sh * 0.82),
+    ]
+    draw.polygon([(int(x), int(y)) for x, y in path], fill=(211, 181, 110), outline=(166, 135, 80))
+
+    # ground details
+    for x in range(0, sw, max(4, w // 6)):
+        y0 = int(sh * 0.72 + rng.randint(-3, 4))
+        y1 = int(sh * 0.96 + rng.randint(-2, 3))
+        draw.line((x, y1, x + rng.randint(-3, 4), y0), fill=(88, 141, 60), width=1)
+    for _ in range(max(18, sw * sh // 900)):
+        cx = int(rng.randint(0, sw))
+        cy = int(rng.randint(int(sh * 0.56), sh))
+        petal = (250, 246, 235) if rng.rand() > 0.5 else (255, 224, 92)
+        for dx, dy in [(-2, 0), (2, 0), (0, -2), (0, 2)]:
+            draw.ellipse((cx + dx - 1, cy + dy - 1, cx + dx + 1, cy + dy + 1), fill=petal)
+        draw.ellipse((cx - 1, cy - 1, cx + 1, cy + 1), fill=(232, 180, 60))
+
+    # fence and cannon
+    fence_y = int(sh * 0.70)
+    for fx in range(int(sw * 0.03), int(sw * 0.27), max(8, w // 3)):
+        draw.rectangle((fx, fence_y, fx + 2, fence_y + 10), fill=(104, 76, 44))
+    draw.line((int(sw * 0.03), fence_y + 2, int(sw * 0.26), fence_y + 2), fill=(126, 92, 53), width=2)
+    draw.line((int(sw * 0.03), fence_y + 7, int(sw * 0.26), fence_y + 7), fill=(126, 92, 53), width=2)
+    draw.ellipse(_ellipse_xy(sw * 0.83, sh * 0.74, sw * 0.055, sh * 0.06), fill=(52, 61, 70), outline=(18, 18, 20))
+    draw.polygon([(int(sw * 0.79), int(sh * 0.73)), (int(sw * 0.92), int(sh * 0.67)), (int(sw * 0.90), int(sh * 0.76))], fill=(65, 74, 82), outline=(20, 20, 20))
+
+    # bob-ombs
+    _draw_round_bomb(draw, sw * 0.24, sh * 0.77, min(w, h) / 32 * 0.9, (210, 75, 82), (255, 228, 90), (255, 192, 68), eye='friendly')
+    _draw_round_bomb(draw, sw * 0.67, sh * 0.80, min(w, h) / 32 * 0.95, (40, 47, 57), (255, 192, 84), (243, 191, 68), eye='dot')
+
+    # chain chomp silhouette hint on the left hill
+    ccx, ccy = sw * 0.10, sh * 0.64
+    draw.ellipse(_ellipse_xy(ccx, ccy, sw * 0.05, sh * 0.05), fill=(31, 38, 47), outline=(8, 8, 8))
+    for i in range(4):
+        x = ccx + (i + 1) * sw * 0.03
+        y = ccy + (i % 2) * sh * 0.01
+        draw.ellipse(_ellipse_xy(x, y, sw * 0.010, sh * 0.010), fill=(179, 185, 190), outline=(80, 84, 88))
+
+    # Crop tile from a 3x2 layout.
+    tile_map = {0: (0, 0), 1: (1, 0), 2: (2, 0), 3: (0, 1), 4: (1, 1)}
+    col, row = tile_map.get(tile, (tile % cols, min(rows - 1, tile // cols)))
+    tile_img = scene.crop((col * w, row * h, (col + 1) * w, (row + 1) * h))
+    return np.array(tile_img, dtype=np.uint8)
+
+
 def _render_subject(draw, w, h, intent: TextureIntent, colors, rng):
     subject = intent.subject
     role = intent.role
@@ -956,6 +1086,11 @@ def _render_subject(draw, w, h, intent: TextureIntent, colors, rng):
 
     if role == 'skybox':
         _draw_sky(draw, w, h, colors, rng, cloudy=True)
+        return
+
+    if role == 'portrait' and intent.motif == 'bobomb_battlefield_portrait':
+        rgba = _render_bobomb_battlefield_portrait_rgba(intent.fname, (h, w, 4), rng)
+        draw._image.paste(Image.fromarray(rgba, mode='RGBA'), (0, 0))
         return
 
     # subject-driven tileable / actor-surface textures
@@ -1042,11 +1177,13 @@ def render_pil_texture(fname: str, shape, rng=None, identity=None):
     intent = analyze_texture_intent(fname)
     colors = _palette(intent.subject, intent.motif, intent.family, local_rng)
 
-    img = Image.new('RGBA', (w, h), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-    _render_subject(draw, w, h, intent, colors, local_rng)
-
-    rgba = np.array(img, dtype=np.uint8)
+    if intent.role == 'portrait' and intent.motif == 'bobomb_battlefield_portrait':
+        rgba = _render_bobomb_battlefield_portrait_rgba(fname, (h, w, 4), local_rng)
+    else:
+        img = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(img)
+        _render_subject(draw, w, h, intent, colors, local_rng)
+        rgba = np.array(img, dtype=np.uint8)
     req_channels = shape[2] if len(shape) == 3 else 1
     if req_channels == 4:
         return rgba

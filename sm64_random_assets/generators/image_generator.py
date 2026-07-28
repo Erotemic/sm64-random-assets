@@ -59,11 +59,11 @@ def default_image_realization_registry():
         registry.register(AssetRealization(
             id='openai.pil-textures',
             author='openai:gpt-5.6-thinking',
-            version=5,
-            estimated_quality=0.68,
+            version=6,
+            estimated_quality=0.69,
             generator=pil_textures.render_pil_texture,
             families=frozenset({'*'}),
-            notes='Deterministic PIL-authored procedural textures with methodical family, role, motif, and material inference for broad clean-room asset coverage, including improved coins, bob-ombs, Mario eyes, water textures, and grass textures.',
+            notes='Deterministic PIL-authored procedural textures with methodical family, role, motif, and material inference for broad clean-room asset coverage, including improved coins, bob-ombs, Mario eyes, water textures, grass textures, and a dedicated Bob-omb Battlefield portrait renderer.',
         ))
         _DEFAULT_IMAGE_REALIZATION_REGISTRY = registry
     return _DEFAULT_IMAGE_REALIZATION_REGISTRY

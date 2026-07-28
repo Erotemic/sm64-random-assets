@@ -299,3 +299,5 @@ The latest refinement makes this more methodical and family-aware: the generator
 The latest PIL-texture pass also explicitly defers to the human-authored glyph and HUD/life-bar generator by quality rating, improves Bob-omb / King Bob-omb surface rendering, adds specialized coin textures, and treats Bob-omb Battlefield texture groups as grass rather than generic stone.
 
 The realization policy now treats the human semantic generator as the preferred source for glyphs and the HUD life bar, while semantic character-part textures such as eyes are left to the PIL semantic renderer. The PIL pass also now includes a better Mario-eye treatment and richer water / grass variants.
+
+Bob-omb Battlefield portrait tiles now use a dedicated scenic portrait renderer instead of the generic battlefield-grass treatment, so the course portrait can read like a real landscape painting with level-themed landmarks.
