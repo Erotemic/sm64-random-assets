@@ -25,4 +25,4 @@ We aim to adhere to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 ## [Version 0.0.1] -
 
 ### Added
-* Initial version
+* Initial version* The PIL texture generator now uses a methodical semantic-intent system (family + role + motif + subject) to render more interesting clean-room art for actor parts, surfaces, overlays, and VFX sprites.

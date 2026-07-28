@@ -11,10 +11,21 @@ from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking.pil_textures 
 def test_texture_subject_and_role_classification():
     assert classify_texture_subject('levels/water/water_01.rgba16.png') == 'water'
     assert classify_texture_subject('actors/door/metal_door.rgba16.png') == 'metal'
-    assert classify_texture_subject('actors/goomba/goomba_face_blink.rgba16.png') == 'eye'
+    assert classify_texture_subject('actors/bowser/bowser_shell.rgba16.png') == 'shell'
+    assert classify_texture_subject('actors/penguin/penguin_beak.rgba16.png') == 'beak'
+    assert classify_texture_subject('actors/bookend/bookend_pages.rgba16.png') == 'pages'
+    assert classify_texture_subject('actors/mad_piano/mad_piano_keys.rgba16.png') == 'piano_keys'
+    assert classify_texture_subject('actors/yoshi_egg/yoshi_egg_0_unused.rgba16.png') == 'egg'
     assert classify_texture_role('actors/door/metal_door_overlay.rgba16.png') == 'overlay'
     assert classify_texture_role('actors/water_bubble/water_bubble.rgba16.png') == 'sprite'
-    assert analyze_texture_intent('actors/door/metal_door.rgba16.png')['role'] == 'door'
+    assert classify_texture_role('actors/mario/mario_eyes_closed.rgba16.png') == 'face'
+
+
+def test_texture_intent_exposes_family_and_motif():
+    intent = analyze_texture_intent('actors/lakitu_cameraman/lakitu_camera_lens.rgba16.png')
+    assert intent.family == 'lakitu_cameraman'
+    assert intent.subject == 'lens'
+    assert intent.motif == 'lens'
 
 
 def test_render_pil_texture_is_deterministic_and_nontrivial():
@@ -42,3 +53,12 @@ def test_render_sprite_uses_transparency():
     assert arr.shape == (32, 32, 4)
     assert arr[:, :, 3].min() == 0
     assert arr[:, :, 3].max() > 0
+
+
+def test_render_semantic_part_textures_have_structure():
+    egg = render_pil_texture('actors/yoshi_egg/yoshi_egg_0_unused.rgba16.png', (32, 32, 4), np.random.RandomState(0))
+    keys = render_pil_texture('actors/mad_piano/mad_piano_keys.rgba16.png', (32, 32, 4), np.random.RandomState(0))
+    shell = render_pil_texture('actors/bowser/bowser_shell.rgba16.png', (32, 32, 4), np.random.RandomState(0))
+    assert egg[:, :, 3].max() > 0
+    assert keys[:, :, 0].std() > 20
+    assert shell[:, :, 1].mean() > shell[:, :, 0].mean()
