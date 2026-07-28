@@ -103,7 +103,7 @@ class GenerateAssetsConfig(scfg.DataConfig):
         '''
         run the compare debug tool. Can also be a YAML configuration'
         '''))
-    target_quality = scfg.Value(0.0, type=float, help='Select the image realization nearest to this quality score.')
+    target_quality = scfg.Value(0.0, type=float, help='Select each asset realization nearest to this quality score.')
     include_authors = scfg.Value(['*'], nargs='+', help='Author glob patterns to include when selecting image realizations.')
     exclude_authors = scfg.Value([], nargs='+', help='Author glob patterns to exclude when selecting image realizations.')
 
@@ -175,12 +175,22 @@ class GenerateAssetsConfig(scfg.DataConfig):
 
         from sm64_random_assets.generators import image_generator
         from sm64_random_assets.generators import audio_generator
-        realization_policy = image_generator.build_realization_policy(
+        image_realization_policy = image_generator.build_realization_policy(
+            target_quality=args.target_quality,
+            include_authors=args.include_authors,
+            exclude_authors=args.exclude_authors,
+        )
+        audio_realization_policy = audio_generator.build_realization_policy(
             target_quality=args.target_quality,
             include_authors=args.include_authors,
             exclude_authors=args.exclude_authors,
         )
         from sm64_random_assets.generators import binary_generator
+        binary_realization_policy = binary_generator.build_realization_policy(
+            target_quality=args.target_quality,
+            include_authors=args.include_authors,
+            exclude_authors=args.exclude_authors,
+        )
         from sm64_random_assets.util.util_pattern import MultiPattern
 
         # Path to the clone of sm64-port we will generate assets for.
@@ -286,10 +296,14 @@ class GenerateAssetsConfig(scfg.DataConfig):
 
         # Generate randomized / custom versions for each asset
         key_to_asset_generator = {
-            'png': lambda output_dpath, info: image_generator.generate_image(output_dpath, info, realization_policy=realization_policy),
-            'aiff': audio_generator.generate_audio,
-            'm64': binary_generator.generate_binary,  # these are music files for the game.
-            'bin': binary_generator.generate_binary,
+            'png': lambda output_dpath, info: image_generator.generate_image(
+                output_dpath, info, realization_policy=image_realization_policy),
+            'aiff': lambda output_dpath, info: audio_generator.generate_audio(
+                output_dpath, info, realization_policy=audio_realization_policy),
+            'm64': lambda output_dpath, info: binary_generator.generate_binary(
+                output_dpath, info, realization_policy=binary_realization_policy),
+            'bin': lambda output_dpath, info: binary_generator.generate_binary(
+                output_dpath, info, realization_policy=binary_realization_policy),
         }
 
         for key, generate_asset in key_to_asset_generator.items():

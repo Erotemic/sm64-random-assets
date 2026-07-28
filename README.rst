@@ -246,3 +246,46 @@ Other
     :target: https://github.com/Erotemic/sm64-random-assets/actions?query=branch%3Amain
 .. |Codecov| image:: https://codecov.io/github/Erotemic/sm64-random-assets/badge.svg?branch=main&service=github
     :target: https://codecov.io/github/Erotemic/sm64-random-assets?branch=main
+
+
+Audio Quality
+-------------
+
+The quality lever also controls generated AIFF samples. Quality ``0`` keeps
+Jon Crall's original full-range random audio realization. Higher targets select
+a deterministic clean-room synthesizer authored by ``openai:gpt-5.6-thinking``.
+It uses the sample filename to choose conservative synthesized instruments,
+percussion, vocal-like chirps, or softened effects while preserving the exact
+sample length and rate required by the game.
+
+For the best currently registered image and audio realizations::
+
+    python generate_assets.py --dst tpl/sm64 --target_quality=1
+
+To preserve only the original human-authored realizations::
+
+    python generate_assets.py --dst tpl/sm64 --target_quality=1 --include_authors='human:*'
+
+This improves sample quality only. Music sequence composition in the ``.m64``
+files remains unchanged for now.
+
+
+Simple generated music
+----------------------
+
+At higher quality levels the generator now emits compact clean-room M64
+sequences instead of zero-filled music files.  The initial realization is
+intentionally modest: a melody and bass voice, selected from suitable pitched
+instruments in each target sound bank.  Level and menu tracks loop, while
+short event and cutscene tracks end normally.
+
+The default build selects these assets::
+
+    ./build.sh
+
+The original zero-filled music behavior remains available::
+
+    TARGET_QUALITY=0 ./build.sh
+
+The generated music realization is registered as ``openai.simple-music`` with
+version ``1`` and estimated quality ``0.60``.
