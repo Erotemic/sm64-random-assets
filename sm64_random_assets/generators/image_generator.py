@@ -47,11 +47,11 @@ def default_image_realization_registry():
         registry.register(AssetRealization(
             id='openai.pil-textures',
             author='openai:gpt-5.6-thinking',
-            version=1,
-            estimated_quality=0.45,
+            version=2,
+            estimated_quality=0.55,
             generator=pil_textures.render_pil_texture,
             families=frozenset({'*'}),
-            notes='Deterministic PIL-authored procedural textures for all remaining image assets.',
+            notes='Deterministic PIL-authored procedural textures with filename-aware materials and roles for all remaining image assets.',
         ))
         _DEFAULT_IMAGE_REALIZATION_REGISTRY = registry
     return _DEFAULT_IMAGE_REALIZATION_REGISTRY

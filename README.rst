@@ -291,3 +291,5 @@ The generated music realization is registered as ``openai.simple-music`` with
 version ``1`` and estimated quality ``0.60``.
 
 At higher `--target_quality` values, unmatched PNG textures are now produced by a deterministic PIL-based procedural texture generator instead of pure random noise. Semantic human-authored glyph and HUD textures still take precedence when available.
+
+The PIL texture realization now performs a more semantic filename-based interpretation. It distinguishes between tileable surfaces, doors, boxes, signs, eyes/faces, overlays, and particle-like sprites, and then renders material-appropriate textures such as masonry, brick, wood grain, water ripples, lava crust, brushed metal, sand ripples, snow drifts, clouded sky, and transparent bubble/particle sprites.
