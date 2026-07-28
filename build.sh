@@ -21,7 +21,7 @@ To build a PC port with original assets
     ./dev/grab_reference_baserom.sh ./baserom.us.z64
 
     export EXTERNAL_ROM_FPATH=baserom.us.z64
-    export TARGET=pc
+    export TARGET=sm64-port
     export BUILD_REFERENCE=1
     export COMPARE=1
     export NUM_CPUS=all
@@ -58,13 +58,15 @@ BUILD_REFERENCE=${BUILD_REFERENCE:=0}
 
 EXTERNAL_ROM_FPATH=${EXTERNAL_ROM_FPATH:=""}
 
-# TARGET can be rom or pc
-#TARGET=${TARGET:="rom"}
-TARGET=${TARGET:="pc"}
+# TARGET names a supported game repository. The playable PC port is the default.
+TARGET=${TARGET:="sm64-port"}
 
 TEST_LOCALLY=${TEST_LOCALLY:=0}
 
 COMPARE=${COMPARE:=0}
+TARGET_QUALITY=${TARGET_QUALITY:=1.0}
+INCLUDE_AUTHORS=${INCLUDE_AUTHORS:='["*"]'}
+EXCLUDE_AUTHORS=${EXCLUDE_AUTHORS:='[]'}
 
 # Default to an existing emulator if possible
 if command -v mupen64plus &>/dev/null; then
@@ -121,6 +123,9 @@ python3 -c "if 1:
     BUILD_REFERENCE=$BUILD_REFERENCE
     EXTERNAL_ROM_FPATH=$EXTERNAL_ROM_FPATH
     COMPARE=$COMPARE
+    TARGET_QUALITY=$TARGET_QUALITY
+    INCLUDE_AUTHORS=$INCLUDE_AUTHORS
+    EXCLUDE_AUTHORS=$EXCLUDE_AUTHORS
     ASSET_CONFIG=\"$ASSET_CONFIG
     \"
 
@@ -254,6 +259,9 @@ python3 -m sm64_random_assets generate \
     --reference "$REFERENCE_DPATH" \
     --hybrid_mode="0" \
     --compare="$COMPARE" \
+    --target_quality="$TARGET_QUALITY" \
+    --include_authors="$INCLUDE_AUTHORS" \
+    --exclude_authors="$EXCLUDE_AUTHORS" \
     --asset_config "$ASSET_CONFIG"
 
 

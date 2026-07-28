@@ -2,28 +2,27 @@ import numpy as np
 import parse
 import kwimage
 from sm64_random_assets.util import util_random
+from sm64_random_assets.realizations import RealizationPolicy
+from sm64_random_assets.realizations import RealizationRegistry
 
 
-def generate_image(output_dpath, info):
+def generate_image(output_dpath, info, realization_policy=None):
     """
-    Driver function used to generate an image and determine which specialized
-    generator function needs to be called. If you want to write your own custom
-    logic to generate an asset, then you need to register it here.
+    Generate an image using the registered realization nearest to the target
+    quality.
+
+    The current human-authored semantic generator and the original random
+    fallback are both registered realizations. Future generated or curated
+    implementations can be added without replacing either one.
 
     Args:
         output_dpath (Path): where to write the generated image file
         info (dict): a dictionary from asset_metadata.json
+        realization_policy (RealizationPolicy | dict | None):
+            quality target and author filters
 
     Returns:
-        dict: containing keys: status, out_fpath
-
-    Notes:
-        Different texture types
-        ia1
-        ia4
-        ia8
-        ia16
-        rgba16
+        dict: generation status and selected realization metadata
 
     Example:
         >>> from sm64_random_assets.generators.image_generator import *  # NOQA
@@ -37,65 +36,46 @@ def generate_image(output_dpath, info):
         >>> out = generate_image(output_dpath, info)
         >>> assert out['status'] == 'generated'
         >>> assert out['out_fpath'].exists()
+        >>> assert out['realization_author'] == 'human:joncrall'
     """
     if info.get('shape', None) is None:
         return {'status': 'value-error: image has no shape'}
     shape = info['shape']
 
-    # Hack so we can use cv2 imwrite. Should not be needed when pil backend
-    # lands in kwimage.
+    # Keep the manifest shape intact. Two-channel IA textures are supported by
+    # the PIL-backed writer even though older versions of this code originally
+    # carried a cv2-specific workaround here.
     if len(shape) == 3 and shape[2] == 2:
         shape = list(shape)
-        # shape[2] = 4
 
-    # Create a determenistic random state based on the filename.
-    rng = util_random.ensure_rng(info['fname'])
+    policy = RealizationPolicy.coerce(realization_policy)
+    selected = None
+    new_data = None
+    attempted_ids = []
+    for realization in IMAGE_REALIZATION_REGISTRY.require_ranked(info, policy):
+        attempted_ids.append(realization.id)
+        # Reset the filename-derived RNG for every attempt. A realization that
+        # declines an asset must not perturb the fallback's deterministic bytes.
+        rng = util_random.ensure_rng(info['fname'])
+        new_data = realization.generator(info['fname'], shape, rng)
+        if new_data is not None:
+            selected = realization
+            break
+
+    if selected is None:
+        raise RuntimeError(
+            'Compatible image realizations declined asset {!r}: {}'.format(
+                info['fname'], attempted_ids))
 
     out_fpath = output_dpath / info['fname']
     out_fpath.parent.ensuredir()
-
-    new_data = handle_special_texture(info['fname'], shape, rng)
-    if new_data is None:
-        if out_fpath.name.endswith('.ia1.png'):
-            new_data = (rng.rand(*shape) * 255).astype(np.uint8)
-            # new_data[new_data < 127] = 0
-            # new_data[new_data >= 127] = 255
-            # new_data[:] = 0
-        elif out_fpath.name.endswith('.ia4.png'):
-            new_data = (rng.rand(*shape) * 255).astype(np.uint8)
-            # new_data[new_data < 127] = 0
-            # new_data[new_data >= 127] = 255
-            # new_data[:] = 0
-        elif out_fpath.name.endswith('.ia8.png'):
-            # Its just these ones that cause the game to freeze
-            # on my older CPU when there is too much variation in the data
-            new_data = (rng.rand(*shape) * 255).astype(np.uint8)
-            new_data[new_data < 127] = 0
-            new_data[new_data >= 127] = 255
-            new_data[:] = 0
-        elif out_fpath.name.endswith('.ia16.png'):
-            new_data = (rng.rand(*shape) * 255).astype(np.uint8)
-            # new_data[new_data < 127] = 0
-            # new_data[new_data >= 127] = 255
-        elif out_fpath.name.endswith('.rgba16.png'):
-            new_data = (rng.rand(*shape) * 255).astype(np.uint8)
-        else:
-            new_data = (rng.rand(*shape) * 255).astype(np.uint8)
-
-        # Reduce the size of textures
-        smaller = kwimage.imresize(new_data, scale=0.5, interpolation='nearest')
-        new_data = kwimage.imresize(smaller, dsize=shape[0:2][::-1], interpolation='nearest')
-
-        # new_data[..., 0:3] = 0
-        # new_data[..., 3] = 0
-        out = {'status': 'randomized'}
-    else:
-        out = {'status': 'generated'}
-
-    # kwimage.imwrite(out_fpath, new_data, backend='gdal')
-    # kwimage.imwrite(out_fpath, new_data, backend='pil')
     kwimage.imwrite(out_fpath, new_data, backend='pil')
-    out['out_fpath'] = out_fpath
+
+    out = {
+        'status': selected.result_status,
+        'out_fpath': out_fpath,
+    }
+    out.update(selected.metadata())
     return out
 
 
@@ -587,7 +567,7 @@ def handle_special_texture(fname, shape, rng):
         for cand in needs_nbytes_reduction:
             if cand in fname:
                 # Still randomize, but reduce the compressed PNG size
-                new_data = (np.random.rand(*shape) * 255).astype(np.uint8)
+                new_data = (rng.rand(*shape) * 255).astype(np.uint8)
                 generated = kwimage.imresize(new_data[::4, ::4, :],
                                              dsize=shape[0:2][::-1],
                                              interpolation='nearest')
@@ -634,3 +614,86 @@ def handle_special_texture(fname, shape, rng):
             img[img >= thresh] = 255
             img[img < thresh] = 0
         return img
+
+
+def _generate_random_texture(fname, shape, rng):
+    """Original filename-seeded random fallback, kept as a realization."""
+    if fname.endswith('.ia8.png'):
+        # These textures caused freezes on older hardware when they contained
+        # too much variation. Preserve the established all-zero workaround.
+        new_data = np.zeros(shape, dtype=np.uint8)
+    else:
+        new_data = (rng.rand(*shape) * 255).astype(np.uint8)
+
+    needs_nbytes_reduction = {
+        'textures/skyboxes',
+        'levels/bowser',
+        'bowser_shell_edge',
+        'bowser_nostrils',
+        'bowser_hair',
+    }
+    if any(cand in fname for cand in needs_nbytes_reduction):
+        # Preserve the more aggressive low-entropy fallback used for assets
+        # known to exceed practical compressed-size limits.
+        new_data = (rng.rand(*shape) * 255).astype(np.uint8)
+        new_data = kwimage.imresize(
+            new_data[::4, ::4, ...],
+            dsize=shape[0:2][::-1],
+            interpolation='nearest',
+        )
+        if len(shape) == 3 and shape[2] >= 4:
+            new_data[:, :, 3] = 255
+    else:
+        smaller = kwimage.imresize(
+            new_data, scale=0.5, interpolation='nearest')
+        new_data = kwimage.imresize(
+            smaller,
+            dsize=shape[0:2][::-1],
+            interpolation='nearest',
+        )
+    return kwimage.ensure_uint255(new_data)
+
+
+IMAGE_REALIZATION_REGISTRY = RealizationRegistry('image')
+
+IMAGE_REALIZATION_REGISTRY.realization(
+    id='human.semantic-v1',
+    author='human:joncrall',
+    estimated_quality=0.60,
+    version=1,
+    result_status='generated',
+    description=(
+        'The original hand-written semantic texture rules, including glyphs, '
+        'simple faces, labels, and the power meter.'
+    ),
+)(handle_special_texture)
+
+IMAGE_REALIZATION_REGISTRY.realization(
+    id='human.random-v1',
+    author='human:joncrall',
+    estimated_quality=0.0,
+    version=1,
+    result_status='randomized',
+    description='The original deterministic full-random texture fallback.',
+)(_generate_random_texture)
+
+
+def register_image_realization(**kwargs):
+    """Register another image realization.
+
+    Model- or human-authored additions should provide a stable ``author`` id,
+    an ``estimated_quality`` in ``[0, 1]``, and an integer ``version``. The
+    decorated function receives ``(fname, shape, rng)`` and returns an image or
+    ``None`` when it does not implement that asset.
+
+    Example:
+        >>> @register_image_realization(
+        >>>     id='example.generated-v1',
+        >>>     author='openai:gpt-5.6-thinking',
+        >>>     estimated_quality=0.8,
+        >>>     version=1,
+        >>> )
+        >>> def example_generated(fname, shape, rng):
+        >>>     return None
+    """
+    return IMAGE_REALIZATION_REGISTRY.realization(**kwargs)
