@@ -98,28 +98,14 @@ class GenerateAssetsConfig(scfg.DataConfig):
         the format. If "auto", attempts to use the one in this module
         directory.
         '''))
-    target_quality = scfg.Value(1.0, type=float, help=ub.paragraph(
-        '''
-        Desired image realization quality on a 0.0 to 1.0 scale. For each
-        image, choose the registered realization whose estimated quality is
-        closest to this target. A target of 0 selects the fully random legacy
-        realization; a target of 1 selects the best available realization.
-        '''))
-    include_authors = scfg.Value(None, help=ub.paragraph(
-        '''
-        Optional YAML list or comma-separated shell patterns for realization
-        authors to include, e.g. '[human:joncrall, openai:*]'.
-        '''))
-    exclude_authors = scfg.Value(None, help=ub.paragraph(
-        '''
-        Optional YAML list or comma-separated shell patterns for realization
-        authors to exclude.
-        '''))
     hybrid_mode = scfg.Value(None, isflag=True, help='hybrid_mode. DEPRECATED. Set the appropriate key in the asset_config to hybrid')
     compare = scfg.Value(None, isflag=True, help=ub.paragraph(
         '''
         run the compare debug tool. Can also be a YAML configuration'
         '''))
+    target_quality = scfg.Value(0.0, type=float, help='Select the image realization nearest to this quality score.')
+    include_authors = scfg.Value(['*'], nargs='+', help='Author glob patterns to include when selecting image realizations.')
+    exclude_authors = scfg.Value([], nargs='+', help='Author glob patterns to exclude when selecting image realizations.')
 
     asset_config = scfg.Value(None, help=ub.paragraph(
         '''
@@ -169,22 +155,6 @@ class GenerateAssetsConfig(scfg.DataConfig):
                 raise Exception(f'Unknown value {v=} for {k=}')
         self.asset_config = asset_config
 
-        def coerce_author_patterns(value, default):
-            value = Yaml.coerce(value)
-            if value is None:
-                return list(default)
-            if isinstance(value, str):
-                value = [part.strip() for part in value.split(',') if part.strip()]
-            if not isinstance(value, (list, tuple)):
-                raise TypeError(
-                    'Author filters must be a YAML list or comma-separated string')
-            return [str(item) for item in value]
-
-        self.include_authors = coerce_author_patterns(
-            self.include_authors, default=['*'])
-        self.exclude_authors = coerce_author_patterns(
-            self.exclude_authors, default=[])
-
         compare = Yaml.coerce(self.compare)
         if compare is False:
             compare = None
@@ -205,8 +175,12 @@ class GenerateAssetsConfig(scfg.DataConfig):
 
         from sm64_random_assets.generators import image_generator
         from sm64_random_assets.generators import audio_generator
+        realization_policy = image_generator.build_realization_policy(
+            target_quality=args.target_quality,
+            include_authors=args.include_authors,
+            exclude_authors=args.exclude_authors,
+        )
         from sm64_random_assets.generators import binary_generator
-        from sm64_random_assets.realizations import RealizationPolicy
         from sm64_random_assets.util.util_pattern import MultiPattern
 
         # Path to the clone of sm64-port we will generate assets for.
@@ -310,16 +284,9 @@ class GenerateAssetsConfig(scfg.DataConfig):
         # List to keep track of what we did
         results = []
 
-        realization_policy = RealizationPolicy(
-            target_quality=args.target_quality,
-            include_authors=tuple(args.include_authors),
-            exclude_authors=tuple(args.exclude_authors),
-        )
-
         # Generate randomized / custom versions for each asset
         key_to_asset_generator = {
-            'png': lambda output_dpath, info: image_generator.generate_image(
-                output_dpath, info, realization_policy=realization_policy),
+            'png': lambda output_dpath, info: image_generator.generate_image(output_dpath, info, realization_policy=realization_policy),
             'aiff': audio_generator.generate_audio,
             'm64': binary_generator.generate_binary,  # these are music files for the game.
             'bin': binary_generator.generate_binary,
@@ -363,21 +330,6 @@ class GenerateAssetsConfig(scfg.DataConfig):
         ext_status_hist = ub.dict_hist([(r['ext'], r['region'], r['status']) for r in results])
         rich.print('Asset status histogram:')
         rich.print('{}'.format(ub.urepr(ext_status_hist, nl=1)))
-
-        image_realizations = [
-            (
-                r['realization_id'],
-                r['realization_author'],
-                r['realization_estimated_quality'],
-                r['realization_version'],
-            )
-            for r in results
-            if r.get('realization_id') is not None
-        ]
-        if image_realizations:
-            realization_hist = ub.dict_hist(image_realizations)
-            rich.print('Image realization histogram:')
-            rich.print('{}'.format(ub.urepr(realization_hist, nl=1)))
 
         if 0:
             # Debug missing assets

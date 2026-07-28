@@ -1,90 +1,74 @@
-import pytest
-
-from sm64_random_assets.realizations import AssetRealization
-from sm64_random_assets.realizations import NoMatchingRealizationError
-from sm64_random_assets.realizations import RealizationPolicy
-from sm64_random_assets.realizations import RealizationRegistry
-
-
-def _noop(*args, **kwargs):
-    return None
+from sm64_random_assets.realizations import (
+    AssetIdentity,
+    AssetRealization,
+    RealizationPolicy,
+    RealizationRegistry,
+)
 
 
-def test_registry_uses_closest_quality_then_newest_version():
-    registry = RealizationRegistry('demo')
+def _dummy_generator(fname, shape, rng, identity):
+    return object()
+
+
+def test_registry_allows_same_id_across_versions():
+    registry = RealizationRegistry()
     registry.register(AssetRealization(
-        id='human-random-v1',
-        author='human:joncrall',
-        estimated_quality=0.0,
-        version=1,
-        generator=_noop,
-    ))
+        id='human.semantic', author='human:joncrall', version=1,
+        estimated_quality=0.6, generator=_dummy_generator))
     registry.register(AssetRealization(
-        id='model-v1',
-        author='openai:gpt-5.6-thinking',
-        estimated_quality=0.8,
-        version=1,
-        generator=_noop,
-    ))
+        id='human.semantic', author='human:joncrall', version=2,
+        estimated_quality=0.75, generator=_dummy_generator))
+    assert len(list(registry.iter_candidates(AssetIdentity('x', 'x'), {}))) == 2
+
+
+def test_choose_nearest_quality_tiebreaks_to_higher_quality_and_version():
+    registry = RealizationRegistry()
     registry.register(AssetRealization(
-        id='model-v2',
-        author='openai:gpt-5.6-thinking',
-        estimated_quality=0.8,
-        version=2,
-        generator=_noop,
-    ))
-
-    ranked = registry.require_ranked(
-        {'fname': 'demo.png'},
-        RealizationPolicy(target_quality=0.75),
-    )
-    assert [item.id for item in ranked] == [
-        'model-v2', 'model-v1', 'human-random-v1']
-
-
-def test_registry_author_filters():
-    registry = RealizationRegistry('demo')
+        id='a', author='human:joncrall', version=1,
+        estimated_quality=0.4, generator=_dummy_generator))
     registry.register(AssetRealization(
-        id='human',
-        author='human:joncrall',
-        estimated_quality=0.2,
-        version=1,
-        generator=_noop,
-    ))
+        id='b', author='human:joncrall', version=1,
+        estimated_quality=0.6, generator=_dummy_generator))
+    chosen = registry.choose(AssetIdentity('x', 'fam'), {}, target_quality=0.5)
+    assert chosen.id == 'b'
+
+    registry = RealizationRegistry()
     registry.register(AssetRealization(
-        id='model',
-        author='openai:gpt-5.6-thinking',
-        estimated_quality=0.9,
-        version=1,
-        generator=_noop,
-    ))
-
-    human_only = RealizationPolicy(
-        target_quality=1.0,
-        include_authors=('human:*',),
-    )
-    assert registry.require_ranked({'fname': 'x'}, human_only)[0].id == 'human'
-
-    no_models = RealizationPolicy(
-        target_quality=1.0,
-        exclude_authors=('openai:*',),
-    )
-    assert registry.require_ranked({'fname': 'x'}, no_models)[0].id == 'human'
-
-    with pytest.raises(NoMatchingRealizationError):
-        registry.require_ranked(
-            {'fname': 'x'},
-            RealizationPolicy(include_authors=('anthropic:*',)),
-        )
+        id='same', author='human:joncrall', version=1,
+        estimated_quality=0.6, generator=_dummy_generator))
+    registry.register(AssetRealization(
+        id='same', author='human:joncrall', version=2,
+        estimated_quality=0.6, generator=_dummy_generator))
+    chosen = registry.choose(AssetIdentity('x', 'fam'), {}, target_quality=0.6)
+    assert chosen.version == 2
 
 
-def test_source_dependent_realizations_are_rejected():
-    with pytest.raises(ValueError, match='cannot use source assets'):
-        AssetRealization(
-            id='derived',
-            author='example:model',
-            estimated_quality=0.9,
-            version=1,
-            generator=_noop,
-            source_assets_used=True,
-        )
+def test_author_filtering():
+    registry = RealizationRegistry()
+    registry.register(AssetRealization(
+        id='a', author='human:joncrall', version=1,
+        estimated_quality=0.2, generator=_dummy_generator))
+    registry.register(AssetRealization(
+        id='b', author='openai:gpt', version=1,
+        estimated_quality=0.9, generator=_dummy_generator))
+    chosen = registry.choose(
+        AssetIdentity('x', 'fam'), {}, target_quality=1.0,
+        include_authors=['human:*'], exclude_authors=[])
+    assert chosen.author == 'human:joncrall'
+
+
+def test_family_selection_cached_once_per_family():
+    registry = RealizationRegistry()
+    registry.register(AssetRealization(
+        id='low', author='human:joncrall', version=1,
+        estimated_quality=0.0, generator=_dummy_generator,
+        families=frozenset({'fam'})))
+    registry.register(AssetRealization(
+        id='high', author='human:joncrall', version=1,
+        estimated_quality=0.8, generator=_dummy_generator,
+        families=frozenset({'fam'})))
+    policy = RealizationPolicy(registry=registry, target_quality=1.0)
+    a = policy.resolve(AssetIdentity('one', 'fam', 'm1'), {})
+    b = policy.resolve(AssetIdentity('two', 'fam', 'm2'), {})
+    assert a is b
+    assert a.id == 'high'

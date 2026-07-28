@@ -1,699 +1,158 @@
+from __future__ import annotations
+
 import numpy as np
-import parse
 import kwimage
+
 from sm64_random_assets.util import util_random
-from sm64_random_assets.realizations import RealizationPolicy
-from sm64_random_assets.realizations import RealizationRegistry
+from sm64_random_assets.realizations import (
+    AssetRealization,
+    RealizationPolicy,
+    RealizationRegistry,
+)
+from sm64_random_assets.image_catalog import determine_asset_identity
+from sm64_random_assets.image_realizations.human_joncrall import random as human_random
+from sm64_random_assets.image_realizations.human_joncrall import semantic as human_semantic
+
+
+def _semantic_supports(identity, info):
+    return human_semantic.can_generate(identity.fname, info.get('shape', None))
+
+
+_DEFAULT_IMAGE_REALIZATION_REGISTRY = None
+
+
+def default_image_realization_registry():
+    global _DEFAULT_IMAGE_REALIZATION_REGISTRY
+    if _DEFAULT_IMAGE_REALIZATION_REGISTRY is None:
+        registry = RealizationRegistry()
+        registry.register(AssetRealization(
+            id='human.random',
+            author='human:joncrall',
+            version=1,
+            estimated_quality=0.0,
+            generator=human_random.generate_random_image_data,
+            families=frozenset({'*'}),
+            notes='Original fully random fallback generator.',
+        ))
+        registry.register(AssetRealization(
+            id='human.semantic',
+            author='human:joncrall',
+            version=1,
+            estimated_quality=0.60,
+            generator=human_semantic.generate_semantic_image_data,
+            supports=_semantic_supports,
+            notes='Original human-authored semantic and glyph generator.',
+        ))
+        _DEFAULT_IMAGE_REALIZATION_REGISTRY = registry
+    return _DEFAULT_IMAGE_REALIZATION_REGISTRY
+
+
+def build_realization_policy(target_quality=0.0, include_authors=None,
+                             exclude_authors=None, registry=None):
+    registry = default_image_realization_registry() if registry is None else registry
+    include_authors = ('*',) if include_authors is None else tuple(include_authors)
+    exclude_authors = () if exclude_authors is None else tuple(exclude_authors)
+    return RealizationPolicy(
+        registry=registry,
+        target_quality=float(target_quality),
+        include_authors=include_authors,
+        exclude_authors=exclude_authors,
+    )
+
+
+def validate_generated_image(generated, requested_shape):
+    if generated is None:
+        raise ValueError('Generated image is None')
+    generated = np.asarray(generated)
+    requested_shape = tuple(requested_shape)
+
+    if generated.ndim not in {2, 3}:
+        raise ValueError(f'Generated image has invalid ndim={generated.ndim}')
+
+    if generated.dtype != np.uint8:
+        if generated.dtype.kind == 'f':
+            generated = kwimage.ensure_uint255(generated.clip(0, 1))
+        else:
+            generated = generated.astype(np.uint8)
+
+    if len(requested_shape) == 2:
+        target_dsize = requested_shape[::-1]
+    else:
+        target_dsize = requested_shape[0:2][::-1]
+    generated = kwimage.imresize(generated, dsize=target_dsize, interpolation='nearest')
+
+    if len(requested_shape) == 3:
+        req_channels = requested_shape[2]
+        if generated.ndim == 2:
+            generated = generated[:, :, None]
+        gen_channels = generated.shape[2]
+        if gen_channels > req_channels:
+            generated = generated[:, :, -req_channels:]
+        elif gen_channels < req_channels:
+            if gen_channels == 1:
+                generated = np.repeat(generated, req_channels, axis=2)
+            else:
+                pad = np.zeros(generated.shape[0:2] + (req_channels - gen_channels,), dtype=generated.dtype)
+                generated = np.concatenate([generated, pad], axis=2)
+        if generated.shape != requested_shape:
+            raise ValueError(f'Generated image shape {generated.shape!r} does not match requested {requested_shape!r}')
+    else:
+        if generated.shape != requested_shape:
+            raise ValueError(f'Generated image shape {generated.shape!r} does not match requested {requested_shape!r}')
+    return np.ascontiguousarray(generated)
 
 
 def generate_image(output_dpath, info, realization_policy=None):
-    """
-    Generate an image using the registered realization nearest to the target
-    quality.
-
-    The current human-authored semantic generator and the original random
-    fallback are both registered realizations. Future generated or curated
-    implementations can be added without replacing either one.
-
-    Args:
-        output_dpath (Path): where to write the generated image file
-        info (dict): a dictionary from asset_metadata.json
-        realization_policy (RealizationPolicy | dict | None):
-            quality target and author filters
-
-    Returns:
-        dict: generation status and selected realization metadata
-
-    Example:
-        >>> from sm64_random_assets.generators.image_generator import *  # NOQA
-        >>> import ubelt as ub
-        >>> dpath = ub.Path.appdir('sm64-random-assets/tests')
-        >>> output_dpath = dpath / 'test-output'
-        >>> info = {
-        >>>     "fname": "actors/blue_coin_switch/blue_coin_switch_side.rgba16.png",
-        >>>     "shape": [16, 32, 4]
-        >>> }
-        >>> out = generate_image(output_dpath, info)
-        >>> assert out['status'] == 'generated'
-        >>> assert out['out_fpath'].exists()
-        >>> assert out['realization_author'] == 'human:joncrall'
-    """
+    """Thin orchestrator for versioned image realizations."""
     if info.get('shape', None) is None:
         return {'status': 'value-error: image has no shape'}
-    shape = info['shape']
+    shape = tuple(info['shape'])
+    fname = str(info['fname'])
 
-    # Keep the manifest shape intact. Two-channel IA textures are supported by
-    # the PIL-backed writer even though older versions of this code originally
-    # carried a cv2-specific workaround here.
-    if len(shape) == 3 and shape[2] == 2:
-        shape = list(shape)
-
-    policy = RealizationPolicy.coerce(realization_policy)
-    selected = None
-    new_data = None
-    attempted_ids = []
-    for realization in IMAGE_REALIZATION_REGISTRY.require_ranked(info, policy):
-        attempted_ids.append(realization.id)
-        # Reset the filename-derived RNG for every attempt. A realization that
-        # declines an asset must not perturb the fallback's deterministic bytes.
-        rng = util_random.ensure_rng(info['fname'])
-        new_data = realization.generator(info['fname'], shape, rng)
-        if new_data is not None:
-            selected = realization
-            break
-
-    if selected is None:
-        raise RuntimeError(
-            'Compatible image realizations declined asset {!r}: {}'.format(
-                info['fname'], attempted_ids))
+    realization_policy = build_realization_policy() if realization_policy is None else realization_policy
+    identity = determine_asset_identity(info, name_to_text_lut=human_semantic.name_to_text_lut)
+    rng = util_random.ensure_rng(fname)
 
     out_fpath = output_dpath / info['fname']
     out_fpath.parent.ensuredir()
-    kwimage.imwrite(out_fpath, new_data, backend='pil')
 
-    out = {
-        'status': selected.result_status,
-        'out_fpath': out_fpath,
-    }
-    out.update(selected.metadata())
-    return out
-
-
-def build_char_name_map():
-    """
-    Create a manual mapping from texture names to the glyph we want them to
-    represent. This is only partially complete.
-
-    # Font Notes:
-
-    textures
-    ipl3_font_00.ia1.png = A
-    ipl3_font_25.ia1.png = Z
-    ipl3_font_26.ia1.png = 0
-    ipl3_font_35.ia1.png = 9
-
-    36-49
-    !"#'*+,-./;=?@
-
-
-    import kwplot
-    kwplot.autompl()
-    kwplot.imshow(img)
-
-
-    # In textures/segment2/
-
-    Looks like rotated numbers and letters.
-
-    segment2.00000.rgba16.png - Big 0
-    segment2.00200.rgba16.png - Big 1
-    segment2.00400.rgba16.png - Big 2
-    """
-    ipl_chars = []
-    for i in range(26):
-        ipl_chars.append(chr(ord('A') + i))
-    for i in range(10):
-        ipl_chars.append(chr(ord('0') + i))
-    ipl_chars.extend('!"#\'*+,-./;=?@')
-
-    name_to_text_lut = {}
-    for i, c in enumerate(ipl_chars):
-        n = 'textures/ipl3_raw/ipl3_font_{:02d}.ia1.png'.format(i)
-        name_to_text_lut[n] = {
-            'text': c,
-            'color': 'white',
-            'scale': 0.8,
-        }
-
-    # Big fancy letters
-    segment_fmt = 'textures/segment2/segment2.{:03X}00.rgba16.png'
-    for i in range(10):
-        n = segment_fmt.format(i * 2)
-        c = str(i)
-        name_to_text_lut[n] = {
-            'text': c,
-            'color': 'orange',
-        }
-    for i in range(26):
-        n = segment_fmt.format(20 + i * 2)
-        c = chr(ord('A') + i)
-        name_to_text_lut[n] = {
-            'text': c,
-            'color': 'orange',
-        }
-
-    segment2_rgba16_data = [
-        {'index': 0x04800, 'text': "'"},
-        {'index': 0x04A00, 'text': '"'},
-        {'index': 0x05000, 'text': '?'},
-        {'index': 0x05600, 'text': 'x', 'comment': 'times'},
-    ]
-    for item in segment2_rgba16_data:
-        n = 'textures/segment2/segment2.{index:05X}.rgba16.png'.format(**item)
-        item.setdefault('color', 'orange')
-        name_to_text_lut[n] = item
-
-    segment2_rgba16_data = [
-        {'index': 0x05800, 'text': '$', 'comment': 'coin', 'color': 'yellow'},
-        {'index': 0x05A00, 'text': 'O', 'comment': 'mario head', 'color': 'red'},
-        {'index': 0x05C00, 'text': '*', 'comment': 'star', 'color': 'yellow'},
-        {'index': 0x06200, 'text': '3', 'color': 'green', 'scale': 0.5, 'background': 'black'},
-        {'index': 0x06280, 'text': '3', 'color': 'green', 'scale': 0.5, 'background': 'black'},
-        {'index': 0x06300, 'text': '6', 'color': 'green', 'scale': 0.5, 'background': 'black'},
-        {'index': 0x07080, 'text': '.', 'color': 'yellow'},
-        {'index': 0x07B50, 'text': '8', 'color': 'gray', 'comment': 'camera'},
-        {'index': 0x07D50, 'text': 'O', 'color': 'yellow', 'comment': 'lakitu head'},
-        {'index': 0x07F50, 'text': 'X', 'color': 'red', 'comment': 'locked X', 'background': 'darkred'},
-        {'index': 0x08150, 'text': '^', 'color': 'yellow', 'comment': 'c-up'},
-        {'index': 0x081D0, 'text': 'V', 'color': 'yellow', 'comment': 'c-down'},
-    ]
-    for item in segment2_rgba16_data:
-        n = 'textures/segment2/segment2.{index:05X}.rgba16.png'.format(**item)
-        name_to_text_lut[n] = item
-
-    main_menu_texts = [
-        {'index': 0x0AC40, 'text': '0', 'color': 'white', 'scale': 0.5, 'binary': True},
-    ]
-    # Numbers
-    for i in range(1, 10):
-        new = main_menu_texts[0].copy()
-        new['text'] = str(i)
-        new['index'] = new['index'] + (64 * i)
-        main_menu_texts.append(new)
-    # Letters
-    for i in range(0, 26):
-        new = main_menu_texts[0].copy()
-        new['text'] = chr(i + 65)
-        new['index'] = new['index'] + (64 * (i + 10))
-        main_menu_texts.append(new)
-    for item in main_menu_texts:
-        n = 'levels/menu/main_menu_seg7_us.{index:05X}.ia8.png'.format(**item)
-        name_to_text_lut[n] = item
-    mmia8 = {'color': 'white', 'scale': 0.5, 'binary': True}
-    main_menu_texts2 = [
-        {'index': 0x0B540 + 64 * 0, 'text': 'O', 'comment': 'coin', **mmia8},
-        {'index': 0x0B540 + 64 * 1, 'text': 'x', 'comment': 'times', **mmia8},
-        {'index': 0x0B540 + 64 * 2, 'text': '*', 'comment': 'star', **mmia8},
-        {'index': 0x0B540 + 64 * 3, 'text': '-', 'comment': '', **mmia8},
-        {'index': 0x0B540 + 64 * 4, 'text': ',', 'comment': '', **mmia8},
-        {'index': 0x0B540 + 64 * 5, 'text': "'", 'comment': '', **mmia8},
-        {'index': 0x0B540 + 64 * 6, 'text': '!', 'comment': '', **mmia8},
-        {'index': 0x0B540 + 64 * 7, 'text': '?', 'comment': '', **mmia8},
-        {'index': 0x0B540 + 64 * 8, 'text': '@', 'comment': 'face', **mmia8},
-        {'index': 0x0B540 + 64 * 9, 'text': '%', 'comment': 'not sure', **mmia8},
-        {'index': 0x0B540 + 64 * 10, 'text': '.', 'comment': '', **mmia8},
-        {'index': 0x0B540 + 64 * 11, 'text': '&', 'comment': '', **mmia8},
-    ]
-    for item in main_menu_texts2:
-        n = 'levels/menu/main_menu_seg7_us.{index:05X}.ia8.png'.format(**item)
-        name_to_text_lut[n] = item
-
-    # Sideways numbers
-    # font_graphics.05900.ia4
-    offset = 0x05900
-    fmt = 'textures/segment2/font_graphics.{:05X}.ia4.png'
-    inc = 64
-    for i in range(0, 10):
-        n = fmt.format(offset + i * inc)
-        c = chr(ord('0') + i)
-        name_to_text_lut[n] = {
-            'text': c,
-            'color': 'white',
-            'rot': 1,
-            'scale': 0.5
-        }
-
-    # Sideways italic capital letters
-    'font_graphics.05B80.ia4.png'
-    'font_graphics.05BC0.ia4.png'
-    fmt = 'textures/segment2/font_graphics.{:05X}.ia4.png'
-    offset = 0x05B80
-    inc = 0x05BC0 - offset
-    for i in range(26):
-        n = fmt.format(offset + i * inc)
-        c = chr(ord('A') + i)
-        name_to_text_lut[n] = {
-            'text': c,
-            'color': 'white',
-            'rot': 1,
-            'scale': 0.5
-        }
-
-    # Sideways italic lowercase letters
-    # font_graphics.06200.ia4.png
-    fmt = 'textures/segment2/font_graphics.{:05X}.ia4.png'
-    offset = 0x06200
-    inc = 64
-    for i in range(26):
-        n = fmt.format(offset + i * inc)
-        c = chr(ord('a') + i)
-        name_to_text_lut[n] = {
-            'text': c,
-            'color': 'white',
-            'rot': 1,
-            'scale': 0.5
-        }
-
-    # Green letters with black background
-    fmt = 'textures/segment2/segment2.{:05X}.rgba16.png'
-    offset = 0x06380
-    inc = 0x06400 - 0x06380
-    for i in range(26):
-        n = fmt.format(offset + i * inc)
-        c = chr(ord('A') + i)
-        name_to_text_lut[n] = {
-            'text': c,
-            'color': 'green',
-            'scale': 0.5,
-            'background': 'black',
-        }
-
-    n = 'textures/segment2/font_graphics.06410.ia4.png'
-    name_to_text_lut[n] = {'text': ':', 'color': 'white', 'rot': 1, 'scale': 0.5}
-
-    n = 'textures/segment2/font_graphics.06420.ia4.png'
-    name_to_text_lut[n] = {'text': '-', 'color': 'white', 'rot': 1, 'scale': 0.5}
-
-    # Not entirely sure about some of these
-    ia4_font_graphics_data = [
-        {'index': 0x06880, 'text': 'I', 'comment': 'updown arrow', 'utf': '⬍'},
-        {'index': 0x068C0, 'text': '!'},
-        {'index': 0x06900, 'text': 'O', 'comment': 'coin symbol', 'utf': '🪙'},
-        {'index':    None, 'text': 'x', 'comment': 'times symbol', 'utf': None},
-        {'index':    None, 'text': '('},
-        {'index':    None, 'text': 'H', 'comment': 'double paren'},
-        {'index':    None, 'text': ')'},
-        {'index':    None, 'text': '~'},
-        {'index':    None, 'text': '.', 'comment': 'cdot?'},
-        {'index':    None, 'text': '%'},
-        {'index':    None, 'text': '.'},
-        {'index':    None, 'text': ','},
-        {'index':    None, 'text': "'"},
-        {'index':    None, 'text': '?'},
-        {'index':    None, 'text': '*', 'comment': 'filled star'},
-        {'index':    None, 'text': '*', 'comment': 'unfilled star'},
-        {'index':    None, 'text': '"', 'comment': ''},
-        {'index':    None, 'text': '"', 'comment': ''},
-        {'index':    None, 'text': ':', 'comment': ''},
-        {'index':    None, 'text': '-', 'comment': ''},
-        {'index':    None, 'text': '&', 'comment': ''},
-        # Sideways bold captial letters
-        # Only 5 of these corresponding to buttons.
-        {'index': 0x06DC0, 'text': 'A'},
-        {'index':    None, 'text': 'B'},
-        {'index':    None, 'text': 'C'},
-        {'index':    None, 'text': 'Z'},
-        {'index':    None, 'text': 'R'},
-        {'index':    None, 'text': '^', 'comment': 'direction arrow'},
-        {'index':    None, 'text': 'V', 'comment': 'direction arrow'},
-        {'index':    None, 'text': '<', 'comment': 'direction arrow'},
-        {'index': 0x06FC0, 'text': '>', 'comment': 'direction arrow'},
-    ]
-    base = 0x06880
-    for inc, item in enumerate(ia4_font_graphics_data):
-        index = base + (0x40 * inc)
-        if item.get('index', None) is not None:
-            assert item['index'] == index
-        item['index'] = index
-
-    for item in ia4_font_graphics_data:
-        n = 'textures/segment2/font_graphics.{index:05X}.ia4.png'.format(**item)
-        name_to_text_lut[n] = {'text': item['text'], 'color': 'white', 'rot': 1, 'scale': 0.5}
-
-    ia1_segment_data = [
-        {'index':    0x06410, 'text': ':', 'base': 'font_graphics'},
-        {'index':    0x06420, 'text': '-', 'base': 'font_graphics'},
-        {'index':    0x07340, 'text': '|', 'base': 'segment2'},
-    ]
-    for item in ia1_segment_data:
-        n = 'textures/segment2/{base}.{index:05X}.ia1.png'.format(**item)
-        name_to_text_lut[n] = {'text': item['text'], 'color': 'white', 'rot': 1, 'scale': 0.5}
-
-    name_to_text_lut['levels/castle_grounds/5.ia8.png'] = {
-        # fixme
-        'text': 'Peach',
-        'color': 'white',
-    }
-    # 'levels/menu/main_menu_seg7_us.0AC40.ia8.png': 0
-    return name_to_text_lut
-
-name_to_text_lut = build_char_name_map()
-
-
-# class AssetGenerator:
-#     def match(self, fname):
-#         import xdev
-#         xdev.Pattern.coerce('actors/power_meter').match(fname)
-
-class PowerMeter:
-    """
-    Helper to draw something useful for the power/health meter
-
-    Example:
-        >>> from sm64_random_assets.generators.image_generator import *  # NOQA
-        >>> self = PowerMeter()
-        >>> canvas1 = self.draw(power=8)
-        >>> canvas2 = self.draw(power=5)
-        >>> canvas3 = self.draw(power=2)
-        >>> # xdoctest: +REQUIRES(--show)
-        >>> import kwplot
-        >>> kwplot.autompl()
-        >>> kwplot.imshow(canvas1, pnum=(1, 3, 1))
-        >>> kwplot.imshow(canvas2, pnum=(1, 3, 2))
-        >>> kwplot.imshow(canvas3, pnum=(1, 3, 3))
-    """
-
-    def match(self, fname):
-        return 'actors/power_meter/power_meter_' in fname
-
-    def draw(self, power):
-        power_to_color = {
-            8: kwimage.Color.coerce('water blue'),
-            7: kwimage.Color.coerce('water blue'),
-            6: kwimage.Color.coerce('vibrant green'),
-            5: kwimage.Color.coerce('vibrant green'),
-            4: kwimage.Color.coerce('yellow'),
-            3: kwimage.Color.coerce('yellow'),
-            2: kwimage.Color.coerce('red'),
-            1: kwimage.Color.coerce('red'),
-            0: kwimage.Color.coerce('brown'),
-        }
-        if power in power_to_color:
-            color = power_to_color[power]
-        else:
-            color1 = power_to_color[power + 1]
-            color2 = power_to_color[power - 1]
-            color = color1.interpolate(color2, alpha=0.5)
-
-        tau = 2 * np.pi
-
-        def circle_segment(total_segments, filled_segments, start_theta=0):
-            resolution = 64
-            r = 32
-            xy = (32, 32)
-            theta = np.linspace(start_theta, start_theta + tau, resolution)
-            start = 0
-            stop = int(resolution * (filled_segments / total_segments))
-            sub_theta = theta[start:stop + 1]
-
-            y_offset = np.sin(sub_theta) * r
-            x_offset = np.cos(sub_theta) * r
-            center = np.array(xy)
-            xcoords = center[0] + x_offset
-            ycoords = center[1] + y_offset
-            if stop == 32:
-                ...
-            else:
-                xcoords = np.concatenate([xcoords, [center[0]]], axis=0)
-                ycoords = np.concatenate([ycoords, [center[1]]], axis=0)
-            exterior = np.stack([xcoords.ravel(), ycoords.ravel()], axis=1)
-            poly = kwimage.Polygon(exterior=exterior)
-            poly.draw(setlim=1)
-            return poly
-
-        total_segments = 8
-        filled_segments = power
-        start_theta = -tau / 4
-        poly = circle_segment(total_segments, filled_segments, start_theta)
-
-        canvas = np.zeros((64, 64, 4), dtype=np.float32)
-        # poly = kwimage.Polygon.circle(xy=(32, 32), r=32)
-        canvas = poly.draw_on(canvas, color=color)
-        canvas = canvas.clip(0, 1)
-        return canvas
-        # kwplot.imshow(canvas)
-
-    def generate(self, fname):
-        pat = parse.Parser('actors/power_meter/power_meter_{type}.rgba16.png')
-        result = pat.parse(fname)
-
-        mapping = {
-            'full': 8,
-            'seven_segments': 7,
-            'six_segments': 6,
-            'five_segments': 5,
-            'four_segments': 4,
-            'three_segments': 3,
-            'two_segments': 2,
-            'one_segment': 1,
-        }
-
-        if result.named['type'] == 'left_side':
-            canvas = np.zeros((64, 64, 4), dtype=np.float32)
-        elif result.named['type'] == 'right_side':
-            canvas = np.zeros((64, 64, 4), dtype=np.float32)
-        else:
-            power = mapping.get(result.named['type'], None)
-            if power is None:
-                canvas = None
-            else:
-                canvas = self.draw(power)
-        return canvas
-
-
-def handle_special_texture(fname, shape, rng):
-    """
-    Can programatically generate nicer-than-random textures for some assets.
-    """
-    import numpy as np
-    fname = str(fname)
-
-    generators = [PowerMeter()]
-    for gen in generators:
-        if gen.match(fname):
-            # print(f'try to generate fname={fname}')
-            generated = gen.generate(fname)
-            if generated is not None:
-                generated = kwimage.imresize(generated, dsize=shape[0:2][::-1])
-                generated = kwimage.ensure_uint255(generated.clip(0, 1))
-                # print(f'generated fname={fname}')
-                return generated
-
+    tried = set()
     generated = None
-    import ubelt as ub
-    if fname == 'levels/intro/2_copyright.rgba16.png':
-        generated = kwimage.draw_text_on_image(
-            None, ub.codeblock(
-                '''
-                For Educational Use Only.
-                Mario is owned by Nintendo.
-                Please support the official release.
-                '''), color='skyblue', halign='center')
+    chosen_realization = None
+    while True:
+        realization = realization_policy.resolve(identity, info, exclude_keys=tried)
+        if realization is None:
+            break
+        chosen_realization = realization
+        generated = realization.generator(fname, shape, rng, identity)
+        if generated is not None:
+            break
+        tried.add(realization.registry_key())
 
-    if fname == 'levels/intro/3_tm.rgba16.png':
-        generated = kwimage.draw_text_on_image(
-            None, 'TM', color='white')
-    if 'actors/blue_fish' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, 'blue\nfish', color='blue')
-
-    if 'flame' in fname:
-        generated = kwimage.draw_text_on_image(
-            img={'color': (0, 0, 0, 0)},
-            text='flame', color='yellow')
-
-    if 'unused' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, 'unused', color='red')
-    elif 'eyebrow' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, 'eyebrow', color='brown')
-    elif 'mips_eyes' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, 'QQ', color='gray')
-    elif 'eyes_center' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, 'O O', color='gray')
-    elif 'eyes_closed' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, '_ _', color='gray')
-    elif 'eyes_dead' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, 'X X', color='gray')
-    elif 'eye_mostly_open' in fname or 'iris_mostly_open' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, '_ye', color='gray')
-    elif 'goomba_face_blink' in fname:
-        generated = kwimage.draw_text_on_image(
-            {'color': 'brown'}, '- -', color='black')
-    elif 'goomba_face' in fname:
-        generated = kwimage.draw_text_on_image(
-            {'color': 'brown'}, 'O O', color='black')
-    elif 'eye_mostly_closed' in fname or 'iris_mostly_closed' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, '_y_', color='gray')
-    elif 'eye_closed' in fname or 'iris_closed' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, '___', color='gray')
-    elif 'eye_angry' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, ' < ', color='gray')
-    elif 'eye_half_closed' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, '_y_', color='gray')
-    elif 'eyes' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, 'eyes', color='gray')
-    elif 'eye' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, 'eye', color='gray')
-    elif 'bubble' in fname:
-        generated = kwimage.draw_text_on_image(
-            None, 'bubble', color='lightblue')
-    elif 'coin_side' in fname:
-        # generated = kwimage.draw_text_on_image(
-        #     None, '$', color='yellow')
-        # TODO: fix when background color has alpha
-        generated = kwimage.draw_text_on_image(
-            {'color': (0.0, 0.0, 0.0, 0.0)}, '|', color='yellow')
-    elif 'coin' in fname:
-        # generated = kwimage.draw_text_on_image(
-        #     None, '$', color='yellow')
-        # TODO: fix when background color has alpha
-        generated = kwimage.draw_text_on_image(
-            {'color': (0.0, 0.0, 0.0, 0.0)}, '$', color='yellow')
-    elif 'thwomp_face' in fname:
-        generated = kwimage.draw_text_on_image(
-            {'color': 'lightblue'}, ':(', color='black')
-
-    if generated is None:
-        needs_nbytes_reduction = {
-            'textures/skyboxes',
-            'levels/bowser',
-            'bowser_shell_edge',
-            'bowser_nostrils',
-            'bowser_hair',
+    if generated is None or chosen_realization is None:
+        return {
+            'status': 'value-error: no compatible image realization',
+            'identity_family': identity.family,
+            'identity_member': identity.member,
         }
-        for cand in needs_nbytes_reduction:
-            if cand in fname:
-                # Still randomize, but reduce the compressed PNG size
-                new_data = (rng.rand(*shape) * 255).astype(np.uint8)
-                generated = kwimage.imresize(new_data[::4, ::4, :],
-                                             dsize=shape[0:2][::-1],
-                                             interpolation='nearest')
-                generated[:, :, 3] = 255
 
-    if generated is not None:
-        if len(shape) == 3:
-            if generated.shape[2] > shape[2]:
-                # Fix ia16 images:
-                generated = generated[:, :, -shape[2]:]
-        generated = kwimage.imresize(generated, dsize=shape[0:2][::-1])
-        if generated.dtype.kind == 'f':
-            generated = generated.clip(0, 1)
-        generated = kwimage.ensure_uint255(generated)
-        return generated
-
-    if fname in name_to_text_lut:
-        info = name_to_text_lut[fname]
-        text = info['text']
-        color = info['color']
-        rot = info.get('rot', 0)
-        scale = info.get('scale', 1)
-        binary = info.get('binary', 0)
-        bg = np.zeros(shape, dtype=np.uint8)
-        h, w = shape[0:2]
-        if rot:
-            bg = np.rot90(bg, k=1)
-            bg = np.ascontiguousarray(bg)
-            h, w = w, h
-        org = (w // 2, h // 2)
-        img, info = kwimage.draw_text_on_image(
-            bg,
-            # {'width': w, 'height': h}
-            text, fontScale=0.6 * scale, thickness=1, org=org, halign='center',
-            valign='center', color=color, return_info=True)
-
-        if rot:
-            img = np.fliplr(img)
-            img = np.rot90(img, k=-1)
-            img = np.ascontiguousarray(img)
-
-        if binary:
-            thresh = 160
-            img[img >= thresh] = 255
-            img[img < thresh] = 0
-        return img
-
-
-def _generate_random_texture(fname, shape, rng):
-    """Original filename-seeded random fallback, kept as a realization."""
-    if fname.endswith('.ia8.png'):
-        # These textures caused freezes on older hardware when they contained
-        # too much variation. Preserve the established all-zero workaround.
-        new_data = np.zeros(shape, dtype=np.uint8)
-    else:
-        new_data = (rng.rand(*shape) * 255).astype(np.uint8)
-
-    needs_nbytes_reduction = {
-        'textures/skyboxes',
-        'levels/bowser',
-        'bowser_shell_edge',
-        'bowser_nostrils',
-        'bowser_hair',
+    generated = validate_generated_image(generated, shape)
+    kwimage.imwrite(out_fpath, generated, backend='pil')
+    return {
+        'status': 'generated',
+        'out_fpath': out_fpath,
+        'identity_family': identity.family,
+        'identity_member': identity.member,
+        'realization_id': chosen_realization.id,
+        'realization_author': chosen_realization.author,
+        'realization_version': chosen_realization.version,
+        'realization_estimated_quality': chosen_realization.estimated_quality,
     }
-    if any(cand in fname for cand in needs_nbytes_reduction):
-        # Preserve the more aggressive low-entropy fallback used for assets
-        # known to exceed practical compressed-size limits.
-        new_data = (rng.rand(*shape) * 255).astype(np.uint8)
-        new_data = kwimage.imresize(
-            new_data[::4, ::4, ...],
-            dsize=shape[0:2][::-1],
-            interpolation='nearest',
-        )
-        if len(shape) == 3 and shape[2] >= 4:
-            new_data[:, :, 3] = 255
-    else:
-        smaller = kwimage.imresize(
-            new_data, scale=0.5, interpolation='nearest')
-        new_data = kwimage.imresize(
-            smaller,
-            dsize=shape[0:2][::-1],
-            interpolation='nearest',
-        )
-    return kwimage.ensure_uint255(new_data)
 
 
-IMAGE_REALIZATION_REGISTRY = RealizationRegistry('image')
-
-IMAGE_REALIZATION_REGISTRY.realization(
-    id='human.semantic-v1',
-    author='human:joncrall',
-    estimated_quality=0.60,
-    version=1,
-    result_status='generated',
-    description=(
-        'The original hand-written semantic texture rules, including glyphs, '
-        'simple faces, labels, and the power meter.'
-    ),
-)(handle_special_texture)
-
-IMAGE_REALIZATION_REGISTRY.realization(
-    id='human.random-v1',
-    author='human:joncrall',
-    estimated_quality=0.0,
-    version=1,
-    result_status='randomized',
-    description='The original deterministic full-random texture fallback.',
-)(_generate_random_texture)
-
-
-def register_image_realization(**kwargs):
-    """Register another image realization.
-
-    Model- or human-authored additions should provide a stable ``author`` id,
-    an ``estimated_quality`` in ``[0, 1]``, and an integer ``version``. The
-    decorated function receives ``(fname, shape, rng)`` and returns an image or
-    ``None`` when it does not implement that asset.
-
-    Example:
-        >>> @register_image_realization(
-        >>>     id='example.generated-v1',
-        >>>     author='openai:gpt-5.6-thinking',
-        >>>     estimated_quality=0.8,
-        >>>     version=1,
-        >>> )
-        >>> def example_generated(fname, shape, rng):
-        >>>     return None
-    """
-    return IMAGE_REALIZATION_REGISTRY.realization(**kwargs)
+__all__ = [
+    'build_realization_policy',
+    'default_image_realization_registry',
+    'generate_image',
+    'validate_generated_image',
+]

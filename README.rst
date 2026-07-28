@@ -14,14 +14,11 @@ for educational purposes.
 
 This has only been tested for building the US variant, and only on Linux.
 
-For each asset in the game, this system chooses among registered clean-room
-asset realizations. The original deterministic random generator remains the
-quality-zero fallback, while hand-written semantic generators provide more
-structured glyphs, faces, meters, and other special textures. The result is
-surprisingly playable.
+For each asset in the game, this system generates a random texture, except in special cases like text
+where it is possible to generate reasonable textures with open source tools.
+The result is surprisingly playable.
 
-The selection quality is configurable, and additional human- or model-authored
-realizations can be registered without replacing the original code.
+Future work will support configurable and procedural generation of assets.
 
 
 .. image:: https://i.imgur.com/iiMPSTZ.png
@@ -73,6 +70,9 @@ The following instructions were written on an Ubuntu 22.04 PC
 
     # Run the asset generator
     python "$CODE_DPATH"/sm64-random-assets/generate_assets.py --dst $CODE_DPATH/sm64-random-assets/tpl/sm64-port
+
+    # Prefer the best available human-authored semantic assets
+    python "$CODE_DPATH"/sm64-random-assets/generate_assets.py --dst $CODE_DPATH/sm64-random-assets/tpl/sm64-port --target_quality=1 --include_authors "human:*"
 
     # Move into the PC port directory
     cd $CODE_DPATH/sm64-random-assets/tpl/sm64-port
@@ -133,83 +133,6 @@ installed (e.g. ``sudo apt install mupen64plus-qt``) you can run:
    mupen64plus build/us/sm64.us.z64
 
 
-
-Quality and Author Selection
-----------------------------
-
-Image generation uses a continuous quality lever. Each realization registers:
-
-* a stable ``id``;
-* an ``author`` such as ``human:joncrall`` or a model identifier;
-* an ``estimated_quality`` between 0 and 1;
-* a positive integer ``version``;
-* a clean-room generator callable.
-
-For each image, the generator filters realizations by author and then tries them
-in order of distance from ``--target_quality``. Equal-quality realizations prefer
-the newest ``version``. A realization may return ``None`` when it does not
-implement a particular asset, in which case the next closest candidate is tried.
-
-The current registrations preserve the original human-written implementation:
-
-* ``human.random-v1`` at quality ``0.0`` is the deterministic full-random
-  fallback;
-* ``human.semantic-v1`` at quality ``0.6`` contains the existing hand-written
-  glyphs, simple semantic textures, and power meter.
-
-Thus the two ends of the lever are immediately useful:
-
-.. code:: bash
-
-    # Original full-random presentation
-    python generate_assets.py --dst tpl/sm64 --target_quality=0
-
-    # Best registered clean-room realization for each image
-    python generate_assets.py --dst tpl/sm64 --target_quality=1
-
-Author filters accept YAML lists or comma-separated shell patterns:
-
-.. code:: bash
-
-    # Preserve a build containing only Jon's original human-authored code
-    python generate_assets.py --dst tpl/sm64 \
-        --target_quality=1 \
-        --include_authors='[human:joncrall]'
-
-    # Prefer the best assets while excluding a model family
-    python generate_assets.py --dst tpl/sm64 \
-        --target_quality=1 \
-        --exclude_authors='[openai:*]'
-
-The developer ``build.sh`` entry point defaults to ``sm64-port`` because it
-produces a directly playable PC executable. The shorter ``pc`` name remains
-accepted as an alias. It exposes the same realization controls through the
-``TARGET_QUALITY``, ``INCLUDE_AUTHORS``, and ``EXCLUDE_AUTHORS`` environment
-variables.
-
-New realizations are ordinary Python registrations; no authoring backend or live
-model call is part of the build system:
-
-.. code:: python
-
-    from sm64_random_assets.generators.image_generator import register_image_realization
-
-
-    @register_image_realization(
-        id='storybook.coin-v1',
-        author='openai:gpt-5.6-thinking',
-        estimated_quality=0.82,
-        version=1,
-    )
-    def generate_storybook_coin(fname, shape, rng):
-        if 'coin' not in fname:
-            return None
-        ...
-
-Realizations in this clean registry cannot use source assets. The selected
-realization metadata is included in per-asset results and summarized after
-generation.
-
 N64 Limitations
 ---------------
 
@@ -239,7 +162,7 @@ The following are several common examples:
 .. code::
 
    # Build and run the PC port
-   TEST_LOCALLY=1 TARGET=sm64-port ./build.sh
+   TEST_LOCALLY=1 TARGET=pc ./build.sh
 
    # Build and run the ROM in an emulator (m64py)
    TEST_LOCALLY=1 TARGET=rom EMULATOR=m64py ./build.sh
