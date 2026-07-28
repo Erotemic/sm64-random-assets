@@ -67,6 +67,7 @@ _PATTERN_RULES = [
     ('actors/*/flame*',            dict(subject='lava', role='sprite', motif='flame')),
     ('actors/*/*smoke*',           dict(subject='smoke', role='sprite', motif='smoke')),
     ('actors/*/water_bubble*',     dict(subject='water', role='sprite', motif='bubble')),
+    ('actors/water_wave/*',         dict(subject='water', role='sprite', motif='wave')),
     ('actors/*/water_ring*',       dict(subject='water', role='sprite', motif='ring')),
     ('actors/*/water_splash*',     dict(subject='water', role='sprite', motif='splash')),
     ('actors/*/*particle*',        dict(role='sprite', motif='particle')),
@@ -80,6 +81,12 @@ _PATTERN_RULES = [
     ('actors/*/*face*',            dict(role='face')),
     # common actor parts
     ('actors/*/*shell*',           dict(subject='shell', motif='shell')),
+    ('actors/coin/*',               dict(subject='coin', motif='coin')),
+    ('actors/bobomb/*left_side*',   dict(subject='bobomb_body', motif='bomb_body')),
+    ('actors/bobomb/*right_side*',  dict(subject='bobomb_body', motif='bomb_body')),
+    ('actors/king_bobomb/*left_side*',  dict(subject='bobomb_body', motif='bomb_body')),
+    ('actors/king_bobomb/*right_side*', dict(subject='bobomb_body', motif='bomb_body')),
+    ('actors/king_bobomb/*body*',   dict(subject='bobomb_body', motif='bomb_body')),
     ('actors/*/*scales*',          dict(subject='scales', motif='scales')),
     ('actors/*/*skin*',            dict(subject='skin', motif='skin')),
     ('actors/*/*dress*',           dict(subject='fabric', motif='dress')),
@@ -116,8 +123,10 @@ _PATTERN_RULES = [
     # level / texture groups
     ('textures/skyboxes/*',        dict(role='skybox')),
     ('textures/sky/*',             dict(subject='sky')),
+    ('textures/water/jrb_textures.*', dict(subject='water', motif='sea_water')),
     ('textures/water/*',           dict(subject='water')),
     ('textures/fire/*',            dict(subject='lava')),
+    ('textures/grass/wf_textures.*', dict(subject='grass', motif='wildflower_grass')),
     ('textures/grass/*',           dict(subject='grass')),
     ('textures/snow/*',            dict(subject='snow')),
     ('textures/cave/*',            dict(subject='stone', motif='cave')),
@@ -126,7 +135,9 @@ _PATTERN_RULES = [
     ('textures/spooky/*',          dict(subject='fabric', motif='spooky')),
     ('textures/inside/*',          dict(subject='wood', motif='inside')),
     ('textures/outside/*',         dict(subject='brick', motif='outside')),
+    ('textures/generic/bob_textures.*', dict(subject='grass', motif='battlefield_grass')),
     ('textures/generic/*',         dict(subject='stone', motif='generic')),
+    ('levels/bob/*',               dict(subject='grass', motif='battlefield_grass')),
     ('textures/effect/lava_bubble*', dict(subject='lava', role='sprite', motif='bubble')),
     ('textures/effect/flower*',    dict(subject='flower', motif='flower')),
     # level-local fallbacks
@@ -152,6 +163,7 @@ _FAMILY_DEFAULTS = {
     'piranha_plant': dict(subject='foliage', motif='plant'),
     'snowman':       dict(subject='snow', motif='snowman'),
     'book':          dict(subject='book_cover', motif='book'),
+    'coin':          dict(subject='coin', motif='coin'),
     'bookend':       dict(subject='book_cover', motif='book'),
     'mad_piano':     dict(subject='wood', motif='piano'),
     'yoshi_egg':     dict(subject='egg', motif='egg'),
@@ -161,6 +173,7 @@ _FAMILY_DEFAULTS = {
     'king_bobomb':   dict(subject='metal', motif='bomb'),
     'chain_chomp':   dict(subject='metal', motif='iron'),
     'mario':         dict(subject='fabric', motif='hero'),
+    'water_wave':    dict(subject='water', motif='wave'),
     'mario_cap':     dict(subject='fabric', motif='hero'),
     'peach':         dict(subject='fabric', motif='princess'),
 }
@@ -204,6 +217,19 @@ def analyze_texture_intent(fname: str):
         defaults['subject'] = 'water'
     if 'lava' in low and defaults['subject'] == 'generic':
         defaults['subject'] = 'lava'
+    if (low.startswith('levels/bob/') or low.startswith('textures/generic/bob_textures.')) and defaults['subject'] in {'generic', 'stone'}:
+        defaults['subject'] = 'grass'
+        defaults['motif'] = 'battlefield_grass'
+    if family == 'coin' and defaults['subject'] == 'generic':
+        defaults['subject'] = 'coin'
+        defaults['motif'] = 'coin'
+    if family == 'mario' and 'eyes' in low:
+        defaults['subject'] = 'eye'
+        defaults['role'] = 'face'
+        defaults['motif'] = 'mario_eye'
+    if family in {'bobomb', 'king_bobomb'} and any(tok in low for tok in ['left_side', 'right_side', 'body']):
+        defaults['subject'] = 'bobomb_body'
+        defaults['motif'] = 'bomb_body'
     return TextureIntent(fname=fname, **defaults)
 
 
@@ -224,7 +250,7 @@ def _palette(subject: str, motif: str, family: str, rng):
     palettes = {
         'grass':      ((73, 112, 51), (110, 158, 77), (162, 198, 108), (48, 77, 35)),
         'foliage':    ((52, 95, 50), (86, 137, 74), (147, 181, 96), (29, 56, 25)),
-        'water':      ((32, 82, 138), (70, 136, 189), (138, 204, 230), (18, 44, 93)),
+        'water':      ((24, 94, 156), (68, 152, 205), (164, 223, 244), (16, 51, 108)),
         'lava':       ((114, 22, 10), (201, 64, 22), (249, 165, 59), (52, 5, 4)),
         'stone':      ((98, 99, 105), (136, 137, 143), (182, 177, 166), (61, 62, 67)),
         'brick':      ((130, 70, 55), (163, 92, 72), (206, 156, 124), (89, 43, 36)),
@@ -240,6 +266,8 @@ def _palette(subject: str, motif: str, family: str, rng):
         'mouth':      ((226, 128, 136), (250, 192, 196), (255, 230, 235), (92, 18, 27)),
         'skin':       ((191, 164, 127), (222, 194, 158), (241, 221, 190), (124, 90, 57)),
         'shell':      ((61, 132, 73), (117, 174, 90), (213, 228, 132), (39, 76, 37)),
+        'coin':       ((178, 129, 24), (220, 172, 48), (255, 226, 118), (106, 72, 12)),
+        'bobomb_body': ((18, 22, 29), (55, 61, 72), (145, 160, 176), (7, 9, 12)),
         'scales':     ((57, 131, 144), (95, 168, 173), (162, 210, 194), (30, 76, 85)),
         'fur':        ((122, 91, 61), (164, 129, 88), (219, 191, 143), (81, 55, 34)),
         'feather':    ((93, 127, 170), (133, 166, 201), (238, 239, 232), (53, 70, 101)),
@@ -268,7 +296,7 @@ def _palette(subject: str, motif: str, family: str, rng):
         colors = [(61, 87, 132), (99, 132, 171), (240, 243, 246), (28, 39, 64)]
     elif family in {'boo', 'boo_castle'}:
         colors = [(213, 223, 236), (240, 246, 252), (255, 255, 255), (91, 109, 135)]
-    elif family in {'chain_chomp', 'bomb', 'bobomb', 'king_bobomb'} and subject in {'metal', 'generic'}:
+    elif family in {'chain_chomp', 'bomb', 'bobomb', 'king_bobomb'} and subject in {'metal', 'generic', 'bobomb_body'}:
         colors = [(34, 38, 44), (76, 81, 90), (189, 195, 204), (13, 14, 18)]
     elif motif == 'spooky':
         colors = [(87, 71, 113), (122, 98, 152), (170, 144, 198), (55, 42, 72)]
@@ -297,22 +325,30 @@ def _horizontal_gradient(draw, w, h, left, right):
 # ---------------------------------
 
 
-def _draw_grass(draw, w, h, colors, rng):
+def _draw_grass(draw, w, h, colors, rng, motif='generic'):
     _vertical_gradient(draw, w, h, colors[2], colors[0])
-    _soft_noise_points(draw, w, h, colors, rng, density=0.05)
-    for _ in range(max(12, w * h // 42)):
+    _soft_noise_points(draw, w, h, colors, rng, density=0.06)
+    tufts = max(14, w * h // 34)
+    for _ in range(tufts):
         x = rng.randint(0, w)
         base_y = rng.randint(h // 3, h)
-        length = rng.randint(max(2, h // 10), max(3, h // 3))
-        bend = rng.randint(-max(1, w // 16), max(1, w // 16) + 1)
-        draw.line((x, base_y, x + bend, base_y - length), fill=_jitter(colors[1], 10, rng), width=1)
-    for _ in range(max(1, w * h // 360)):
+        length = rng.randint(max(2, h // 10), max(4, h // 3))
+        bend = rng.randint(-max(1, w // 12), max(1, w // 12) + 1)
+        draw.line((x, base_y, x + bend, base_y - length), fill=_jitter(colors[1], 12, rng), width=1)
+        if rng.rand() > 0.72:
+            draw.line((x, base_y, x - bend, max(0, base_y - length + 1)), fill=_jitter(colors[0], 8, rng), width=1)
+    if motif in {'wildflower_grass', 'battlefield_grass'}:
+        draw.arc((0, h // 2, w - 1, h + h // 3), 180, 360, fill=_jitter(colors[3], 8, rng), width=1)
+        draw.arc((-w // 4, h // 2 - 1, w * 3 // 4, h + h // 4), 180, 360, fill=_jitter(colors[0], 10, rng), width=1)
+    flower_count = max(1, w * h // (250 if motif == 'wildflower_grass' else 420))
+    for _ in range(flower_count):
         cx, cy = rng.randint(0, w), rng.randint(h // 3, h)
         petal = _mix(colors[2], (250, 240, 210), rng.rand() * 0.55)
+        if motif == 'battlefield_grass' and rng.rand() > 0.4:
+            petal = _mix((240, 230, 160), (255, 255, 255), rng.rand() * 0.3)
         for dx, dy in [(-2, 0), (2, 0), (0, -2), (0, 2)]:
             draw.ellipse((cx + dx - 1, cy + dy - 1, cx + dx + 1, cy + dy + 1), fill=petal)
         draw.ellipse((cx - 1, cy - 1, cx + 1, cy + 1), fill=(235, 210, 70))
-
 
 def _draw_foliage(draw, w, h, colors, rng):
     draw.rectangle((0, 0, w, h), fill=colors[3])
@@ -328,21 +364,34 @@ def _draw_foliage(draw, w, h, colors, rng):
         draw.line((x0, y0, x1, y1), fill=_jitter(colors[3], 5, rng), width=1)
 
 
-def _draw_water(draw, w, h, colors, rng):
+def _draw_water(draw, w, h, colors, rng, motif='generic'):
     _vertical_gradient(draw, w, h, colors[2], colors[3])
-    for band in range(max(3, h // 6)):
-        y = int((band + 0.5) * h / max(3, h // 6))
+    draw.rectangle((0, 0, w - 1, h - 1), outline=_mix(colors[2], colors[1], 0.35), width=1)
+    band_count = max(3, h // 6)
+    for band in range(band_count):
+        y = int((band + 0.5) * h / band_count)
         phase = rng.rand() * math.pi * 2
-        amp = max(1, h // 14)
+        amp = max(1, h // (10 if motif == 'wave' else 14))
         pts = []
         for x in range(0, w + 2, 2):
-            pts.append((x, y + int(math.sin((x / max(w, 1)) * math.pi * 2 + phase) * amp)))
-        draw.line(pts, fill=_jitter(colors[1], 6, rng), width=1)
-    for _ in range(max(2, w * h // 300)):
+            freq = 3 if motif in {'sea_water', 'wave'} else 2
+            pts.append((x, y + int(math.sin((x / max(w, 1)) * math.pi * freq + phase) * amp)))
+        draw.line(pts, fill=_jitter(colors[1], 8, rng), width=1)
+    for _ in range(max(2, w * h // 250)):
         x, y = rng.randint(0, w), rng.randint(0, h)
         rw, rh = rng.randint(1, max(2, w // 10)), rng.randint(1, max(2, h // 14))
         draw.arc((x - rw, y - rh, x + rw, y + rh), 190, 350, fill=colors[2], width=1)
-
+    if motif in {'sea_water', 'wave'}:
+        for _ in range(max(2, w * h // 320)):
+            x0 = rng.randint(0, w)
+            y0 = rng.randint(h // 4, h)
+            x1 = min(w - 1, x0 + rng.randint(max(2, w // 8), max(3, w // 4)))
+            y1 = min(h - 1, y0 + rng.randint(-1, 2))
+            draw.arc((x0, y0 - max(1, h // 12), x1, y1 + max(1, h // 14)), 200, 340, fill=(240, 250, 255), width=1)
+        if motif == 'wave':
+            for _ in range(max(1, w // 12)):
+                x = rng.randint(0, w)
+                draw.line((x, h // 2, min(w - 1, x + 2), min(h - 1, h // 2 + 2)), fill=(230, 245, 255), width=1)
 
 def _draw_lava(draw, w, h, colors, rng):
     draw.rectangle((0, 0, w, h), fill=colors[0])
@@ -491,25 +540,49 @@ def _draw_sign(draw, w, h, colors, rng):
 # ---------------------------------
 
 
-def _draw_eye(draw, w, h, colors, rng, blink=False, angry=False):
+def _draw_eye(draw, w, h, colors, rng, blink=False, angry=False, style='generic', low=''):
     draw.rectangle((0, 0, w, h), fill=(0, 0, 0, 0))
     margin_x = max(1, w // 12)
     margin_y = max(1, h // 5)
     if blink:
         y = h // 2 if not angry else h // 2 - 1
-        draw.line((margin_x, y, w - margin_x, y), fill=colors[3], width=max(1, h // 8))
+        line_color = colors[3] if style != 'mario' else (63, 37, 28)
+        draw.line((margin_x, y, w - margin_x, y), fill=line_color, width=max(1, h // 8))
+        if style == 'mario':
+            draw.arc((margin_x, max(0, y - h // 5), w - margin_x, min(h - 1, y + h // 8)), 200, 340, fill=(63, 37, 28), width=1)
         return
-    draw.ellipse((margin_x, margin_y, w - margin_x, h - margin_y), fill=colors[1], outline=colors[3])
-    cx = w // 2 + rng.randint(-max(1, w // 14), max(1, w // 14) + 1)
-    cy = h // 2 + rng.randint(-max(1, h // 14), max(1, h // 14) + 1)
+    sclera = colors[1]
+    outline = colors[3]
+    iris = colors[2]
+    if style == 'mario':
+        outline = (56, 35, 28)
+        iris = (62, 134, 215)
+    draw.ellipse((margin_x, margin_y, w - margin_x, h - margin_y), fill=sclera, outline=outline)
+    dx = 0
+    dy = 0
+    if 'left' in low:
+        dx = -max(1, w // 10)
+    elif 'right' in low:
+        dx = max(1, w // 10)
+    if 'up' in low:
+        dy = -max(1, h // 10)
+    elif 'down' in low:
+        dy = max(1, h // 10)
+    if dx == 0 and dy == 0 and style != 'mario':
+        dx = rng.randint(-max(1, w // 14), max(1, w // 14) + 1)
+        dy = rng.randint(-max(1, h // 14), max(1, h // 14) + 1)
+    cx = w // 2 + dx
+    cy = h // 2 + dy
     iris_r = max(1, min(w, h) // 5)
     pupil_r = max(1, min(w, h) // 9)
-    draw.ellipse((cx - iris_r, cy - iris_r, cx + iris_r, cy + iris_r), fill=colors[2])
-    draw.ellipse((cx - pupil_r, cy - pupil_r, cx + pupil_r, cy + pupil_r), fill=colors[3])
-    draw.ellipse((cx - 1, cy - 1, cx + 1, cy + 1), fill=colors[1])
+    draw.ellipse((cx - iris_r, cy - iris_r, cx + iris_r, cy + iris_r), fill=iris)
+    draw.ellipse((cx - pupil_r, cy - pupil_r, cx + pupil_r, cy + pupil_r), fill=(0, 0, 0))
+    draw.ellipse((cx - 1, cy - 1, cx + 1, cy + 1), fill=(255, 255, 255))
     if angry:
-        draw.line((margin_x, margin_y + 1, w - margin_x, margin_y - 1), fill=colors[3], width=1)
-
+        draw.line((margin_x, margin_y + 1, w - margin_x, margin_y - 1), fill=outline, width=1)
+    if style == 'mario':
+        lid = (244, 203, 180, 180)
+        draw.arc((margin_x, margin_y - 1, w - margin_x, h // 2), 180, 360, fill=lid, width=1)
 
 def _draw_mouth(draw, w, h, colors, rng):
     draw.rectangle((0, 0, w, h), fill=(0, 0, 0, 0))
@@ -689,6 +762,57 @@ def _draw_emblem(draw, w, h, colors, rng, kind='star'):
         draw.polygon(pts, fill=_mix(colors[2], (255, 220, 100), 0.3), outline=colors[3])
 
 
+def _draw_coin(draw, w, h, colors, rng, low=''):
+    draw.rectangle((0, 0, w, h), fill=(0, 0, 0, 0))
+    sideish = ('side' in low)
+    tilt_left = ('tilt_left' in low)
+    tilt_right = ('tilt_right' in low)
+    cx, cy = w // 2, h // 2
+    rx = max(2, w // 3)
+    ry = max(2, h // 3)
+    if sideish:
+        rx = max(1, w // 7)
+    elif tilt_left or tilt_right:
+        rx = max(2, w // 4)
+        cy += -1 if tilt_left else 1
+    rim_fill = _mix(colors[1], colors[2], 0.45)
+    inner_fill = _mix(colors[0], colors[2], 0.38)
+    draw.ellipse((cx - rx, cy - ry, cx + rx, cy + ry), fill=rim_fill, outline=colors[3])
+    inset_x = max(1, rx // 4)
+    inset_y = max(1, ry // 4)
+    draw.ellipse((cx - rx + inset_x, cy - ry + inset_y, cx + rx - inset_x, cy + ry - inset_y), fill=inner_fill, outline=_mix(colors[3], colors[0], 0.5))
+    draw.arc((cx - rx + 1, cy - ry + 1, cx + rx - 1, cy + ry - 1), 205, 330, fill=(255, 250, 210, 220), width=1)
+    if not sideish:
+        bar_h = max(1, ry // 2)
+        draw.rectangle((cx - max(1, rx // 7), cy - bar_h, cx + max(1, rx // 7), cy + bar_h), fill=_mix(colors[2], colors[3], 0.25))
+        draw.arc((cx - rx // 2, cy - ry // 2, cx + rx // 2, cy + ry // 2), 25, 155, fill=_mix(colors[2], (255, 255, 255), 0.2), width=1)
+
+
+def _draw_bobomb_body(draw, w, h, colors, rng, low=''):
+    draw.rectangle((0, 0, w, h), fill=(0, 0, 0, 0))
+    buddy = 'buddy' in low
+    regal = 'king_' in low or 'crown' in low
+    base_outer = (54, 97, 179) if buddy else colors[0]
+    base_inner = (117, 163, 232) if buddy else colors[1]
+    highlight = (210, 228, 255) if buddy else colors[2]
+    edge = (20, 36, 75) if buddy else colors[3]
+    cx, cy = w // 2, h // 2
+    rx = max(3, w // 2 - 2)
+    ry = max(3, h // 2 - 2)
+    for t in np.linspace(1.0, 0.35, 7):
+        fill = _mix(base_outer, base_inner, 1 - t)
+        dx = int((1 - t) * rx * 0.4)
+        dy = int((1 - t) * ry * 0.4)
+        draw.ellipse((cx - int(rx * t) + dx, cy - int(ry * t) + dy, cx + int(rx * t) + dx, cy + int(ry * t) + dy), fill=fill)
+    draw.ellipse((cx - rx, cy - ry, cx + rx, cy + ry), outline=edge, width=1)
+    draw.ellipse((cx - rx // 2, cy - ry // 2, cx - rx // 6, cy - ry // 5), fill=(255, 255, 255, 80 if buddy else 55))
+    cap_w = max(2, w // 6)
+    cap_h = max(2, h // 6)
+    draw.rectangle((cx - cap_w // 2, 1, cx + cap_w // 2, cap_h), fill=(166, 130, 58) if regal else (126, 109, 88), outline=edge)
+    if regal:
+        draw.arc((cx - rx // 2, 0, cx + rx // 2, h // 3), 180, 360, fill=(237, 198, 85), width=1)
+
+
 # ---------------------------------
 # Sprite / overlay renderers
 # ---------------------------------
@@ -778,7 +902,8 @@ def _render_subject(draw, w, h, intent: TextureIntent, colors, rng):
         elif subject == 'mouth' or 'mouth' in low:
             _draw_mouth(draw, w, h, colors, rng)
         else:
-            _draw_eye(draw, w, h, colors, rng, blink=('closed' in low or 'blink' in low), angry=('angry' in low))
+            eye_style = 'mario' if intent.family == 'mario' else 'generic'
+            _draw_eye(draw, w, h, colors, rng, blink=('closed' in low or 'blink' in low), angry=('angry' in low), style=eye_style, low=low)
         return
 
     if role == 'sprite':
@@ -835,14 +960,14 @@ def _render_subject(draw, w, h, intent: TextureIntent, colors, rng):
 
     # subject-driven tileable / actor-surface textures
     if subject == 'grass':
-        _draw_grass(draw, w, h, colors, rng)
+        _draw_grass(draw, w, h, colors, rng, motif=intent.motif)
     elif subject == 'foliage':
         if intent.motif in {'leaf', 'stem'}:
             _draw_leaf(draw, w, h, colors, rng)
         else:
             _draw_foliage(draw, w, h, colors, rng)
     elif subject == 'water':
-        _draw_water(draw, w, h, colors, rng)
+        _draw_water(draw, w, h, colors, rng, motif=intent.motif)
     elif subject == 'lava':
         _draw_lava(draw, w, h, colors, rng)
     elif subject == 'stone':
@@ -867,6 +992,10 @@ def _render_subject(draw, w, h, intent: TextureIntent, colors, rng):
         _draw_sign(draw, w, h, colors, rng)
     elif subject == 'ghost':
         _draw_ghost(draw, w, h, colors, rng, face=False)
+    elif subject == 'coin':
+        _draw_coin(draw, w, h, colors, rng, low)
+    elif subject == 'bobomb_body':
+        _draw_bobomb_body(draw, w, h, colors, rng, low)
     elif subject == 'shell':
         _draw_shell(draw, w, h, colors, rng)
     elif subject == 'scales':

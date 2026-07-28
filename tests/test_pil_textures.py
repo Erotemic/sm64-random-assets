@@ -16,6 +16,9 @@ def test_texture_subject_and_role_classification():
     assert classify_texture_subject('actors/bookend/bookend_pages.rgba16.png') == 'pages'
     assert classify_texture_subject('actors/mad_piano/mad_piano_keys.rgba16.png') == 'piano_keys'
     assert classify_texture_subject('actors/yoshi_egg/yoshi_egg_0_unused.rgba16.png') == 'egg'
+    assert classify_texture_subject('actors/coin/coin_front.ia16.png') == 'coin'
+    assert classify_texture_subject('textures/generic/bob_textures.00000.rgba16.png') == 'grass'
+    assert classify_texture_subject('actors/mario/mario_eyes_center.rgba16.png') == 'eye'
     assert classify_texture_role('actors/door/metal_door_overlay.rgba16.png') == 'overlay'
     assert classify_texture_role('actors/water_bubble/water_bubble.rgba16.png') == 'sprite'
     assert classify_texture_role('actors/mario/mario_eyes_closed.rgba16.png') == 'face'
@@ -26,6 +29,12 @@ def test_texture_intent_exposes_family_and_motif():
     assert intent.family == 'lakitu_cameraman'
     assert intent.subject == 'lens'
     assert intent.motif == 'lens'
+    mario_eye = analyze_texture_intent('actors/mario/mario_eyes_left_unused.rgba16.png')
+    assert mario_eye.motif == 'mario_eye'
+    water = analyze_texture_intent('textures/water/jrb_textures.00000.rgba16.png')
+    assert water.motif == 'sea_water'
+    grass = analyze_texture_intent('textures/grass/wf_textures.00000.rgba16.png')
+    assert grass.motif == 'wildflower_grass'
 
 
 def test_render_pil_texture_is_deterministic_and_nontrivial():
@@ -62,3 +71,24 @@ def test_render_semantic_part_textures_have_structure():
     assert egg[:, :, 3].max() > 0
     assert keys[:, :, 0].std() > 20
     assert shell[:, :, 1].mean() > shell[:, :, 0].mean()
+
+
+def test_render_coin_and_bobomb_textures_have_specialized_structure():
+    coin = render_pil_texture('actors/coin/coin_front.ia16.png', (32, 32, 2), np.random.RandomState(0))
+    bomb = render_pil_texture('actors/bobomb/bob-omb_left_side.rgba16.png', (32, 32, 4), np.random.RandomState(0))
+    battlefield = render_pil_texture('textures/generic/bob_textures.00000.rgba16.png', (32, 32, 4), np.random.RandomState(0))
+    assert coin.shape == (32, 32, 2)
+    assert coin[:, :, 1].max() > 0
+    assert coin[:, :, 0].std() > 10
+    assert bomb[:, :, 0:3].std() > 10
+    assert battlefield[:, :, 1].mean() > battlefield[:, :, 0].mean()
+
+
+def test_render_mario_eye_water_and_grass_have_semantic_structure():
+    mario_eye = render_pil_texture('actors/mario/mario_eyes_left_unused.rgba16.png', (32, 32, 4), np.random.RandomState(0))
+    water = render_pil_texture('textures/water/jrb_textures.00000.rgba16.png', (32, 32, 4), np.random.RandomState(0))
+    grass = render_pil_texture('textures/grass/wf_textures.00000.rgba16.png', (32, 32, 4), np.random.RandomState(0))
+    assert mario_eye[:, :, 2].mean() > mario_eye[:, :, 0].mean()  # blue iris bias
+    assert water[:, :, 2].mean() > water[:, :, 1].mean() > water[:, :, 0].mean()
+    assert grass[:, :, 1].mean() > grass[:, :, 0].mean()
+    assert grass[:, :, 1].std() > 10

@@ -26,3 +26,5 @@ We aim to adhere to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 * Initial version* The PIL texture generator now uses a methodical semantic-intent system (family + role + motif + subject) to render more interesting clean-room art for actor parts, surfaces, overlays, and VFX sprites.
+* Raise the human semantic glyph / HUD realization quality so it wins for character sets and the life bar; also improve procedural coin textures, Bob-omb body textures, and Bob-omb Battlefield grass classification.
+* Restrict the human semantic realization to glyph/HUD-style assets so semantic character-part textures like eyes use the PIL renderer; improve Mario eye rendering, add richer water and grass variants, and keep the human glyph/life-bar work preferred where it belongs.

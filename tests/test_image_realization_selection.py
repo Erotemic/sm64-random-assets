@@ -29,3 +29,19 @@ def test_validate_generated_image_enforces_shape_and_dtype():
     fixed = image_generator.validate_generated_image(img, (8, 8, 4))
     assert fixed.shape == (8, 8, 4)
     assert fixed.dtype == np.uint8
+
+
+def test_default_registry_prefers_semantic_for_glyphs_at_high_quality():
+    policy = image_generator.build_realization_policy(target_quality=1.0)
+    info = {'fname': 'textures/segment2/segment2.00000.rgba16.png', 'shape': [64, 64, 4]}
+    identity = determine_asset_identity(info, name_to_text_lut=human_semantic.name_to_text_lut)
+    realization = policy.resolve(identity, info)
+    assert realization.id == 'human.semantic'
+
+
+def test_default_registry_uses_pil_textures_for_eyes_even_at_high_quality():
+    policy = image_generator.build_realization_policy(target_quality=1.0)
+    info = {'fname': 'actors/mario/mario_eyes_center.rgba16.png', 'shape': [32, 32, 4]}
+    identity = determine_asset_identity(info, name_to_text_lut=human_semantic.name_to_text_lut)
+    realization = policy.resolve(identity, info)
+    assert realization.id == 'openai.pil-textures'

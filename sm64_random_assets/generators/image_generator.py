@@ -16,7 +16,19 @@ from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import pil_te
 
 
 def _semantic_supports(identity, info):
-    return human_semantic.can_generate(identity.fname, info.get('shape', None))
+    # Restrict the human semantic realization to the families it is best at.
+    preferred_families = {
+        'hud.power_meter',
+    }
+    if identity.family in preferred_families or identity.family.startswith('glyph.'):
+        return human_semantic.can_generate(identity.fname, info.get('shape', None))
+    preferred_fnames = {
+        'levels/intro/2_copyright.rgba16.png',
+        'levels/intro/3_tm.rgba16.png',
+    }
+    if identity.fname in preferred_fnames:
+        return human_semantic.can_generate(identity.fname, info.get('shape', None))
+    return False
 
 
 _DEFAULT_IMAGE_REALIZATION_REGISTRY = None
@@ -39,19 +51,19 @@ def default_image_realization_registry():
             id='human.semantic',
             author='human:joncrall',
             version=1,
-            estimated_quality=0.60,
+            estimated_quality=0.70,
             generator=human_semantic.generate_semantic_image_data,
             supports=_semantic_supports,
-            notes='Original human-authored semantic and glyph generator.',
+            notes='Original human-authored semantic, glyph, and HUD generator; preferred for text glyph sets and the power meter/life bar, but not for semantic character-part textures like eyes.',
         ))
         registry.register(AssetRealization(
             id='openai.pil-textures',
             author='openai:gpt-5.6-thinking',
-            version=3,
+            version=5,
             estimated_quality=0.68,
             generator=pil_textures.render_pil_texture,
             families=frozenset({'*'}),
-            notes='Deterministic PIL-authored procedural textures with methodical family, role, motif, and material inference for broad clean-room asset coverage.',
+            notes='Deterministic PIL-authored procedural textures with methodical family, role, motif, and material inference for broad clean-room asset coverage, including improved coins, bob-ombs, Mario eyes, water textures, and grass textures.',
         ))
         _DEFAULT_IMAGE_REALIZATION_REGISTRY = registry
     return _DEFAULT_IMAGE_REALIZATION_REGISTRY
