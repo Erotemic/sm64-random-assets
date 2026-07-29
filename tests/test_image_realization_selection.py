@@ -72,3 +72,18 @@ def test_default_registry_uses_early_environment_realization_for_first_levels():
         realization = policy.resolve(identity, info)
         assert realization.id == 'openai.early-environment'
         assert realization.estimated_quality == 0.79
+
+
+def test_default_registry_uses_bowser_peach_and_restored_frequent_realizations():
+    policy = image_generator.build_realization_policy(target_quality=1.0)
+    cases = [
+        ({'fname': 'levels/castle_inside/5.rgba16.png', 'shape': [64, 32, 4]}, 'openai.bowser-peach-textures'),
+        ({'fname': 'levels/castle_inside/6.rgba16.png', 'shape': [64, 32, 4]}, 'openai.bowser-peach-textures'),
+        ({'fname': 'actors/bowser/bowser_shell.rgba16.png', 'shape': [32, 32, 4]}, 'openai.bowser-peach-textures'),
+        ({'fname': 'actors/peach/peach_dress.rgba16.png', 'shape': [32, 32, 4]}, 'openai.bowser-peach-textures'),
+        ({'fname': 'actors/door/castle_door.rgba16.png', 'shape': [64, 32, 4]}, 'openai.frequent-textures'),
+    ]
+    for info, expected in cases:
+        identity = determine_asset_identity(info, name_to_text_lut=human_semantic.name_to_text_lut)
+        realization = policy.resolve(identity, info)
+        assert realization.id == expected

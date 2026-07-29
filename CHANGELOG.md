@@ -1,4 +1,8 @@
 
+### Changed
+- Raised semantic synthesized audio by another approximately 1.5x in average level, corresponding to the requested 7.5/10 balance, with a soft limiter at 0.97 full scale to avoid hard clipping.
+
+
 ### Fixed
 * Corrected Castle Grounds feedback regressions: outside-bank `03000` is lawn again, `06800` is masonry rather than water, moat water remains blue, and the fence texture retains a transparent iron mask.
 
@@ -12,6 +16,7 @@ We aim to adhere to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+* Added a code-authored Bowser/Peach hallway fake-out portrait pair and differentiated Bowser, Peach, and Bowser-flame texture renderers.
 * broadened the clean-room castle portrait generator to cover every castle portrait / portal texture, including Tiny-Huge Island's two standalone square paintings.
 * A clean-room `openai.simple-music` M64 realization with compact two-voice melodies and bass lines.
 * Target sound-bank inspection to choose suitable pitched instruments when available.
@@ -23,6 +28,7 @@ We aim to adhere to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 * Regression tests for realization selection and deterministic human realizations.
 
 ### Changed
+* Restored the high-exposure texture realization in the merged registry after later environment overlays had replaced its registration.
 * routed all supported castle portrait textures through the dedicated portrait realization and expanded tests to cover the full mapped portrait set.
 * `build.sh` now defaults `TARGET_QUALITY` to `1`, selecting semantic samples and simple music.
 * Binary generation now participates in author/version/quality realization selection.

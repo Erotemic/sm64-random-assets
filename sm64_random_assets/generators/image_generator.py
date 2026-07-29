@@ -14,6 +14,8 @@ from sm64_random_assets.image_realizations.human_joncrall import random as human
 from sm64_random_assets.image_realizations.human_joncrall import semantic as human_semantic
 from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import pil_textures
 from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import environment_textures
+from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import frequent_textures
+from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import bowser_peach_textures
 
 
 def _semantic_supports(identity, info):
@@ -35,6 +37,10 @@ def _semantic_supports(identity, info):
 
 def _early_environment_supports(identity, info):
     return environment_textures.can_generate(identity.fname, info.get('shape', None))
+
+
+def _bowser_peach_supports(identity, info):
+    return bowser_peach_textures.supports_bowser_peach_texture(identity, info)
 
 
 def _castle_portrait_supports(identity, info):
@@ -83,6 +89,24 @@ def default_image_realization_registry():
             generator=environment_textures.render_environment_texture,
             supports=_early_environment_supports,
             notes='Focused semantic environment textures for early-game levels and shared banks, including blue water, grassy castle grounds, stronger stone / wood material differentiation, alpha-aware hedge / fence / icy mask tiles, and screenshot-verified Castle Grounds routing so the lawn stays grass, the castle stays masonry, water stays blue, and the fence keeps a transparent iron mask.',
+        ))
+        registry.register(AssetRealization(
+            id='openai.frequent-textures',
+            author='openai:gpt-5.6-thinking',
+            version=2,
+            estimated_quality=0.80,
+            generator=frequent_textures.render_frequent_texture,
+            supports=frequent_textures.supports_frequent_texture,
+            notes='Restored focused high-exposure texture pass for Mario details, recurring collectibles, shadows, effects, trees, doors, boxes, switches, signposts, Goombas, and Koopa shells after later environment overlays replaced the registry file.',
+        ))
+        registry.register(AssetRealization(
+            id='openai.bowser-peach-textures',
+            author='openai:gpt-5.6-thinking',
+            version=1,
+            estimated_quality=0.84,
+            generator=bowser_peach_textures.render_bowser_peach_texture,
+            supports=_bowser_peach_supports,
+            notes='Dedicated code-authored Bowser/Peach fake-out portraits plus differentiated Bowser, Peach, and Bowser-flame actor textures based on descriptive asset names.',
         ))
         registry.register(AssetRealization(
             id='openai.castle-portraits',

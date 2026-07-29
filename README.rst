@@ -312,3 +312,12 @@ The latest PIL-texture pass also explicitly defers to the human-authored glyph a
 The realization policy now treats the human semantic generator as the preferred source for glyphs and the HUD life bar, while semantic character-part textures such as eyes are left to the PIL semantic renderer. The PIL pass also now includes a better Mario-eye treatment and richer water / grass variants.
 
 Bob-omb Battlefield uses the castle painting pair ``levels/castle_inside/17.rgba16.png`` and ``levels/castle_inside/18.rgba16.png``. These two 64x32 halves now use a dedicated scenic renderer and combine into a coherent 64x64 course portrait. The similarly named ``levels/bob/*`` assets remain battlefield course textures rather than painting tiles.
+
+Bowser / Peach fake-out and character differentiation
+-----------------------------------------------------
+
+The castle hallway fake-out uses code-authored Peach and Bowser portraits for
+``levels/castle_inside/5.rgba16.png`` and ``6.rgba16.png``.  A focused
+``openai.bowser-peach-textures`` realization also differentiates named Bowser
+and Peach actor parts and gives Bowser flame frames transparent animated
+silhouettes.

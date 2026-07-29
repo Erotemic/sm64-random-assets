@@ -21,3 +21,13 @@ def test_mario_eye_variants_are_a_coherent_family():
     assert center.family == closed.family == 'actor.mario.eyes'
     assert center.member == 'center'
     assert closed.member == 'closed'
+
+
+def test_bowser_peach_eye_and_fakeout_families_are_separate():
+    peach_fakeout = determine_asset_identity('levels/castle_inside/5.rgba16.png')
+    bowser_fakeout = determine_asset_identity('levels/castle_inside/6.rgba16.png')
+    bowser_eye = determine_asset_identity('actors/bowser/bowser_eye_left_0.rgba16.png')
+    peach_eye = determine_asset_identity('actors/peach/peach_eye_open.rgba16.png')
+    assert peach_fakeout.family == bowser_fakeout.family == 'castle.fakeout_portrait'
+    assert bowser_eye.family == 'actor.bowser.eyes'
+    assert peach_eye.family == 'actor.peach.eyes'

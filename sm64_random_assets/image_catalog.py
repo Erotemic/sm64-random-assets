@@ -33,6 +33,21 @@ def determine_asset_identity(info_or_fname, *, name_to_text_lut=None) -> AssetId
         member = fname.rsplit('mario_eyes_', 1)[1].split('.', 1)[0]
         return AssetIdentity(fname=fname, family='actor.mario.eyes', member=member)
 
+    if fname in {
+        'levels/castle_inside/5.rgba16.png',
+        'levels/castle_inside/6.rgba16.png',
+    }:
+        member = 'peach' if '/5.' in fname else 'bowser'
+        return AssetIdentity(fname=fname, family='castle.fakeout_portrait', member=member)
+
+    if fname.startswith('actors/bowser/bowser_eye'):
+        member = fname.rsplit('bowser_eye', 1)[1].split('.', 1)[0].lstrip('_') or 'default'
+        return AssetIdentity(fname=fname, family='actor.bowser.eyes', member=member)
+
+    if fname.startswith('actors/peach/peach_eye'):
+        member = fname.rsplit('peach_eye_', 1)[1].split('.', 1)[0]
+        return AssetIdentity(fname=fname, family='actor.peach.eyes', member=member)
+
     if 'goomba_face_blink' in fname:
         return AssetIdentity(fname=fname, family='actor.goomba.face', member='blink')
     if 'goomba_face' in fname:
