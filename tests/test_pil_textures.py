@@ -1,5 +1,9 @@
 import numpy as np
 
+from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking.environment_textures import (
+    render_environment_texture,
+    resolve_environment_motif,
+)
 from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking.pil_textures import (
     _CASTLE_PORTRAIT_LAYOUTS,
     _render_castle_portrait_rgba,
@@ -148,3 +152,35 @@ def test_render_bobomb_battlefield_portrait_is_scenic():
     assert (bottom[:, :, 0] > 150).mean() > 0.03
     assert np.unique(full.reshape(-1, 4), axis=0).shape[0] > 100
     assert np.abs(top.astype(int) - bottom.astype(int)).mean() > 15
+
+
+
+def test_environment_texture_resolution_targets_early_level_families():
+    assert resolve_environment_motif('levels/castle_grounds/0.rgba16.png') == 'castle_lawn'
+    assert resolve_environment_motif('levels/jrb/1.rgba16.png') == 'sea_water'
+    assert resolve_environment_motif('textures/generic/bob_textures.00000.rgba16.png') == 'battlefield_grass'
+    assert resolve_environment_motif('textures/outside/castle_grounds_textures.0BC00.ia16.png') == 'hedge_alpha'
+
+
+def test_environment_texture_rendering_emphasizes_blue_water_green_grass_and_alpha_masks():
+    lawn = render_environment_texture('levels/castle_grounds/0.rgba16.png', (32, 64, 4), np.random.RandomState(0))
+    water = render_environment_texture('levels/castle_grounds/1.rgba16.png', (32, 64, 4), np.random.RandomState(0))
+    hedge = render_environment_texture('levels/castle_grounds/5.ia8.png', (32, 64, 2), np.random.RandomState(0))
+    fence = render_environment_texture('levels/wf/5.ia8.png', (16, 16, 2), np.random.RandomState(0))
+    ice = render_environment_texture('levels/ccm/9.ia16.png', (32, 32, 2), np.random.RandomState(0))
+    assert lawn[:, :, 1].mean() > lawn[:, :, 0].mean()
+    assert water[:, :, 2].mean() > water[:, :, 1].mean() > water[:, :, 0].mean()
+    assert hedge[:, :, 1].max() > 0
+    assert hedge[:, :, 1].min() == 0
+    assert fence[:, :, 1].min() == 0
+    assert fence[:, :, 1].max() > 0
+    assert ice[:, :, 1].max() > ice[:, :, 1].min()
+
+
+def test_environment_texture_bank_members_are_nontrivial():
+    bob = render_environment_texture('textures/generic/bob_textures.01000.rgba16.png', (32, 32, 4), np.random.RandomState(0))
+    water = render_environment_texture('textures/water/jrb_textures.00800.rgba16.png', (32, 64, 4), np.random.RandomState(0))
+    outside = render_environment_texture('textures/outside/castle_grounds_textures.02000.rgba16.png', (64, 32, 4), np.random.RandomState(0))
+    assert np.unique(bob.reshape(-1, 4), axis=0).shape[0] > 24
+    assert np.unique(water.reshape(-1, 4), axis=0).shape[0] > 24
+    assert np.unique(outside.reshape(-1, 4), axis=0).shape[0] > 24

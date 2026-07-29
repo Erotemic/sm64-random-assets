@@ -58,3 +58,16 @@ def test_default_registry_uses_specialized_castle_portraits():
         realization = policy.resolve(identity, info)
         assert realization.id == 'openai.castle-portraits'
         assert realization.estimated_quality == 0.82
+
+
+def test_default_registry_uses_early_environment_realization_for_first_levels():
+    policy = image_generator.build_realization_policy(target_quality=1.0)
+    for info in [
+        {'fname': 'levels/bob/0.rgba16.png', 'shape': [32, 32, 4]},
+        {'fname': 'levels/castle_grounds/1.rgba16.png', 'shape': [32, 64, 4]},
+        {'fname': 'textures/water/jrb_textures.00800.rgba16.png', 'shape': [32, 64, 4]},
+    ]:
+        identity = determine_asset_identity(info, name_to_text_lut=human_semantic.name_to_text_lut)
+        realization = policy.resolve(identity, info)
+        assert realization.id == 'openai.early-environment'
+        assert realization.estimated_quality == 0.79

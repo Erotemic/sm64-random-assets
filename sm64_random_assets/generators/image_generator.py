@@ -13,6 +13,7 @@ from sm64_random_assets.image_catalog import determine_asset_identity
 from sm64_random_assets.image_realizations.human_joncrall import random as human_random
 from sm64_random_assets.image_realizations.human_joncrall import semantic as human_semantic
 from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import pil_textures
+from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import environment_textures
 
 
 def _semantic_supports(identity, info):
@@ -30,6 +31,10 @@ def _semantic_supports(identity, info):
         return human_semantic.can_generate(identity.fname, info.get('shape', None))
     return False
 
+
+
+def _early_environment_supports(identity, info):
+    return environment_textures.can_generate(identity.fname, info.get('shape', None))
 
 
 def _castle_portrait_supports(identity, info):
@@ -69,6 +74,15 @@ def default_image_realization_registry():
             generator=pil_textures.render_pil_texture,
             families=frozenset({'*'}),
             notes='Deterministic PIL-authored procedural textures with methodical family, role, motif, and material inference for broad clean-room asset coverage, including improved coins, bob-ombs, Mario eyes, water textures, grass textures, and broader clean-room castle portrait routing.',
+        ))
+        registry.register(AssetRealization(
+            id='openai.early-environment',
+            author='openai:gpt-5.6-thinking',
+            version=1,
+            estimated_quality=0.79,
+            generator=environment_textures.render_environment_texture,
+            supports=_early_environment_supports,
+            notes='Focused semantic environment textures for early-game levels and shared banks, including blue water, grassy castle grounds, stronger stone / wood material differentiation, and alpha-aware hedge / fence / icy mask tiles.',
         ))
         registry.register(AssetRealization(
             id='openai.castle-portraits',

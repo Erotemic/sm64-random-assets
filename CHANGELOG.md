@@ -1,3 +1,12 @@
+
+## Unreleased
+
+### Added
+- Added a focused `openai.early-environment` image realization for early-game environment textures, including Bob-omb Battlefield, Whomp's Fortress, Jolly Roger Bay, Cool, Cool Mountain, Castle Grounds, and their shared grass / water / outside texture banks.
+
+### Changed
+- Improved semantic environment rendering so castle lawns stay grassy, water banks render with blue water instead of gray tiles, and several IA environment textures now carry meaningful alpha masks for hedges, fences, vines, and icy translucent surfaces.
+
 # Changelog
 We [keep a changelog](https://keepachangelog.com/en/1.0.0/).
 We aim to adhere to [semantic versioning](https://semver.org/spec/v2.0.0.html).
