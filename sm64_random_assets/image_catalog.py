@@ -29,6 +29,10 @@ def determine_asset_identity(info_or_fname, *, name_to_text_lut=None) -> AssetId
             family = 'glyph.misc'
         return AssetIdentity(fname=fname, family=family, member=fname.rsplit('/', 1)[-1])
 
+    if fname.startswith('actors/mario/mario_eyes_'):
+        member = fname.rsplit('mario_eyes_', 1)[1].split('.', 1)[0]
+        return AssetIdentity(fname=fname, family='actor.mario.eyes', member=member)
+
     if 'goomba_face_blink' in fname:
         return AssetIdentity(fname=fname, family='actor.goomba.face', member='blink')
     if 'goomba_face' in fname:

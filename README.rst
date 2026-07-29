@@ -43,6 +43,17 @@ To run the asset generation script, the following requirements are needed.
    pip install -r requirements/runtime.txt
 
 
+
+High-Exposure Texture Pass
+--------------------------
+
+At high target quality, frequently visible assets use a focused semantic
+realization before the general PIL fallback.  The first pass covers Mario's
+persistent detail textures, stars and coins, actor shadows, smoke / sparkle /
+water-splash effects, trees, doors, common boxes and switches, signposts,
+Goombas, and Koopa shells.  The prioritization table is kept in
+``frequent_textures.py`` so later passes can extend it methodically.
+
 PC Port Example Usage
 ---------------------
 

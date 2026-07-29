@@ -13,3 +13,11 @@ def test_unknown_assets_remain_asset_scoped():
     a = determine_asset_identity('textures/misc/example.rgba16.png')
     assert a.family == 'textures/misc/example.rgba16.png'
     assert a.member == 'default'
+
+
+def test_mario_eye_variants_are_a_coherent_family():
+    center = determine_asset_identity('actors/mario/mario_eyes_center.rgba16.png')
+    closed = determine_asset_identity('actors/mario/mario_eyes_closed.rgba16.png')
+    assert center.family == closed.family == 'actor.mario.eyes'
+    assert center.member == 'center'
+    assert closed.member == 'closed'
