@@ -66,6 +66,7 @@ def test_default_registry_uses_early_environment_realization_for_first_levels():
         {'fname': 'levels/bob/0.rgba16.png', 'shape': [32, 32, 4]},
         {'fname': 'levels/castle_grounds/1.rgba16.png', 'shape': [32, 64, 4]},
         {'fname': 'textures/water/jrb_textures.00800.rgba16.png', 'shape': [32, 64, 4]},
+        {'fname': 'textures/outside/castle_grounds_textures.03000.rgba16.png', 'shape': [32, 32, 4]},
     ]:
         identity = determine_asset_identity(info, name_to_text_lut=human_semantic.name_to_text_lut)
         realization = policy.resolve(identity, info)

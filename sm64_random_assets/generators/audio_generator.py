@@ -32,11 +32,11 @@ def default_audio_realization_registry():
         registry.register(AssetRealization(
             id='openai.semantic-synth',
             author='openai:gpt-5.6-thinking',
-            version=1,
+            version=2,
             estimated_quality=0.65,
             generator=openai_semantic.generate_semantic_sample,
             families=frozenset({'*'}),
-            notes='Deterministic filename-aware synthetic instruments and effects.',
+            notes='Deterministic filename-aware synthetic instruments and effects, normalized to stronger game-ready peaks so they sit closer to engine-provided coin sounds without clipping.',
         ))
         _DEFAULT_AUDIO_REALIZATION_REGISTRY = registry
     return _DEFAULT_AUDIO_REALIZATION_REGISTRY

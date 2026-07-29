@@ -3,6 +3,19 @@ from __future__ import annotations
 import math
 import numpy as np
 
+# Generated samples were intentionally conservative in the first semantic-audio pass.
+# The game engine's built-in coin sound is substantially louder, which encouraged users
+# to turn the global volume up and then get hit by the coin transient. These targets
+# raise semantic effects by roughly 1.7x-2.0x while preserving headroom below full scale.
+SEMANTIC_MASTER_PEAKS = {
+    'percussion': 0.74,
+    'pitched_decay': 0.72,
+    'sustained': 0.68,
+    'voice': 0.70,
+    'effect': 0.66,
+}
+
+
 
 def _moving_average(data, width):
     width = max(1, min(int(width), len(data)))
@@ -252,6 +265,11 @@ def generate_semantic_sample(fname, params, rng, identity=None):
     else:
         mono = _water_or_soft_effect(name, nframes, sample_rate, rng)
 
+    # Bring generated effects closer to the engine's built-in sound level. This is
+    # peak normalization rather than a blind integer gain, so quiet synthesis choices
+    # get louder without clipping or changing the waveform shape.
+    mono = _normalize(mono, peak=SEMANTIC_MASTER_PEAKS[category])
+
     # Quantize below full scale. AIFF PCM is encoded later in big-endian order.
     pcm = np.round(mono * 32767.0).astype(np.int16)
     if nchannels > 1:
@@ -259,4 +277,4 @@ def generate_semantic_sample(fname, params, rng, identity=None):
     return pcm
 
 
-__all__ = ['generate_semantic_sample']
+__all__ = ['SEMANTIC_MASTER_PEAKS', 'generate_semantic_sample']

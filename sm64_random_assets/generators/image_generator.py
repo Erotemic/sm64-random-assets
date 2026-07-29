@@ -78,11 +78,11 @@ def default_image_realization_registry():
         registry.register(AssetRealization(
             id='openai.early-environment',
             author='openai:gpt-5.6-thinking',
-            version=1,
+            version=3,
             estimated_quality=0.79,
             generator=environment_textures.render_environment_texture,
             supports=_early_environment_supports,
-            notes='Focused semantic environment textures for early-game levels and shared banks, including blue water, grassy castle grounds, stronger stone / wood material differentiation, and alpha-aware hedge / fence / icy mask tiles.',
+            notes='Focused semantic environment textures for early-game levels and shared banks, including blue water, grassy castle grounds, stronger stone / wood material differentiation, alpha-aware hedge / fence / icy mask tiles, and screenshot-verified Castle Grounds routing so the lawn stays grass, the castle stays masonry, water stays blue, and the fence keeps a transparent iron mask.',
         ))
         registry.register(AssetRealization(
             id='openai.castle-portraits',

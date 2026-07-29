@@ -56,13 +56,37 @@ _EXACT_RULES = {
     'levels/castle_grounds/3.rgba16.png': 'castle_brick',
     'levels/castle_grounds/4.rgba16.png': 'hedge_top',
     'levels/castle_grounds/5.ia8.png': 'hedge_alpha',
+
+    # Castle grounds shared outside bank. Use explicit per-file routing instead of
+    # the old offset bucket heuristic so wall / water / roof / fence tiles do not
+    # get mistaken for grass or hedge masks.
+    'textures/outside/castle_grounds_textures.00000.rgba16.png': 'castle_lawn',
+    'textures/outside/castle_grounds_textures.00800.rgba16.png': 'castle_lawn',
+    'textures/outside/castle_grounds_textures.01000.rgba16.png': 'moat_water',
+    'textures/outside/castle_grounds_textures.02000.rgba16.png': 'castle_flagstone',
+    'textures/outside/castle_grounds_textures.03000.rgba16.png': 'castle_lawn',
+    'textures/outside/castle_grounds_textures.03800.rgba16.png': 'castle_brick',
+    'textures/outside/castle_grounds_textures.04000.rgba16.png': 'castle_brick',
+    'textures/outside/castle_grounds_textures.04800.rgba16.png': 'roof_shingles',
+    'textures/outside/castle_grounds_textures.05800.rgba16.png': 'castle_flagstone',
+    'textures/outside/castle_grounds_textures.06000.rgba16.png': 'castle_brick',
+    'textures/outside/castle_grounds_textures.06800.rgba16.png': 'castle_brick',
+    'textures/outside/castle_grounds_textures.07800.rgba16.png': 'castle_brick',
+    'textures/outside/castle_grounds_textures.08000.rgba16.png': 'castle_brick',
+    'textures/outside/castle_grounds_textures.08800.rgba16.png': 'castle_flagstone',
+    'textures/outside/castle_grounds_textures.09000.rgba16.png': 'castle_brick',
+    'textures/outside/castle_grounds_textures.09800.rgba16.png': 'castle_flagstone',
+    'textures/outside/castle_grounds_textures.0A000.rgba16.png': 'castle_brick',
+    'textures/outside/castle_grounds_textures.0A800.rgba16.png': 'castle_brick',
+    'textures/outside/castle_grounds_textures.0B000.rgba16.png': 'castle_banner_trim',
+    'textures/outside/castle_grounds_textures.0B400.rgba16.png': 'roof_shingles',
+    'textures/outside/castle_grounds_textures.0BC00.ia16.png': 'castle_fence_alpha',
 }
 
 _PATTERN_RULES = [
     ('textures/generic/bob_textures.*', 'bob_bank'),
     ('textures/grass/wf_textures.*', 'wf_grass_bank'),
     ('textures/water/jrb_textures.*', 'jrb_water_bank'),
-    ('textures/outside/castle_grounds_textures.*', 'castle_outside_bank'),
 ]
 
 _BANK_VARIANTS = {
@@ -87,13 +111,6 @@ _BANK_VARIANTS = {
         'sea_water_vertical', 'sea_water_vertical', 'sea_water', 'sea_water',
         'sea_water_vertical', 'sea_water_vertical', 'sea_water', 'sea_water_vertical',
         'sea_water', 'sea_water_vertical', 'sea_water_vertical',
-    ],
-    'castle_outside_bank': [
-        'castle_lawn', 'castle_lawn', 'moat_water', 'castle_flagstone', 'castle_brick',
-        'castle_brick', 'hedge_top', 'castle_lawn', 'roof_shingles', 'castle_flagstone',
-        'moat_water', 'castle_lawn', 'castle_brick', 'hedge_top', 'castle_lawn',
-        'castle_flagstone', 'castle_brick', 'roof_shingles', 'castle_banner_trim',
-        'castle_lawn', 'hedge_alpha',
     ],
 }
 
@@ -136,16 +153,8 @@ def resolve_environment_motif(fname: str) -> str | None:
             idx = _extract_numeric_index(fname)
             if idx is None:
                 idx = _stable_seed(fname)
-            if bank == 'bob_bank':
+            if bank in {'bob_bank', 'wf_grass_bank', 'jrb_water_bank'}:
                 slot = idx // 0x800 if idx > 0 else 0
-            elif bank == 'wf_grass_bank':
-                slot = idx // 0x800 if idx > 0 else 0
-            elif bank == 'jrb_water_bank':
-                slot = idx // 0x800 if idx > 0 else 0
-            elif bank == 'castle_outside_bank':
-                slot = idx // 0x800 if idx > 0 else 0
-                if idx == 0x0BC00:
-                    slot = len(variants) - 1
             else:
                 slot = 0
             return variants[slot % len(variants)]
@@ -411,6 +420,33 @@ def _chainlink_tile(h, w, rng):
     return np.array(img, dtype=np.uint8)
 
 
+def _castle_fence_alpha_tile(h, w, rng):
+    rgba = np.zeros((h, w, 4), dtype=np.uint8)
+    img = Image.fromarray(rgba, mode='RGBA')
+    draw = ImageDraw.Draw(img)
+    bar_w = max(1, w // 14)
+    spacing = max(bar_w + 1, w // 7)
+    left_margin = max(1, spacing // 2)
+    iron_fill = (82, 89, 95, 235)
+    iron_edge = (138, 146, 152, 255)
+    rail_y1 = max(1, h // 3)
+    rail_y2 = max(rail_y1 + 2, (2 * h) // 3)
+    # horizontal rails
+    draw.rectangle((0, rail_y1, w, min(h - 1, rail_y1 + bar_w)), fill=iron_fill)
+    draw.rectangle((0, rail_y2, w, min(h - 1, rail_y2 + bar_w)), fill=iron_fill)
+    # vertical pickets with pointed tops
+    for x in range(left_margin, w, spacing):
+        x0 = max(0, x - bar_w // 2)
+        x1 = min(w - 1, x0 + bar_w)
+        y0 = max(1, h // 8)
+        y1 = h - 1
+        draw.rectangle((x0, y0 + bar_w, x1, y1), fill=iron_fill)
+        draw.polygon([(x0, y0 + bar_w), ((x0 + x1) // 2, 0), (x1, y0 + bar_w)], fill=iron_fill)
+        draw.line((x0, y0 + bar_w, (x0 + x1) // 2, 0), fill=iron_edge, width=1)
+        draw.line(((x0 + x1) // 2, 0, x1, y0 + bar_w), fill=iron_edge, width=1)
+    return np.array(img, dtype=np.uint8)
+
+
 def _banner_trim_tile(h, w, rng):
     arr = _base_noise(h, w, (154, 112, 31), rng, delta=4)
     img = Image.fromarray(arr, mode='RGBA')
@@ -502,7 +538,7 @@ def _motif_to_rgba(motif: str, h: int, w: int, rng):
     if motif == 'frozen_water':
         return _water_tile(h, w, rng, deep=(94, 153, 210), shallow=(190, 226, 247), vertical=False, foam=False, frozen=True)
     if motif == 'moat_water':
-        return _water_tile(h, w, rng, deep=(24, 92, 164), shallow=(98, 186, 230), vertical=False, foam=True)
+        return _water_tile(h, w, rng, deep=(18, 102, 196), shallow=(104, 198, 244), vertical=False, foam=True)
     if motif == 'sea_water':
         return _water_tile(h, w, rng, deep=(22, 88, 150), shallow=(82, 174, 218), vertical=False, foam=False)
     if motif == 'sea_water_vertical':
@@ -531,6 +567,8 @@ def _motif_to_rgba(motif: str, h: int, w: int, rng):
         return _chainlink_tile(h, w, rng)
     if motif == 'battlefield_fence_alpha':
         return _chainlink_tile(h, w, rng)
+    if motif == 'castle_fence_alpha':
+        return _castle_fence_alpha_tile(h, w, rng)
     if motif == 'ice_alpha':
         return _ice_tile(h, w, rng, alpha=True)
     if motif == 'castle_banner_trim':

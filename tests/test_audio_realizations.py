@@ -4,6 +4,7 @@ import numpy as np
 
 from sm64_random_assets.audio_catalog import determine_audio_identity
 from sm64_random_assets.audio_realizations.openai_gpt_5_6_thinking.semantic import (
+    SEMANTIC_MASTER_PEAKS,
     generate_semantic_sample,
 )
 from sm64_random_assets.generators.audio_generator import (
@@ -49,7 +50,7 @@ def test_registry_quality_selects_semantic_audio():
     assert chosen.author == 'openai:gpt-5.6-thinking'
 
 
-def test_semantic_samples_are_deterministic_moderate_and_nonstatic():
+def test_semantic_samples_are_deterministic_louder_and_nonstatic():
     names = [
         'sound/samples/instruments/35_gospel_organ.aiff',
         'sound/samples/instruments/06_kick_drum_1.aiff',
@@ -70,6 +71,13 @@ def test_semantic_samples_are_deterministic_moderate_and_nonstatic():
         assert np.unique(sample1).size > 32
         peak = np.max(np.abs(sample1.astype(np.int32))) / 32767
         rms = np.sqrt(np.mean(sample1.astype(np.float64) ** 2)) / 32767
-        assert 0.05 < peak <= 0.45
-        assert 0.005 < rms < 0.35
+        assert 0.64 <= peak <= 0.75
+        assert 0.010 < rms < 0.55
         assert abs(float(sample1.mean())) < 128
+
+
+def test_semantic_master_peak_targets_keep_headroom():
+    assert set(SEMANTIC_MASTER_PEAKS) == {
+        'percussion', 'pitched_decay', 'sustained', 'voice', 'effect'}
+    assert min(SEMANTIC_MASTER_PEAKS.values()) >= 0.66
+    assert max(SEMANTIC_MASTER_PEAKS.values()) <= 0.74

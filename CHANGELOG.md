@@ -1,11 +1,9 @@
 
-## Unreleased
-
-### Added
-- Added a focused `openai.early-environment` image realization for early-game environment textures, including Bob-omb Battlefield, Whomp's Fortress, Jolly Roger Bay, Cool, Cool Mountain, Castle Grounds, and their shared grass / water / outside texture banks.
+### Fixed
+* Corrected Castle Grounds feedback regressions: outside-bank `03000` is lawn again, `06800` is masonry rather than water, moat water remains blue, and the fence texture retains a transparent iron mask.
 
 ### Changed
-- Improved semantic environment rendering so castle lawns stay grassy, water banks render with blue water instead of gray tiles, and several IA environment textures now carry meaningful alpha masks for hedges, fences, vines, and icy translucent surfaces.
+* Raised semantic generated SFX peaks from roughly 0.32-0.42 to category-specific 0.66-0.74 targets so they sit closer to the engine's coin sound without clipping.
 
 # Changelog
 We [keep a changelog](https://keepachangelog.com/en/1.0.0/).
