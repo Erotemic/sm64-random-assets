@@ -45,3 +45,16 @@ def test_default_registry_uses_pil_textures_for_eyes_even_at_high_quality():
     identity = determine_asset_identity(info, name_to_text_lut=human_semantic.name_to_text_lut)
     realization = policy.resolve(identity, info)
     assert realization.id == 'openai.pil-textures'
+
+
+def test_default_registry_uses_specialized_castle_portraits():
+    policy = image_generator.build_realization_policy(target_quality=1.0)
+    for info in [
+        {'fname': 'levels/castle_inside/17.rgba16.png', 'shape': [32, 64, 4]},
+        {'fname': 'levels/castle_inside/30.rgba16.png', 'shape': [32, 32, 4]},
+        {'fname': 'levels/castle_inside/39.rgba16.png', 'shape': [32, 64, 4]},
+    ]:
+        identity = determine_asset_identity(info, name_to_text_lut=human_semantic.name_to_text_lut)
+        realization = policy.resolve(identity, info)
+        assert realization.id == 'openai.castle-portraits'
+        assert realization.estimated_quality == 0.82

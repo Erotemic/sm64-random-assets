@@ -60,6 +60,65 @@ class TextureIntent:
     notes: str = ''
 
 
+_CASTLE_PORTRAIT_FILE_RULES = [
+    ('levels/castle_inside/17.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_bobomb_battlefield_top')),
+    ('levels/castle_inside/18.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_bobomb_battlefield_bottom')),
+    ('levels/castle_inside/19.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_cool_cool_mountain_top')),
+    ('levels/castle_inside/20.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_cool_cool_mountain_bottom')),
+    ('levels/castle_inside/21.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_whomps_fortress_top')),
+    ('levels/castle_inside/22.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_whomps_fortress_bottom')),
+    ('levels/castle_inside/23.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_jolly_roger_bay_top')),
+    ('levels/castle_inside/23_us.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_jolly_roger_bay_top')),
+    ('levels/castle_inside/24.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_jolly_roger_bay_bottom')),
+    ('levels/castle_inside/24_us.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_jolly_roger_bay_bottom')),
+    ('levels/castle_inside/25.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_lethal_lava_land_top')),
+    ('levels/castle_inside/26.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_lethal_lava_land_bottom')),
+    ('levels/castle_inside/27.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_shifting_sand_land_top')),
+    ('levels/castle_inside/28.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_shifting_sand_land_bottom')),
+    ('levels/castle_inside/29.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_tiny_huge_island_tiny')),
+    ('levels/castle_inside/30.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_tiny_huge_island_huge')),
+    ('levels/castle_inside/31.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_snowmans_land_top')),
+    ('levels/castle_inside/32.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_snowmans_land_bottom')),
+    ('levels/castle_inside/33.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_wet_dry_world_top')),
+    ('levels/castle_inside/34.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_wet_dry_world_bottom')),
+    ('levels/castle_inside/35.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_tall_tall_mountain_top')),
+    ('levels/castle_inside/36.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_tall_tall_mountain_bottom')),
+    ('levels/castle_inside/37.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_tick_tock_clock_top')),
+    ('levels/castle_inside/38.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_tick_tock_clock_bottom')),
+    ('levels/castle_inside/39.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_rainbow_ride_top')),
+    ('levels/castle_inside/40.rgba16.png', dict(subject='portrait', role='portrait', motif='castle_portrait_rainbow_ride_bottom')),
+]
+
+_CASTLE_PORTRAIT_LAYOUTS = {
+    'levels/castle_inside/17.rgba16.png': ('bobomb_battlefield', 'top'),
+    'levels/castle_inside/18.rgba16.png': ('bobomb_battlefield', 'bottom'),
+    'levels/castle_inside/19.rgba16.png': ('cool_cool_mountain', 'top'),
+    'levels/castle_inside/20.rgba16.png': ('cool_cool_mountain', 'bottom'),
+    'levels/castle_inside/21.rgba16.png': ('whomps_fortress', 'top'),
+    'levels/castle_inside/22.rgba16.png': ('whomps_fortress', 'bottom'),
+    'levels/castle_inside/23.rgba16.png': ('jolly_roger_bay', 'top'),
+    'levels/castle_inside/23_us.rgba16.png': ('jolly_roger_bay', 'top'),
+    'levels/castle_inside/24.rgba16.png': ('jolly_roger_bay', 'bottom'),
+    'levels/castle_inside/24_us.rgba16.png': ('jolly_roger_bay', 'bottom'),
+    'levels/castle_inside/25.rgba16.png': ('lethal_lava_land', 'top'),
+    'levels/castle_inside/26.rgba16.png': ('lethal_lava_land', 'bottom'),
+    'levels/castle_inside/27.rgba16.png': ('shifting_sand_land', 'top'),
+    'levels/castle_inside/28.rgba16.png': ('shifting_sand_land', 'bottom'),
+    'levels/castle_inside/29.rgba16.png': ('tiny_huge_island_tiny', 'full'),
+    'levels/castle_inside/30.rgba16.png': ('tiny_huge_island_huge', 'full'),
+    'levels/castle_inside/31.rgba16.png': ('snowmans_land', 'top'),
+    'levels/castle_inside/32.rgba16.png': ('snowmans_land', 'bottom'),
+    'levels/castle_inside/33.rgba16.png': ('wet_dry_world', 'top'),
+    'levels/castle_inside/34.rgba16.png': ('wet_dry_world', 'bottom'),
+    'levels/castle_inside/35.rgba16.png': ('tall_tall_mountain', 'top'),
+    'levels/castle_inside/36.rgba16.png': ('tall_tall_mountain', 'bottom'),
+    'levels/castle_inside/37.rgba16.png': ('tick_tock_clock', 'top'),
+    'levels/castle_inside/38.rgba16.png': ('tick_tock_clock', 'bottom'),
+    'levels/castle_inside/39.rgba16.png': ('rainbow_ride', 'top'),
+    'levels/castle_inside/40.rgba16.png': ('rainbow_ride', 'bottom'),
+}
+
+
 _PATTERN_RULES = [
     # sprite / VFX
     ('actors/*/sparkle*',          dict(subject='sparkle', role='sprite', motif='sparkle')),
@@ -138,7 +197,7 @@ _PATTERN_RULES = [
     ('textures/generic/bob_textures.*', dict(subject='grass', motif='battlefield_grass')),
     ('textures/generic/*',         dict(subject='stone', motif='generic')),
     ('levels/bob/*',               dict(subject='grass', motif='battlefield_grass')),
-    ('levels/bob/*.rgba16.png',    dict(subject='portrait', role='portrait', motif='bobomb_battlefield_portrait')),
+    *_CASTLE_PORTRAIT_FILE_RULES,
     ('textures/effect/lava_bubble*', dict(subject='lava', role='sprite', motif='bubble')),
     ('textures/effect/flower*',    dict(subject='flower', motif='flower')),
     # level-local fallbacks
@@ -893,132 +952,438 @@ def _draw_tree_sprite(draw, w, h, colors, rng):
 
 
 
-def _portrait_tile_index(low: str):
-    stem = low.rsplit('/', 1)[-1].split('.', 1)[0]
-    try:
-        return int(stem)
-    except Exception:
-        return 0
+def _draw_highres_bobomb(draw, cx, cy, radius, body, shoes, fuse, *, king=False, buddy=False):
+    outline = (24, 23, 27, 255)
+    # Drop shadow anchors the character into the painted ground.
+    draw.ellipse((cx - radius * 0.9, cy + radius * 0.72, cx + radius * 0.9, cy + radius * 1.12), fill=(30, 45, 25, 70))
+    # Feet.
+    shoe_y = cy + radius * 0.72
+    shoe_rx = radius * 0.44
+    shoe_ry = radius * 0.24
+    draw.ellipse((cx - radius * 0.78 - shoe_rx, shoe_y - shoe_ry, cx - radius * 0.78 + shoe_rx, shoe_y + shoe_ry), fill=shoes, outline=outline, width=max(1, radius // 14))
+    draw.ellipse((cx + radius * 0.78 - shoe_rx, shoe_y - shoe_ry, cx + radius * 0.78 + shoe_rx, shoe_y + shoe_ry), fill=shoes, outline=outline, width=max(1, radius // 14))
+    # Spherical body with concentric painterly shading.
+    for step in range(18, 0, -1):
+        t = step / 18.0
+        rx = radius * t
+        ry = radius * t
+        # Shift highlights up-left and shadows down-right.
+        shift_x = radius * (1 - t) * -0.22
+        shift_y = radius * (1 - t) * -0.24
+        shaded = _mix(body[0], body[1], 1 - t)
+        draw.ellipse((cx - rx + shift_x, cy - ry + shift_y, cx + rx + shift_x, cy + ry + shift_y), fill=shaded)
+    draw.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), outline=outline, width=max(2, radius // 10))
+    # Glossy brush highlight.
+    draw.ellipse((cx - radius * 0.58, cy - radius * 0.62, cx - radius * 0.12, cy - radius * 0.18), fill=(255, 255, 255, 95))
+    # Fuse cap and fuse.
+    cap_w = radius * 0.44
+    cap_h = radius * 0.27
+    cap_fill = (195, 152, 58, 255) if king else (123, 99, 72, 255)
+    draw.rounded_rectangle((cx - cap_w / 2, cy - radius - cap_h * 0.42, cx + cap_w / 2, cy - radius + cap_h * 0.58), radius=max(2, int(radius * 0.08)), fill=cap_fill, outline=outline, width=max(1, radius // 14))
+    fuse_start = (cx + cap_w * 0.25, cy - radius - cap_h * 0.15)
+    fuse_end = (cx + radius * 0.92, cy - radius * 1.48)
+    draw.line((fuse_start[0], fuse_start[1], fuse_end[0], fuse_end[1]), fill=fuse, width=max(2, radius // 8))
+    spark_r = max(3, radius * 0.14)
+    draw.ellipse((fuse_end[0] - spark_r, fuse_end[1] - spark_r, fuse_end[0] + spark_r, fuse_end[1] + spark_r), fill=(255, 207, 64, 255), outline=(180, 92, 20, 255), width=max(1, radius // 18))
+    # Eyes.
+    eye_y = cy - radius * 0.04
+    eye_dx = radius * 0.34
+    eye_rx = radius * 0.13
+    eye_ry = radius * 0.20
+    for sign in (-1, 1):
+        ex = cx + sign * eye_dx
+        draw.ellipse((ex - eye_rx, eye_y - eye_ry, ex + eye_rx, eye_y + eye_ry), fill=(250, 250, 244, 255), outline=outline, width=max(1, radius // 18))
+        pupil_shift = radius * (0.03 if buddy else -0.01)
+        draw.ellipse((ex - eye_rx * 0.38 + pupil_shift, eye_y - eye_ry * 0.22, ex + eye_rx * 0.38 + pupil_shift, eye_y + eye_ry * 0.45), fill=(24, 23, 27, 255))
+    if king:
+        crown_y = cy - radius * 1.18
+        crown_w = radius * 1.15
+        crown_h = radius * 0.48
+        pts = [
+            (cx - crown_w / 2, crown_y + crown_h),
+            (cx - crown_w * 0.40, crown_y),
+            (cx - crown_w * 0.15, crown_y + crown_h * 0.42),
+            (cx, crown_y - crown_h * 0.16),
+            (cx + crown_w * 0.15, crown_y + crown_h * 0.42),
+            (cx + crown_w * 0.40, crown_y),
+            (cx + crown_w / 2, crown_y + crown_h),
+        ]
+        draw.polygon(pts, fill=(238, 190, 61, 255), outline=outline)
+        draw.ellipse((cx - radius * 0.12, crown_y + crown_h * 0.36, cx + radius * 0.12, crown_y + crown_h * 0.60), fill=(209, 61, 61, 255), outline=outline)
 
 
-def _ellipse_xy(cx, cy, rx, ry):
-    return (int(cx - rx), int(cy - ry), int(cx + rx), int(cy + ry))
 
 
-def _draw_round_bomb(draw, cx, cy, scale, body, fuse, shoe, eye='dot'):
-    draw.ellipse(_ellipse_xy(cx, cy, 11 * scale, 11 * scale), fill=body, outline=(24, 24, 24), width=max(1, int(scale)))
-    # shoes
-    draw.ellipse(_ellipse_xy(cx - 6 * scale, cy + 10 * scale, 5 * scale, 3 * scale), fill=shoe, outline=(90, 70, 18))
-    draw.ellipse(_ellipse_xy(cx + 6 * scale, cy + 10 * scale, 5 * scale, 3 * scale), fill=shoe, outline=(90, 70, 18))
-    # wind-up key / fuse
-    draw.line((int(cx + 10 * scale), int(cy - 6 * scale), int(cx + 15 * scale), int(cy - 13 * scale)), fill=fuse, width=max(1, int(scale)))
-    draw.ellipse(_ellipse_xy(cx + 16 * scale, cy - 14 * scale, 2 * scale, 2 * scale), fill=(255, 212, 82), outline=(140, 90, 12))
-    # eyes
-    if eye == 'friendly':
-        draw.ellipse(_ellipse_xy(cx - 4 * scale, cy - 1 * scale, 1.4 * scale, 2.2 * scale), fill=(255, 255, 255))
-        draw.ellipse(_ellipse_xy(cx + 1 * scale, cy - 1 * scale, 1.4 * scale, 2.2 * scale), fill=(255, 255, 255))
-        draw.point((int(cx - 4 * scale), int(cy)), fill=(20, 20, 20))
-        draw.point((int(cx + 1 * scale), int(cy)), fill=(20, 20, 20))
+def _lerp_color(a, b, t):
+    return tuple(int(round(ai + (bi - ai) * t)) for ai, bi in zip(a, b))
+
+
+def _paint_vertical_gradient(draw, w, h, stops):
+    stops = sorted(stops, key=lambda item: item[0])
+    for y in range(h):
+        t = y / max(1, h - 1)
+        for (t0, c0), (t1, c1) in zip(stops, stops[1:]):
+            if t <= t1:
+                lt = 0.0 if t1 == t0 else (t - t0) / (t1 - t0)
+                draw.line((0, y, w, y), fill=_lerp_color(c0, c1, max(0.0, min(1.0, lt))))
+                break
+        else:
+            draw.line((0, y, w, y), fill=stops[-1][1])
+
+
+def _draw_cloud_cluster(draw, cx, cy, rx, ry, fill=(255, 255, 250, 210)):
+    offsets = [(-0.45, 0.10, 0.56, 0.46), (0.0, -0.10, 0.72, 0.60), (0.46, 0.08, 0.52, 0.44)]
+    for ox, oy, sx, sy in offsets:
+        draw.ellipse((cx + ox * rx - sx * rx, cy + oy * ry - sy * ry, cx + ox * rx + sx * rx, cy + oy * ry + sy * ry), fill=fill)
+
+
+def _draw_pine_tree(draw, x, base_y, scale, leaf=(56, 120, 70, 255), trunk=(112, 79, 48, 255)):
+    trunk_w = max(3, int(4 * scale))
+    draw.rectangle((x - trunk_w // 2, base_y - 11 * scale, x + trunk_w // 2, base_y), fill=trunk)
+    for idx, spread in enumerate((13, 10, 7)):
+        top = base_y - (28 - idx * 8) * scale
+        pts = [(x, top), (x - spread * scale, top + 12 * scale), (x + spread * scale, top + 12 * scale)]
+        draw.polygon(pts, fill=leaf, outline=(34, 73, 43, 255))
+
+
+def _draw_house(draw, x, y, scale, wall=(181, 150, 110, 255), roof=(154, 64, 46, 255)):
+    draw.rectangle((x, y, x + 18 * scale, y + 14 * scale), fill=wall, outline=(88, 67, 46, 255))
+    draw.polygon([(x - 2 * scale, y + 2 * scale), (x + 9 * scale, y - 7 * scale), (x + 20 * scale, y + 2 * scale)], fill=roof, outline=(88, 43, 31, 255))
+    draw.rectangle((x + 7 * scale, y + 5 * scale, x + 11 * scale, y + 14 * scale), fill=(103, 74, 44, 255))
+    draw.rectangle((x + 2 * scale, y + 5 * scale, x + 6 * scale, y + 9 * scale), fill=(168, 214, 233, 255), outline=(82, 120, 146, 255))
+
+
+def _draw_gear(draw, cx, cy, inner_r, outer_r, teeth, fill=(185, 151, 74, 255), outline=(86, 67, 35, 255)):
+    pts = []
+    for idx in range(teeth * 2):
+        ang = (2 * math.pi * idx) / (teeth * 2)
+        radius = outer_r if idx % 2 == 0 else inner_r
+        pts.append((cx + math.cos(ang) * radius, cy + math.sin(ang) * radius))
+    draw.polygon(pts, fill=fill, outline=outline)
+    draw.ellipse((cx - inner_r * 0.45, cy - inner_r * 0.45, cx + inner_r * 0.45, cy + inner_r * 0.45), fill=(235, 214, 167, 255), outline=outline)
+
+
+def _draw_rainbow_arc(draw, bbox, width):
+    colors = [
+        (235, 76, 88, 255),
+        (244, 150, 57, 255),
+        (244, 216, 82, 255),
+        (92, 194, 103, 255),
+        (87, 153, 235, 255),
+        (150, 112, 219, 255),
+    ]
+    for idx, color in enumerate(colors):
+        inset = idx * width
+        draw.arc((bbox[0] + inset, bbox[1] + inset, bbox[2] - inset, bbox[3] - inset), 190, 350, fill=color, width=max(1, width))
+
+
+def _draw_portrait_border(draw, w, h):
+    draw.rectangle((2, 2, w - 3, h - 3), outline=(78, 54, 34, 255), width=4)
+    draw.rectangle((8, 8, w - 9, h - 9), outline=(171, 129, 79, 190), width=2)
+
+
+def _draw_scattered_dabs(draw, rng, w, h, colors, count):
+    for _ in range(count):
+        x = int(rng.randint(0, w))
+        y = int(rng.randint(0, h))
+        rx = int(rng.randint(1, 4))
+        ry = int(rng.randint(1, 4))
+        color = colors[int(rng.randint(0, len(colors)))]
+        draw.ellipse((x - rx, y - ry, x + rx, y + ry), fill=color)
+
+
+def _render_generic_castle_portrait_full(scene_key):
+    scale = 1
+    final_size = 64
+    work_size = 256
+    sw = sh = work_size
+    rng = np.random.RandomState(_stable_seed(f'castle-portrait-{scene_key}-v1'))
+    scene = Image.new('RGBA', (sw, sh), (0, 0, 0, 255))
+    draw = ImageDraw.Draw(scene, 'RGBA')
+
+    if scene_key == 'cool_cool_mountain':
+        _paint_vertical_gradient(draw, sw, sh, [(0.0, (116, 180, 242)), (0.58, (214, 236, 252)), (1.0, (239, 245, 252))])
+        _draw_cloud_cluster(draw, 56 * scale, 42 * scale, 34 * scale, 14 * scale)
+        _draw_cloud_cluster(draw, 185 * scale, 52 * scale, 42 * scale, 16 * scale)
+        draw.polygon([(0, 184 * scale), (58 * scale, 108 * scale), (94 * scale, 150 * scale), (132 * scale, 70 * scale), (178 * scale, 142 * scale), (228 * scale, 92 * scale), (sw, 164 * scale), (sw, sh), (0, sh)], fill=(148, 176, 203, 255))
+        draw.polygon([(24 * scale, sh), (98 * scale, 144 * scale), (154 * scale, sh)], fill=(232, 239, 247, 255), outline=(184, 200, 220, 255))
+        draw.polygon([(122 * scale, sh), (194 * scale, 118 * scale), (sw, sh)], fill=(245, 248, 252, 255), outline=(198, 210, 223, 255))
+        draw.polygon([(0, 216 * scale), (76 * scale, 188 * scale), (124 * scale, 214 * scale), (sw, 175 * scale), (sw, sh), (0, sh)], fill=(214, 224, 235, 255))
+        draw.line((72 * scale, 188 * scale, 114 * scale, 158 * scale), fill=(142, 160, 181, 255), width=5 * scale)
+        draw.line((114 * scale, 158 * scale, 128 * scale, 124 * scale), fill=(142, 160, 181, 255), width=4 * scale)
+        _draw_house(draw, 166 * scale, 176 * scale, scale)
+        draw.ellipse((184 * scale, 170 * scale, 212 * scale, 196 * scale), fill=(250, 250, 253, 255), outline=(150, 162, 180, 255))
+        draw.ellipse((190 * scale, 177 * scale, 197 * scale, 184 * scale), fill=(32, 36, 45, 255))
+        draw.ellipse((201 * scale, 177 * scale, 208 * scale, 184 * scale), fill=(32, 36, 45, 255))
+        draw.polygon([(199 * scale, 184 * scale), (195 * scale, 189 * scale), (203 * scale, 189 * scale)], fill=(236, 180, 87, 255))
+        _draw_scattered_dabs(draw, rng, sw, sh, [(255, 255, 255, 60), (217, 233, 247, 60)], 120)
+    elif scene_key == 'whomps_fortress':
+        _paint_vertical_gradient(draw, sw, sh, [(0.0, (110, 180, 244)), (0.64, (205, 231, 249)), (1.0, (128, 192, 126))])
+        _draw_cloud_cluster(draw, 68 * scale, 48 * scale, 30 * scale, 14 * scale)
+        draw.polygon([(20 * scale, sh), (94 * scale, 128 * scale), (168 * scale, sh)], fill=(133, 184, 110, 255))
+        draw.polygon([(102 * scale, 150 * scale), (188 * scale, 90 * scale), (232 * scale, 174 * scale), (182 * scale, 205 * scale)], fill=(113, 155, 100, 255), outline=(52, 94, 56, 255))
+        stone = (162, 165, 173, 255)
+        stone_dark = (118, 122, 132, 255)
+        draw.rectangle((104 * scale, 92 * scale, 146 * scale, 170 * scale), fill=stone, outline=stone_dark, width=3 * scale)
+        draw.rectangle((134 * scale, 62 * scale, 186 * scale, 184 * scale), fill=stone, outline=stone_dark, width=3 * scale)
+        draw.rectangle((120 * scale, 110 * scale, 134 * scale, 184 * scale), fill=stone_dark)
+        draw.line((136 * scale, 92 * scale, 184 * scale, 62 * scale), fill=(192, 144, 88, 255), width=4 * scale)
+        draw.ellipse((30 * scale, 178 * scale, 76 * scale, 222 * scale), fill=(62, 74, 86, 255), outline=(19, 23, 30, 255), width=3 * scale)
+        draw.line((54 * scale, 178 * scale, 54 * scale, 154 * scale), fill=(88, 64, 44, 255), width=3 * scale)
+        _draw_pine_tree(draw, 218 * scale, 173 * scale, scale * 0.8)
+        _draw_scattered_dabs(draw, rng, sw, sh, [(166, 184, 192, 70), (240, 244, 250, 70), (112, 168, 104, 50)], 110)
+    elif scene_key == 'jolly_roger_bay':
+        _paint_vertical_gradient(draw, sw, sh, [(0.0, (87, 154, 219)), (0.46, (167, 214, 239)), (1.0, (36, 106, 153))])
+        draw.ellipse((-10 * scale, 126 * scale, 104 * scale, 242 * scale), fill=(72, 136, 87, 255), outline=(42, 90, 51, 255))
+        draw.rectangle((0, 148 * scale, sw, sh), fill=(51, 121, 176, 255))
+        for y in range(160 * scale, sh, 12 * scale):
+            draw.line((0, y, sw, y - 8 * scale), fill=(87, 154, 206, 120), width=2 * scale)
+        hull = [(108 * scale, 146 * scale), (206 * scale, 146 * scale), (186 * scale, 182 * scale), (124 * scale, 182 * scale)]
+        draw.polygon(hull, fill=(112, 78, 52, 255), outline=(61, 44, 31, 255))
+        draw.line((156 * scale, 146 * scale, 156 * scale, 88 * scale), fill=(121, 83, 54, 255), width=3 * scale)
+        draw.polygon([(156 * scale, 90 * scale), (186 * scale, 112 * scale), (156 * scale, 126 * scale)], fill=(242, 239, 214, 255), outline=(176, 169, 132, 255))
+        draw.arc((188 * scale, 164 * scale, 238 * scale, 212 * scale), 190, 350, fill=(225, 196, 86, 255), width=3 * scale)
+        draw.line((213 * scale, 188 * scale, 213 * scale, 218 * scale), fill=(119, 83, 50, 255), width=3 * scale)
+        draw.line((108 * scale, 148 * scale, 78 * scale, 112 * scale), fill=(61, 44, 31, 255), width=3 * scale)
+        eel = [(204 * scale, 206 * scale), (198 * scale, 214 * scale), (206 * scale, 224 * scale), (214 * scale, 219 * scale), (220 * scale, 208 * scale)]
+        draw.line(eel, fill=(34, 64, 90, 200), width=10 * scale)
+        _draw_scattered_dabs(draw, rng, sw, sh, [(130, 188, 229, 55), (42, 104, 153, 55), (255, 255, 255, 35)], 130)
+    elif scene_key == 'lethal_lava_land':
+        _paint_vertical_gradient(draw, sw, sh, [(0.0, (111, 70, 81)), (0.42, (188, 98, 74)), (1.0, (243, 142, 58))])
+        draw.rectangle((0, 150 * scale, sw, sh), fill=(234, 86, 35, 255))
+        for y in range(170 * scale, sh, 14 * scale):
+            draw.line((0, y, sw, y - 4 * scale), fill=(255, 171, 70, 110), width=2 * scale)
+        draw.polygon([(74 * scale, 178 * scale), (126 * scale, 92 * scale), (180 * scale, 178 * scale)], fill=(76, 58, 53, 255), outline=(40, 30, 28, 255))
+        draw.polygon([(108 * scale, 132 * scale), (126 * scale, 92 * scale), (144 * scale, 132 * scale)], fill=(226, 156, 41, 255))
+        for cx, cy, rad in [(60, 190, 14), (100, 210, 12), (156, 196, 10), (202, 208, 13)]:
+            draw.ellipse((cx * scale - rad * scale, cy * scale - rad * scale, cx * scale + rad * scale, cy * scale + rad * scale), fill=(98, 77, 66, 255), outline=(42, 33, 28, 255))
+        draw.ellipse((202 * scale, 180 * scale, 232 * scale, 210 * scale), fill=(40, 37, 44, 255), outline=(18, 16, 20, 255))
+        draw.ellipse((208 * scale, 188 * scale, 214 * scale, 194 * scale), fill=(255, 111, 89, 255))
+        draw.ellipse((220 * scale, 188 * scale, 226 * scale, 194 * scale), fill=(255, 111, 89, 255))
+        _draw_scattered_dabs(draw, rng, sw, sh, [(255, 192, 80, 70), (92, 66, 56, 70), (255, 244, 172, 40)], 100)
+    elif scene_key == 'shifting_sand_land':
+        _paint_vertical_gradient(draw, sw, sh, [(0.0, (106, 180, 242)), (0.62, (229, 240, 245)), (1.0, (241, 213, 141))])
+        draw.polygon([(0, 192 * scale), (84 * scale, 142 * scale), (152 * scale, 182 * scale), (sw, 148 * scale), (sw, sh), (0, sh)], fill=(227, 194, 111, 255))
+        draw.polygon([(56 * scale, 170 * scale), (98 * scale, 104 * scale), (140 * scale, 170 * scale)], fill=(203, 163, 88, 255), outline=(137, 111, 62, 255))
+        draw.polygon([(120 * scale, 174 * scale), (170 * scale, 94 * scale), (220 * scale, 174 * scale)], fill=(221, 183, 101, 255), outline=(137, 111, 62, 255))
+        draw.polygon([(148 * scale, 190 * scale), (178 * scale, 162 * scale), (208 * scale, 190 * scale), (178 * scale, 218 * scale)], fill=(205, 174, 95, 255), outline=(137, 111, 62, 255))
+        draw.rectangle((208 * scale, 144 * scale, 214 * scale, 194 * scale), fill=(114, 82, 48, 255))
+        for lx in (194, 220):
+            draw.polygon([(lx * scale, 140 * scale), ((lx - 18) * scale, 164 * scale), ((lx + 18) * scale, 164 * scale)], fill=(58, 138, 72, 255), outline=(34, 88, 44, 255))
+        draw.arc((12 * scale, 20 * scale, 52 * scale, 60 * scale), 0, 360, fill=(247, 235, 139, 255), width=6 * scale)
+        _draw_scattered_dabs(draw, rng, sw, sh, [(251, 233, 166, 55), (193, 161, 89, 55), (255, 255, 250, 30)], 120)
+    elif scene_key == 'tiny_huge_island_tiny':
+        _paint_vertical_gradient(draw, sw, sh, [(0.0, (106, 188, 243)), (0.52, (190, 226, 245)), (1.0, (58, 151, 203))])
+        draw.rectangle((0, 154 * scale, sw, sh), fill=(64, 163, 214, 255))
+        draw.ellipse((88 * scale, 132 * scale, 170 * scale, 188 * scale), fill=(86, 173, 87, 255), outline=(45, 96, 50, 255))
+        draw.polygon([(118 * scale, 156 * scale), (130 * scale, 120 * scale), (142 * scale, 156 * scale)], fill=(115, 156, 72, 255))
+        draw.rectangle((127 * scale, 136 * scale, 133 * scale, 156 * scale), fill=(114, 81, 49, 255))
+        draw.polygon([(92 * scale, 164 * scale), (76 * scale, 175 * scale), (88 * scale, 184 * scale)], fill=(112, 84, 56, 255))
+        draw.ellipse((92 * scale, 160 * scale, 100 * scale, 168 * scale), fill=(227, 78, 78, 255))
+        for y in range(166 * scale, sh, 14 * scale):
+            draw.line((0, y, sw, y - 5 * scale), fill=(125, 202, 231, 100), width=2 * scale)
+        _draw_scattered_dabs(draw, rng, sw, sh, [(255, 255, 255, 35), (95, 186, 233, 45), (71, 151, 109, 45)], 120)
+    elif scene_key == 'tiny_huge_island_huge':
+        _paint_vertical_gradient(draw, sw, sh, [(0.0, (98, 183, 238)), (0.52, (190, 226, 245)), (1.0, (76, 165, 104))])
+        draw.ellipse((-10 * scale, 138 * scale, 266 * scale, 286 * scale), fill=(102, 184, 90, 255), outline=(54, 107, 53, 255))
+        draw.rectangle((30 * scale, 132 * scale, 38 * scale, 198 * scale), fill=(126, 84, 48, 255))
+        draw.ellipse((2 * scale, 88 * scale, 66 * scale, 148 * scale), fill=(62, 144, 72, 255), outline=(36, 92, 46, 255))
+        draw.rectangle((196 * scale, 142 * scale, 204 * scale, 212 * scale), fill=(118, 82, 45, 255))
+        draw.ellipse((164 * scale, 92 * scale, 236 * scale, 160 * scale), fill=(59, 139, 70, 255), outline=(33, 86, 43, 255))
+        draw.ellipse((104 * scale, 166 * scale, 152 * scale, 206 * scale), fill=(222, 74, 74, 255), outline=(120, 34, 34, 255))
+        for dotx, doty in [(116, 176), (126, 184), (138, 176), (128, 166)]:
+            draw.ellipse((dotx * scale, doty * scale, (dotx + 4) * scale, (doty + 4) * scale), fill=(255, 255, 252, 255))
+        _draw_scattered_dabs(draw, rng, sw, sh, [(255, 255, 255, 30), (72, 155, 93, 50), (124, 207, 235, 40)], 110)
+    elif scene_key == 'snowmans_land':
+        _paint_vertical_gradient(draw, sw, sh, [(0.0, (129, 184, 235)), (0.56, (211, 233, 247)), (1.0, (234, 240, 247))])
+        draw.polygon([(0, 190 * scale), (56 * scale, 150 * scale), (116 * scale, 178 * scale), (186 * scale, 132 * scale), (sw, 174 * scale), (sw, sh), (0, sh)], fill=(230, 236, 243, 255))
+        draw.ellipse((116 * scale, 136 * scale, 204 * scale, 222 * scale), fill=(248, 249, 252, 255), outline=(177, 193, 209, 255))
+        draw.ellipse((130 * scale, 90 * scale, 192 * scale, 150 * scale), fill=(250, 250, 253, 255), outline=(177, 193, 209, 255))
+        draw.ellipse((148 * scale, 108 * scale, 154 * scale, 114 * scale), fill=(32, 36, 45, 255))
+        draw.ellipse((170 * scale, 108 * scale, 176 * scale, 114 * scale), fill=(32, 36, 45, 255))
+        draw.polygon([(160 * scale, 116 * scale), (190 * scale, 122 * scale), (160 * scale, 128 * scale)], fill=(240, 160, 62, 255))
+        _draw_pine_tree(draw, 58 * scale, 182 * scale, scale * 0.9, leaf=(66, 120, 82, 255))
+        _draw_pine_tree(draw, 218 * scale, 176 * scale, scale * 0.7, leaf=(62, 116, 78, 255))
+        _draw_scattered_dabs(draw, rng, sw, sh, [(255, 255, 255, 60), (205, 223, 238, 40)], 130)
+    elif scene_key == 'wet_dry_world':
+        _paint_vertical_gradient(draw, sw, sh, [(0.0, (129, 168, 237)), (0.50, (211, 226, 245)), (1.0, (99, 164, 208))])
+        waterline = 156 * scale
+        draw.rectangle((0, waterline, sw, sh), fill=(84, 151, 199, 255))
+        for x, hgt, col in [(38, 56, (196, 178, 96, 255)), (78, 72, (210, 98, 86, 255)), (124, 48, (206, 199, 164, 255)), (166, 62, (169, 190, 117, 255)), (208, 82, (196, 150, 87, 255))]:
+            draw.rectangle((x * scale, (waterline - hgt), (x + 24) * scale, waterline), fill=col, outline=(92, 83, 71, 255))
+            draw.rectangle(((x + 8) * scale, (waterline - hgt + 16), (x + 16) * scale, (waterline - hgt + 32)), fill=(140, 197, 227, 255), outline=(76, 120, 146, 255))
+        draw.line((0, waterline, sw, waterline), fill=(197, 228, 245, 180), width=3 * scale)
+        for y in range(waterline + 8 * scale, sh, 12 * scale):
+            draw.line((0, y, sw, y - 4 * scale), fill=(126, 192, 227, 100), width=2 * scale)
+        _draw_scattered_dabs(draw, rng, sw, sh, [(138, 203, 234, 45), (236, 241, 248, 35), (192, 168, 103, 30)], 120)
+    elif scene_key == 'tall_tall_mountain':
+        _paint_vertical_gradient(draw, sw, sh, [(0.0, (112, 185, 242)), (0.56, (208, 232, 247)), (1.0, (114, 183, 106))])
+        draw.polygon([(24 * scale, sh), (124 * scale, 88 * scale), (224 * scale, sh)], fill=(116, 160, 90, 255), outline=(55, 96, 51, 255))
+        draw.polygon([(84 * scale, 178 * scale), (128 * scale, 88 * scale), (170 * scale, 178 * scale)], fill=(148, 186, 109, 255))
+        draw.line((120 * scale, 126 * scale, 108 * scale, 210 * scale), fill=(187, 226, 239, 255), width=6 * scale)
+        draw.line((108 * scale, 210 * scale, 96 * scale, sh), fill=(187, 226, 239, 255), width=7 * scale)
+        for mx in (64, 172, 198):
+            draw.ellipse((mx * scale, 198 * scale, (mx + 24) * scale, (198 + 14) * scale), fill=(208, 158, 118, 255), outline=(126, 90, 64, 255))
+            draw.rectangle(((mx + 10) * scale, 180 * scale, (mx + 14) * scale, 198 * scale), fill=(193, 171, 130, 255))
+        draw.ellipse((174 * scale, 150 * scale, 196 * scale, 174 * scale), fill=(155, 110, 79, 255), outline=(88, 59, 38, 255))
+        draw.line((186 * scale, 164 * scale, 198 * scale, 152 * scale), fill=(88, 59, 38, 255), width=3 * scale)
+        _draw_scattered_dabs(draw, rng, sw, sh, [(255, 255, 255, 35), (120, 180, 113, 45), (179, 224, 235, 45)], 120)
+    elif scene_key == 'tick_tock_clock':
+        _paint_vertical_gradient(draw, sw, sh, [(0.0, (90, 78, 98)), (0.55, (158, 141, 112)), (1.0, (207, 177, 105))])
+        draw.ellipse((18 * scale, 18 * scale, 238 * scale, 238 * scale), fill=(231, 205, 131, 255), outline=(111, 80, 37, 255), width=6 * scale)
+        draw.ellipse((42 * scale, 42 * scale, 214 * scale, 214 * scale), fill=(245, 233, 196, 255), outline=(154, 122, 62, 255), width=4 * scale)
+        for ang in range(12):
+            rad = math.radians(ang * 30 - 90)
+            x0 = 128 * scale + math.cos(rad) * 74 * scale
+            y0 = 128 * scale + math.sin(rad) * 74 * scale
+            x1 = 128 * scale + math.cos(rad) * 86 * scale
+            y1 = 128 * scale + math.sin(rad) * 86 * scale
+            draw.line((x0, y0, x1, y1), fill=(111, 80, 37, 255), width=3 * scale)
+        _draw_gear(draw, 66 * scale, 66 * scale, 18 * scale, 28 * scale, 10)
+        _draw_gear(draw, 198 * scale, 82 * scale, 14 * scale, 24 * scale, 9, fill=(174, 142, 71, 255))
+        _draw_gear(draw, 188 * scale, 194 * scale, 18 * scale, 30 * scale, 11, fill=(194, 163, 86, 255))
+        draw.line((128 * scale, 128 * scale, 128 * scale, 72 * scale), fill=(74, 56, 37, 255), width=5 * scale)
+        draw.line((128 * scale, 128 * scale, 168 * scale, 152 * scale), fill=(74, 56, 37, 255), width=5 * scale)
+        draw.ellipse((118 * scale, 118 * scale, 138 * scale, 138 * scale), fill=(74, 56, 37, 255))
+        _draw_scattered_dabs(draw, rng, sw, sh, [(247, 232, 189, 25), (110, 92, 67, 35), (220, 181, 98, 35)], 100)
+    elif scene_key == 'rainbow_ride':
+        _paint_vertical_gradient(draw, sw, sh, [(0.0, (138, 191, 249)), (0.56, (228, 239, 252)), (1.0, (244, 233, 247))])
+        _draw_cloud_cluster(draw, 58 * scale, 68 * scale, 34 * scale, 15 * scale)
+        _draw_cloud_cluster(draw, 192 * scale, 52 * scale, 42 * scale, 16 * scale)
+        _draw_cloud_cluster(draw, 128 * scale, 150 * scale, 56 * scale, 20 * scale, fill=(255, 255, 251, 230))
+        _draw_rainbow_arc(draw, (12 * scale, 70 * scale, 248 * scale, 250 * scale), max(2, int(3 * scale)))
+        draw.polygon([(104 * scale, 170 * scale), (156 * scale, 170 * scale), (164 * scale, 182 * scale), (96 * scale, 182 * scale)], fill=(167, 122, 87, 255), outline=(95, 67, 44, 255))
+        draw.line((116 * scale, 170 * scale, 108 * scale, 142 * scale), fill=(95, 67, 44, 255), width=3 * scale)
+        draw.line((144 * scale, 170 * scale, 150 * scale, 144 * scale), fill=(95, 67, 44, 255), width=3 * scale)
+        for px, py in [(72, 184), (188, 174), (214, 196)]:
+            draw.rectangle((px * scale, py * scale, (px + 22) * scale, (py + 6) * scale), fill=(214, 197, 164, 255), outline=(123, 111, 85, 255))
+        _draw_scattered_dabs(draw, rng, sw, sh, [(255, 255, 255, 55), (248, 218, 235, 35), (126, 187, 246, 35)], 125)
     else:
-        draw.ellipse(_ellipse_xy(cx - 4 * scale, cy - 1 * scale, 1.3 * scale, 2.1 * scale), fill=(255, 255, 255))
-        draw.ellipse(_ellipse_xy(cx + 1 * scale, cy - 1 * scale, 1.3 * scale, 2.1 * scale), fill=(255, 255, 255))
-        draw.polygon([(int(cx - 5 * scale), int(cy - 3 * scale)), (int(cx - 2 * scale), int(cy)), (int(cx - 5 * scale), int(cy + 2 * scale))], fill=(20, 20, 20))
-        draw.polygon([(int(cx + 3 * scale), int(cy - 3 * scale)), (int(cx), int(cy)), (int(cx + 3 * scale), int(cy + 2 * scale))], fill=(20, 20, 20))
+        raise KeyError(scene_key)
+
+    _draw_portrait_border(draw, sw, sh)
+    return scene.resize((final_size, final_size), Image.Resampling.LANCZOS)
 
 
-def _render_bobomb_battlefield_portrait_rgba(fname: str, shape, rng):
-    h, w = int(shape[0]), int(shape[1])
-    tile = _portrait_tile_index(fname.lower())
-    cols, rows = 3, 2
-    scene = Image.new('RGBA', (w * cols, h * rows), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(scene)
-    sw, sh = scene.size
+def _render_bobomb_battlefield_portrait_full():
+    # Generate at 4x resolution, then downsample. The fixed seed guarantees that
+    # the two independently requested 64x32 halves always match perfectly.
+    scale = 4
+    size = 64
+    sw = sh = size * scale
+    rng = np.random.RandomState(_stable_seed('bobomb-battlefield-portrait-v2'))
+    scene = Image.new('RGBA', (sw, sh), (0, 0, 0, 255))
+    draw = ImageDraw.Draw(scene, 'RGBA')
 
-    # Sky gradient
+    # Painted sky gradient.
     for y in range(sh):
         t = y / max(1, sh - 1)
-        if t < 0.58:
-            color = _mix((108, 177, 241), (211, 239, 255), t / 0.58)
+        if t < 0.56:
+            color = _mix((73, 143, 218), (191, 225, 246), t / 0.56)
         else:
-            color = _mix((211, 239, 255), (164, 210, 126), (t - 0.58) / 0.42)
+            color = _mix((191, 225, 246), (170, 207, 135), (t - 0.56) / 0.44)
         draw.line((0, y, sw, y), fill=color)
 
-    # clouds
-    for cx, cy, rx, ry in [
-        (sw * 0.18, sh * 0.17, sw * 0.10, sh * 0.07),
-        (sw * 0.65, sh * 0.14, sw * 0.12, sh * 0.08),
-        (sw * 0.87, sh * 0.24, sw * 0.08, sh * 0.05),
-    ]:
-        for dx, dy, sx, sy in [(-0.35, 0, 0.7, 0.6), (0, -0.08, 0.8, 0.7), (0.35, 0, 0.65, 0.55)]:
-            draw.ellipse(_ellipse_xy(cx + dx * rx, cy + dy * ry, rx * sx, ry * sy), fill=(255, 255, 255, 225))
-
-    # distant mountains / floating island
-    mountain = [(sw * 0.34, sh * 0.60), (sw * 0.52, sh * 0.18), (sw * 0.68, sh * 0.60)]
-    draw.polygon(mountain, fill=(127, 172, 88), outline=(78, 113, 59))
-    draw.polygon([(sw * 0.47, sh * 0.45), (sw * 0.52, sh * 0.29), (sw * 0.57, sh * 0.45)], fill=(170, 202, 116))
-    # floating island
-    island = [(sw * 0.73, sh * 0.31), (sw * 0.84, sh * 0.23), (sw * 0.94, sh * 0.30), (sw * 0.88, sh * 0.37), (sw * 0.76, sh * 0.36)]
-    draw.polygon(island, fill=(133, 177, 94), outline=(74, 103, 54))
-    draw.rectangle((int(sw * 0.81), int(sh * 0.18), int(sw * 0.82), int(sh * 0.28)), fill=(100, 70, 44))
-    draw.ellipse(_ellipse_xy(sw * 0.815, sh * 0.14, sw * 0.035, sh * 0.05), fill=(79, 138, 67), outline=(48, 88, 40))
-
-    # rolling hills
-    hill_specs = [
-        ((-sw * 0.05, sh * 0.50, sw * 0.40, sh * 1.02), (113, 176, 86)),
-        ((sw * 0.20, sh * 0.47, sw * 0.78, sh * 1.05), (106, 170, 78)),
-        ((sw * 0.58, sh * 0.50, sw * 1.08, sh * 1.04), (117, 181, 88)),
+    # Broad painterly cloud shapes.
+    cloud_specs = [
+        (44, 42, 44, 18),
+        (177, 35, 50, 20),
+        (225, 66, 34, 14),
     ]
-    for box, fill in hill_specs:
-        draw.ellipse(tuple(int(v) for v in box), fill=fill, outline=(64, 111, 46))
+    for cx, cy, rw, rh in cloud_specs:
+        cx *= scale; cy *= scale; rw *= scale; rh *= scale
+        for dx, dy, sx, sy in [(-0.38, 0.05, 0.70, 0.62), (0, -0.10, 0.86, 0.76), (0.38, 0.04, 0.68, 0.58)]:
+            draw.ellipse((cx + dx * rw - sx * rw, cy + dy * rh - sy * rh, cx + dx * rw + sx * rw, cy + dy * rh + sy * rh), fill=(255, 255, 248, 222))
 
-    # path to mountain
-    path = [
-        (sw * 0.44, sh * 0.99), (sw * 0.57, sh * 0.99), (sw * 0.54, sh * 0.78),
-        (sw * 0.60, sh * 0.66), (sw * 0.55, sh * 0.54), (sw * 0.53, sh * 0.40),
-        (sw * 0.49, sh * 0.32), (sw * 0.44, sh * 0.42), (sw * 0.45, sh * 0.58),
-        (sw * 0.39, sh * 0.69), (sw * 0.42, sh * 0.82),
-    ]
-    draw.polygon([(int(x), int(y)) for x, y in path], fill=(211, 181, 110), outline=(166, 135, 80))
+    # Distant blue-green ridges.
+    draw.polygon([(0, 150), (52, 103), (91, 135), (132, 78), (178, 130), (221, 100), (256, 145), (256, 190), (0, 190)], fill=(90, 137, 111, 255))
+    draw.polygon([(0, 162), (59, 123), (105, 153), (157, 112), (213, 151), (256, 129), (256, 190), (0, 190)], fill=(106, 158, 102, 255))
 
-    # ground details
-    for x in range(0, sw, max(4, w // 6)):
-        y0 = int(sh * 0.72 + rng.randint(-3, 4))
-        y1 = int(sh * 0.96 + rng.randint(-2, 3))
-        draw.line((x, y1, x + rng.randint(-3, 4), y0), fill=(88, 141, 60), width=1)
-    for _ in range(max(18, sw * sh // 900)):
-        cx = int(rng.randint(0, sw))
-        cy = int(rng.randint(int(sh * 0.56), sh))
-        petal = (250, 246, 235) if rng.rand() > 0.5 else (255, 224, 92)
-        for dx, dy in [(-2, 0), (2, 0), (0, -2), (0, 2)]:
-            draw.ellipse((cx + dx - 1, cy + dy - 1, cx + dx + 1, cy + dy + 1), fill=petal)
-        draw.ellipse((cx - 1, cy - 1, cx + 1, cy + 1), fill=(232, 180, 60))
+    # Central mountain and summit flag.
+    mountain = [(73, 190), (128, 48), (188, 190)]
+    draw.polygon(mountain, fill=(102, 151, 78, 255), outline=(49, 91, 48, 255))
+    draw.polygon([(108, 121), (128, 62), (148, 121)], fill=(150, 184, 104, 255))
+    draw.polygon([(122, 74), (128, 52), (134, 74)], fill=(224, 222, 183, 255))
+    draw.line((128, 48, 128, 28), fill=(74, 56, 37, 255), width=3)
+    draw.polygon([(128, 28), (148, 34), (128, 40)], fill=(222, 64, 58, 255), outline=(105, 38, 35, 255))
 
-    # fence and cannon
-    fence_y = int(sh * 0.70)
-    for fx in range(int(sw * 0.03), int(sw * 0.27), max(8, w // 3)):
-        draw.rectangle((fx, fence_y, fx + 2, fence_y + 10), fill=(104, 76, 44))
-    draw.line((int(sw * 0.03), fence_y + 2, int(sw * 0.26), fence_y + 2), fill=(126, 92, 53), width=2)
-    draw.line((int(sw * 0.03), fence_y + 7, int(sw * 0.26), fence_y + 7), fill=(126, 92, 53), width=2)
-    draw.ellipse(_ellipse_xy(sw * 0.83, sh * 0.74, sw * 0.055, sh * 0.06), fill=(52, 61, 70), outline=(18, 18, 20))
-    draw.polygon([(int(sw * 0.79), int(sh * 0.73)), (int(sw * 0.92), int(sh * 0.67)), (int(sw * 0.90), int(sh * 0.76))], fill=(65, 74, 82), outline=(20, 20, 20))
+    # Winding ochre path through the mountain and meadow.
+    path = [(111, 256), (149, 256), (143, 224), (155, 203), (144, 184), (151, 162), (137, 142), (142, 119), (132, 99), (126, 76), (121, 101), (127, 126), (117, 148), (126, 170), (113, 193), (121, 216)]
+    draw.polygon(path, fill=(221, 184, 101, 255), outline=(151, 112, 57, 255))
 
-    # bob-ombs
-    _draw_round_bomb(draw, sw * 0.24, sh * 0.77, min(w, h) / 32 * 0.9, (210, 75, 82), (255, 228, 90), (255, 192, 68), eye='friendly')
-    _draw_round_bomb(draw, sw * 0.67, sh * 0.80, min(w, h) / 32 * 0.95, (40, 47, 57), (255, 192, 84), (243, 191, 68), eye='dot')
+    # Foreground rolling meadow.
+    draw.ellipse((-74, 150, 198, 337), fill=(89, 158, 69, 255), outline=(53, 105, 46, 255))
+    draw.ellipse((91, 151, 335, 335), fill=(101, 169, 76, 255), outline=(53, 105, 46, 255))
+    draw.ellipse((42, 191, 268, 364), fill=(117, 180, 82, 255))
 
-    # chain chomp silhouette hint on the left hill
-    ccx, ccy = sw * 0.10, sh * 0.64
-    draw.ellipse(_ellipse_xy(ccx, ccy, sw * 0.05, sh * 0.05), fill=(31, 38, 47), outline=(8, 8, 8))
-    for i in range(4):
-        x = ccx + (i + 1) * sw * 0.03
-        y = ccy + (i % 2) * sh * 0.01
-        draw.ellipse(_ellipse_xy(x, y, sw * 0.010, sh * 0.010), fill=(179, 185, 190), outline=(80, 84, 88))
+    # Floating island and lone tree.
+    draw.polygon([(184, 83), (220, 71), (247, 84), (232, 101), (197, 100)], fill=(107, 165, 82, 255), outline=(54, 102, 45, 255))
+    draw.polygon([(197, 100), (232, 101), (219, 113), (207, 109)], fill=(105, 82, 55, 255))
+    draw.rectangle((215, 49, 221, 78), fill=(100, 66, 42, 255))
+    draw.ellipse((198, 27, 239, 65), fill=(64, 133, 67, 255), outline=(42, 88, 44, 255))
 
-    # Crop tile from a 3x2 layout.
-    tile_map = {0: (0, 0), 1: (1, 0), 2: (2, 0), 3: (0, 1), 4: (1, 1)}
-    col, row = tile_map.get(tile, (tile % cols, min(rows - 1, tile // cols)))
-    tile_img = scene.crop((col * w, row * h, (col + 1) * w, (row + 1) * h))
-    return np.array(tile_img, dtype=np.uint8)
+    # Fence and cannon silhouette.
+    fence_y = 199
+    for fx in range(13, 80, 17):
+        draw.rectangle((fx, fence_y - 15, fx + 5, fence_y + 15), fill=(102, 72, 42, 255))
+    draw.line((13, fence_y - 7, 79, fence_y - 7), fill=(131, 91, 50, 255), width=5)
+    draw.line((13, fence_y + 6, 79, fence_y + 6), fill=(131, 91, 50, 255), width=5)
+    draw.ellipse((208, 185, 244, 221), fill=(48, 57, 66, 255), outline=(18, 20, 23, 255), width=3)
+    draw.polygon([(221, 191), (255, 174), (252, 204)], fill=(63, 73, 82, 255), outline=(18, 20, 23, 255))
+
+    # Characters: a friendly buddy and King Bob-omb make the identity obvious.
+    _draw_highres_bobomb(draw, 61, 212, 24, ((171, 43, 53, 255), (232, 88, 92, 255)), (244, 187, 57, 255), (226, 190, 76, 255), buddy=True)
+    _draw_highres_bobomb(draw, 188, 216, 32, ((24, 29, 37, 255), (88, 96, 109, 255)), (240, 183, 51, 255), (225, 183, 77, 255), king=True)
+
+    # Chain Chomp silhouette and chain links in the middle distance.
+    draw.ellipse((14, 140, 55, 181), fill=(27, 33, 41, 255), outline=(9, 11, 14, 255), width=3)
+    draw.ellipse((23, 150, 28, 158), fill=(245, 245, 240, 255))
+    draw.ellipse((39, 150, 44, 158), fill=(245, 245, 240, 255))
+    for i in range(5):
+        x = 52 + i * 10
+        y = 174 + (i % 2) * 3
+        draw.ellipse((x, y, x + 8, y + 6), outline=(171, 177, 181, 255), width=2)
+
+    # Flowers and blades create readable course texture without overwhelming the portrait.
+    for _ in range(52):
+        x = int(rng.randint(0, sw))
+        y = int(rng.randint(172, sh))
+        draw.line((x, y + 7, x + int(rng.randint(-2, 3)), y), fill=(55, 121, 48, 210), width=1)
+        if rng.rand() < 0.34:
+            petal = (255, 244, 218, 255) if rng.rand() < 0.7 else (252, 210, 68, 255)
+            draw.ellipse((x - 3, y - 3, x + 3, y + 3), fill=petal)
+            draw.ellipse((x - 1, y - 1, x + 1, y + 1), fill=(212, 146, 45, 255))
+
+    # Thin painted border, useful when the texture warps in the ripple mesh.
+    draw.rectangle((2, 2, sw - 3, sh - 3), outline=(55, 76, 49, 180), width=3)
+
+    # Downsample with antialiasing into the actual 64x64 painting.
+    return scene.resize((size, size), Image.Resampling.LANCZOS)
+
+
+def _render_castle_portrait_full(scene_key: str):
+    if scene_key == 'bobomb_battlefield':
+        return _render_bobomb_battlefield_portrait_full()
+    return _render_generic_castle_portrait_full(scene_key)
+
+
+def _render_castle_portrait_rgba(fname: str, shape):
+    key = fname.lower()
+    if key not in _CASTLE_PORTRAIT_LAYOUTS:
+        raise KeyError(f'unsupported castle portrait: {fname}')
+    scene_key, segment = _CASTLE_PORTRAIT_LAYOUTS[key]
+    full = _render_castle_portrait_full(scene_key)
+    if segment == 'top':
+        crop = full.crop((0, 0, 64, 32))
+    elif segment == 'bottom':
+        crop = full.crop((0, 32, 64, 64))
+    elif segment == 'full':
+        crop = full
+    else:
+        raise KeyError(segment)
+    if crop.size != (int(shape[1]), int(shape[0])):
+        crop = crop.resize((int(shape[1]), int(shape[0])), Image.Resampling.LANCZOS)
+    return np.asarray(crop, dtype=np.uint8)
 
 
 def _render_subject(draw, w, h, intent: TextureIntent, colors, rng):
@@ -1088,10 +1453,6 @@ def _render_subject(draw, w, h, intent: TextureIntent, colors, rng):
         _draw_sky(draw, w, h, colors, rng, cloudy=True)
         return
 
-    if role == 'portrait' and intent.motif == 'bobomb_battlefield_portrait':
-        rgba = _render_bobomb_battlefield_portrait_rgba(intent.fname, (h, w, 4), rng)
-        draw._image.paste(Image.fromarray(rgba, mode='RGBA'), (0, 0))
-        return
 
     # subject-driven tileable / actor-surface textures
     if subject == 'grass':
@@ -1177,8 +1538,8 @@ def render_pil_texture(fname: str, shape, rng=None, identity=None):
     intent = analyze_texture_intent(fname)
     colors = _palette(intent.subject, intent.motif, intent.family, local_rng)
 
-    if intent.role == 'portrait' and intent.motif == 'bobomb_battlefield_portrait':
-        rgba = _render_bobomb_battlefield_portrait_rgba(fname, (h, w, 4), local_rng)
+    if intent.role == 'portrait':
+        rgba = _render_castle_portrait_rgba(fname, (h, w, 4))
     else:
         img = Image.new('RGBA', (w, h), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)

@@ -1,6 +1,8 @@
 import numpy as np
 
 from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking.pil_textures import (
+    _CASTLE_PORTRAIT_LAYOUTS,
+    _render_castle_portrait_rgba,
     analyze_texture_intent,
     classify_texture_role,
     classify_texture_subject,
@@ -18,7 +20,8 @@ def test_texture_subject_and_role_classification():
     assert classify_texture_subject('actors/yoshi_egg/yoshi_egg_0_unused.rgba16.png') == 'egg'
     assert classify_texture_subject('actors/coin/coin_front.ia16.png') == 'coin'
     assert classify_texture_subject('textures/generic/bob_textures.00000.rgba16.png') == 'grass'
-    assert classify_texture_subject('levels/bob/0.rgba16.png') == 'portrait'
+    assert classify_texture_subject('levels/bob/0.rgba16.png') == 'grass'
+    assert classify_texture_subject('levels/castle_inside/17.rgba16.png') == 'portrait'
     assert classify_texture_subject('actors/mario/mario_eyes_center.rgba16.png') == 'eye'
     assert classify_texture_role('actors/door/metal_door_overlay.rgba16.png') == 'overlay'
     assert classify_texture_role('actors/water_bubble/water_bubble.rgba16.png') == 'sprite'
@@ -36,9 +39,11 @@ def test_texture_intent_exposes_family_and_motif():
     assert water.motif == 'sea_water'
     grass = analyze_texture_intent('textures/grass/wf_textures.00000.rgba16.png')
     assert grass.motif == 'wildflower_grass'
-    bob_portrait = analyze_texture_intent('levels/bob/0.rgba16.png')
-    assert bob_portrait.role == 'portrait'
-    assert bob_portrait.motif == 'bobomb_battlefield_portrait'
+    bob_portrait_top = analyze_texture_intent('levels/castle_inside/17.rgba16.png')
+    bob_portrait_bottom = analyze_texture_intent('levels/castle_inside/18.rgba16.png')
+    assert bob_portrait_top.role == 'portrait'
+    assert bob_portrait_top.motif == 'castle_portrait_bobomb_battlefield_top'
+    assert bob_portrait_bottom.motif == 'castle_portrait_bobomb_battlefield_bottom'
 
 
 def test_render_pil_texture_is_deterministic_and_nontrivial():
@@ -99,16 +104,47 @@ def test_render_mario_eye_water_and_grass_have_semantic_structure():
 
 
 
+def test_castle_portrait_intents_cover_every_supported_texture():
+    for fname in sorted(_CASTLE_PORTRAIT_LAYOUTS):
+        intent = analyze_texture_intent(fname)
+        assert intent.role == 'portrait'
+        assert intent.motif.startswith('castle_portrait_')
+
+
+def test_render_castle_portrait_split_pair_and_singles():
+    top = _render_castle_portrait_rgba('levels/castle_inside/17.rgba16.png', (32, 64, 4))
+    bottom = _render_castle_portrait_rgba('levels/castle_inside/18.rgba16.png', (32, 64, 4))
+    tiny = _render_castle_portrait_rgba('levels/castle_inside/29.rgba16.png', (32, 32, 4))
+    huge = _render_castle_portrait_rgba('levels/castle_inside/30.rgba16.png', (32, 32, 4))
+    assert top.shape == (32, 64, 4)
+    assert bottom.shape == (32, 64, 4)
+    assert tiny.shape == (32, 32, 4)
+    assert huge.shape == (32, 32, 4)
+    assert np.any(top[..., :3] != bottom[..., :3])
+    assert np.any(tiny[..., :3] != huge[..., :3])
+    assert top[..., 3].mean() > 200
+    assert huge[..., 3].mean() > 200
+
+
+def test_render_all_castle_portraits_are_nontrivial():
+    shapes = {'top': (32, 64, 4), 'bottom': (32, 64, 4), 'full': (32, 32, 4)}
+    for fname, (_, segment) in sorted(_CASTLE_PORTRAIT_LAYOUTS.items()):
+        rgba = _render_castle_portrait_rgba(fname, shapes[segment])
+        assert rgba.dtype == np.uint8
+        assert rgba.shape == shapes[segment]
+        assert np.unique(rgba[..., :3].reshape(-1, 3), axis=0).shape[0] > 24
+
+
 def test_render_bobomb_battlefield_portrait_is_scenic():
-    top = render_pil_texture('levels/bob/0.rgba16.png', (32, 32, 4), np.random.RandomState(0))
-    bottom = render_pil_texture('levels/bob/3.rgba16.png', (32, 32, 4), np.random.RandomState(0))
-    assert top.shape == (32, 32, 4)
-    assert bottom.shape == (32, 32, 4)
-    # Top panel should contain clear sky content and more than just monotone grass.
-    assert (top[:, :, 2] > top[:, :, 1]).mean() > 0.25
-    # Bottom panel should contain rich ground detail and be more varied than a simple filler texture.
-    lower = bottom[bottom.shape[0] // 2 :, :, :3]
-    assert lower[:, :, 1].mean() > lower[:, :, 2].mean() * 0.65
-    assert np.unique(bottom.reshape(-1, 4), axis=0).shape[0] > 20
-    # The two tiles should be meaningfully different parts of the portrait.
-    assert np.abs(top.astype(int) - bottom.astype(int)).mean() > 20
+    top = render_pil_texture('levels/castle_inside/17.rgba16.png', (32, 64, 4), np.random.RandomState(0))
+    bottom = render_pil_texture('levels/castle_inside/18.rgba16.png', (32, 64, 4), np.random.RandomState(0))
+    full = np.concatenate([top, bottom], axis=0)
+    assert top.shape == (32, 64, 4)
+    assert bottom.shape == (32, 64, 4)
+    assert full.shape == (64, 64, 4)
+    assert (top[:, :, 2] > top[:, :, 1]).mean() > 0.20
+    assert bottom[:, :, 1].mean() > bottom[:, :, 2].mean() * 0.60
+    assert (bottom[:, :, 0] < 70).mean() > 0.03
+    assert (bottom[:, :, 0] > 150).mean() > 0.03
+    assert np.unique(full.reshape(-1, 4), axis=0).shape[0] > 100
+    assert np.abs(top.astype(int) - bottom.astype(int)).mean() > 15

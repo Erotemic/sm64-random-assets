@@ -31,6 +31,11 @@ def _semantic_supports(identity, info):
     return False
 
 
+
+def _castle_portrait_supports(identity, info):
+    return identity.fname in pil_textures._CASTLE_PORTRAIT_LAYOUTS
+
+
 _DEFAULT_IMAGE_REALIZATION_REGISTRY = None
 
 
@@ -59,11 +64,20 @@ def default_image_realization_registry():
         registry.register(AssetRealization(
             id='openai.pil-textures',
             author='openai:gpt-5.6-thinking',
-            version=6,
+            version=8,
             estimated_quality=0.69,
             generator=pil_textures.render_pil_texture,
             families=frozenset({'*'}),
-            notes='Deterministic PIL-authored procedural textures with methodical family, role, motif, and material inference for broad clean-room asset coverage, including improved coins, bob-ombs, Mario eyes, water textures, grass textures, and a dedicated Bob-omb Battlefield portrait renderer.',
+            notes='Deterministic PIL-authored procedural textures with methodical family, role, motif, and material inference for broad clean-room asset coverage, including improved coins, bob-ombs, Mario eyes, water textures, grass textures, and broader clean-room castle portrait routing.',
+        ))
+        registry.register(AssetRealization(
+            id='openai.castle-portraits',
+            author='openai:gpt-5.6-thinking',
+            version=2,
+            estimated_quality=0.82,
+            generator=pil_textures.render_pil_texture,
+            supports=_castle_portrait_supports,
+            notes='Dedicated clean-room scenic textures for every castle portrait and portal painting texture, including multi-part course portraits and the Tiny-Huge Island pair.',
         ))
         _DEFAULT_IMAGE_REALIZATION_REGISTRY = registry
     return _DEFAULT_IMAGE_REALIZATION_REGISTRY
