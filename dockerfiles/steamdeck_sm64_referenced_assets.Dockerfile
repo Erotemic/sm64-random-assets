@@ -22,7 +22,7 @@ RUN <<EOF
 #!/bin/bash
 python -m venv $HOME/.venv/py311
 source $HOME/.venv/py311/bin/activate
-python -m pip install kwimage opencv-python-headless ubelt numpy ruamel.yaml PyYAML scriptconfig rich parse matplotlib
+python -m pip install kwimage opencv-python-headless ubelt numpy ruamel.yaml PyYAML kwconf rich parse matplotlib
 EOF
 
 

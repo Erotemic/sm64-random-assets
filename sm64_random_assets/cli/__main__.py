@@ -23,7 +23,7 @@ def main(cmdline=True, **kw):
 
     # Create a subparser that uses the first positional argument to run one of
     # the previous CLI interfaces.
-    from scriptconfig.modal import ModalCLI
+    from kwconf.modal import ModalCLI
     modal = ModalCLI(description=ub.codeblock(
         '''
         The SM64 Random Assets CLI

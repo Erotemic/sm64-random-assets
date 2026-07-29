@@ -36,7 +36,7 @@ To run the asset generation script, the following requirements are needed.
 
 .. code:: bash
 
-   pip install kwimage opencv-python-headless ubelt numpy ruamel.yaml PyYAML scriptconfig rich parse
+   pip install kwimage opencv-python-headless ubelt numpy ruamel.yaml PyYAML kwconf rich parse
 
    OR
 
@@ -300,4 +300,4 @@ The latest PIL-texture pass also explicitly defers to the human-authored glyph a
 
 The realization policy now treats the human semantic generator as the preferred source for glyphs and the HUD life bar, while semantic character-part textures such as eyes are left to the PIL semantic renderer. The PIL pass also now includes a better Mario-eye treatment and richer water / grass variants.
 
-Bob-omb Battlefield portrait tiles now use a dedicated scenic portrait renderer instead of the generic battlefield-grass treatment, so the course portrait can read like a real landscape painting with level-themed landmarks.
+Bob-omb Battlefield uses the castle painting pair ``levels/castle_inside/17.rgba16.png`` and ``levels/castle_inside/18.rgba16.png``. These two 64x32 halves now use a dedicated scenic renderer and combine into a coherent 64x64 course portrait. The similarly named ``levels/bob/*`` assets remain battlefield course textures rather than painting tiles.

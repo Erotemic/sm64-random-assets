@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-import scriptconfig as scfg
+import kwconf
 import ubelt as ub
 
 
-class GrabBaseromCLI(scfg.DataConfig):
+class GrabBaseromCLI(kwconf.Config):
     """
     Convinience tool to copy the baserom into the current path.
 
@@ -11,13 +11,13 @@ class GrabBaseromCLI(scfg.DataConfig):
     """
     __command__ = 'grab_baserom'
 
-    dst = scfg.Value('.', help='directory or file path to copy the baserom to', position=1)
+    dst = kwconf.Value('.', help='directory or file path to copy the baserom to', position=1)
 
     @classmethod
-    def main(cls, cmdline=1, **kwargs):
+    def main(cls, argv=1, **kwargs):
         import rich
         from rich.markup import escape
-        config = cls.cli(cmdline=cmdline, data=kwargs, strict=True)
+        config = cls.cli(argv=argv, data=kwargs, strict=True)
         rich.print('config = ' + escape(ub.urepr(config, nl=1)))
 
         try:

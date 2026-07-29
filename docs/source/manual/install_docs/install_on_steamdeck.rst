@@ -42,7 +42,7 @@ See ./dockerfiles/steamdeck_sm64_referenced_assets.Dockerfile
 
     source $HOME/.venv/py311/bin/activate
 
-    python -m pip install kwimage opencv-python-headless ubelt numpy ruamel.yaml PyYAML scriptconfig rich parse matplotlib
+    python -m pip install kwimage opencv-python-headless ubelt numpy ruamel.yaml PyYAML kwconf rich parse matplotlib
 
 
 Setup the Repo

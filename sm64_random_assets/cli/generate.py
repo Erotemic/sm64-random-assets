@@ -70,44 +70,44 @@ SeeAlso:
 """
 import ubelt as ub
 import json
-import scriptconfig as scfg
+import kwconf
 import rich
 
 
-class GenerateAssetsConfig(scfg.DataConfig):
+class GenerateAssetsConfig(kwconf.Config):
     """
     Generates non-copyrighted assets for SM64
     """
     __command__ = 'generate'
 
-    dst = scfg.Value('tpl/sm64-port', help=ub.paragraph(
+    dst = kwconf.Value('tpl/sm64-port', help=ub.paragraph(
         '''
         Path to the sm64-based repository to generate assets for.
         This should be a path to a repo that expects assets in the tpl
         directly (e.g. ./tpl/sm64)
         '''), position=1)
-    reference = scfg.Value(None, help=ub.paragraph(
+    reference = kwconf.Value(None, help=ub.paragraph(
         '''
         A reference to a directory with a different set of assets to
         compare against for debugging.
         '''))
-    manifest_fpath = scfg.Value('auto', help=ub.paragraph(
+    manifest_fpath = kwconf.Value('auto', help=ub.paragraph(
         '''
         Path to the ``asset_metadata.json`` asset manifest to use. This is
         the file that specifies the expected size of each asset as well as
         the format. If "auto", attempts to use the one in this module
         directory.
         '''))
-    hybrid_mode = scfg.Value(None, isflag=True, help='hybrid_mode. DEPRECATED. Set the appropriate key in the asset_config to hybrid')
-    compare = scfg.Value(None, isflag=True, help=ub.paragraph(
+    hybrid_mode = kwconf.Value(None, isflag=True, help='hybrid_mode. DEPRECATED. Set the appropriate key in the asset_config to hybrid')
+    compare = kwconf.Value(None, isflag=True, help=ub.paragraph(
         '''
         run the compare debug tool. Can also be a YAML configuration'
         '''))
-    target_quality = scfg.Value(0.0, type=float, help='Select each asset realization nearest to this quality score.')
-    include_authors = scfg.Value(['*'], nargs='+', help='Author glob patterns to include when selecting image realizations.')
-    exclude_authors = scfg.Value([], nargs='+', help='Author glob patterns to exclude when selecting image realizations.')
+    target_quality = kwconf.Value(0.0, type=float, help='Select each asset realization nearest to this quality score.')
+    include_authors = kwconf.Value(['*'], nargs='+', help='Author glob patterns to include when selecting image realizations.')
+    exclude_authors = kwconf.Value([], nargs='+', help='Author glob patterns to exclude when selecting image realizations.')
 
-    asset_config = scfg.Value(None, help=ub.paragraph(
+    asset_config = kwconf.Value(None, help=ub.paragraph(
         '''
         A YAML config that allow for fine grained control over how assets
         should be generated.
@@ -168,8 +168,8 @@ class GenerateAssetsConfig(scfg.DataConfig):
         self.compare = compare
 
     @classmethod
-    def main(GenerateAssetsConfig, cmdline=1, **kwargs):
-        args = GenerateAssetsConfig.cli(cmdline=cmdline, data=kwargs)
+    def main(GenerateAssetsConfig, argv=1, **kwargs):
+        args = GenerateAssetsConfig.cli(argv=argv, data=kwargs)
         from rich.markup import escape
         rich.print('args = ' + escape(ub.urepr(args, nl=2)))
 
