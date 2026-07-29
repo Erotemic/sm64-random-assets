@@ -17,6 +17,26 @@ from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import enviro
 from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import frequent_textures
 from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import bowser_peach_textures
 from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import differentiated_textures
+from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import intro_textures
+from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import transparency_masks
+from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import menu_pointers
+from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import file_select_textures
+
+
+def _intro_texture_supports(identity, info):
+    return intro_textures.supports_intro_texture(identity, info)
+
+
+def _menu_pointer_supports(identity, info):
+    return menu_pointers.supports_menu_pointer(identity, info)
+
+
+def _file_select_texture_supports(identity, info):
+    return file_select_textures.supports_file_select_texture(identity, info)
+
+
+def _transparency_mask_supports(identity, info):
+    return transparency_masks.supports_transparency_mask(identity, info)
 
 
 def _semantic_supports(identity, info):
@@ -105,6 +125,15 @@ def default_image_realization_registry():
             notes='Restored focused high-exposure texture pass for Mario details, recurring collectibles, shadows, effects, trees, doors, boxes, switches, signposts, Goombas, and Koopa shells after later environment overlays replaced the registry file.',
         ))
         registry.register(AssetRealization(
+            id='openai.transparency-masks',
+            author='openai:gpt-5.6-thinking',
+            version=1,
+            estimated_quality=0.88,
+            generator=transparency_masks.render_transparency_mask,
+            supports=_transparency_mask_supports,
+            notes='Dedicated code-authored IA/alpha-mask pass for transparent textures: actor effects, coin silhouettes, smoke, flames, shadows, foliage masks, fences, cobwebs, cloud cutouts, and other assets where alpha definition matters more than color detail.',
+        ))
+        registry.register(AssetRealization(
             id='openai.differentiated-textures',
             author='openai:gpt-5.6-thinking',
             version=1,
@@ -112,6 +141,33 @@ def default_image_realization_registry():
             generator=differentiated_textures.render_differentiated_texture,
             supports=_differentiated_texture_supports,
             notes='Code-authored differentiation pass for multi-part actors and frame animations that previously collapsed to samey generic materials. Distinguishes eyes, mouths, shells, scales, fur, foliage, machinery, locks, bars, effects, waves, smoke, explosions, and rotating egg frames.',
+        ))
+        registry.register(AssetRealization(
+            id='openai.file-select-textures',
+            author='openai:gpt-5.6-thinking',
+            version=1,
+            estimated_quality=0.91,
+            generator=file_select_textures.render_file_select_texture,
+            supports=_file_select_texture_supports,
+            notes='Dedicated code-authored file-select presentation: sapphire menu backdrops, separate occupied and empty save-slot plaques, and differentiated Score, Copy, Erase, Sound, and auxiliary action-button materials while preserving human-rendered labels and the dedicated glove pointer.',
+        ))
+        registry.register(AssetRealization(
+            id='openai.menu-pointers',
+            author='openai:gpt-5.6-thinking',
+            version=1,
+            estimated_quality=0.90,
+            generator=menu_pointers.render_menu_pointer,
+            supports=_menu_pointer_supports,
+            notes='Dedicated transparent menu cursors with strongly differentiated pointing and pressed glove silhouettes for the file-select/main-menu pair and title-screen hand states.',
+        ))
+        registry.register(AssetRealization(
+            id='openai.intro-textures',
+            author='openai:gpt-5.6-thinking',
+            version=1,
+            estimated_quality=0.86,
+            generator=intro_textures.render_intro_texture,
+            supports=_intro_texture_supports,
+            notes='Dedicated code-authored startup and title-screen textures: coherent title background strips, glossy intro-logo materials, animated stars and sparkles, Mario-face shine, and distinct open/closed glove cursors.',
         ))
         registry.register(AssetRealization(
             id='openai.bowser-peach-textures',

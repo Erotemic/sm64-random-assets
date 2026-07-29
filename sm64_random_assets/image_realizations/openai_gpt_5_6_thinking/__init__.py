@@ -1,3 +1,8 @@
+from .file_select_textures import (
+    FILE_SELECT_TEXTURE_SPECS,
+    render_file_select_texture,
+    supports_file_select_texture,
+)
 from .bowser_peach_textures import (
     FAKEOUT_PORTRAIT_FILES,
     render_bowser_peach_texture,
@@ -30,6 +35,10 @@ from .pil_textures import (
 )
 
 __all__ = [
+    'supports_intro_texture',
+    'render_intro_texture',
+    'TITLE_BACKGROUND_FILES',
+    'INTRO_TEXTURE_FILES',
     'DIFFERENTIATED_ACTOR_FAMILIES',
     'DIFFERENTIATED_ANIMATION_FAMILIES',
     'actor_family_from_fname',
@@ -50,4 +59,30 @@ __all__ = [
     'resolve_environment_motif',
     'supports_bowser_peach_texture',
     'supports_frequent_texture',
+    'render_transparency_mask',
+    'supports_transparency_mask',
+    'FILE_SELECT_TEXTURE_SPECS',
+    'render_file_select_texture',
+    'supports_file_select_texture',
+    'MENU_POINTER_FILES',
+    'render_menu_pointer',
+    'supports_menu_pointer',
 ]
+
+from .intro_textures import (
+    INTRO_TEXTURE_FILES,
+    TITLE_BACKGROUND_FILES,
+    render_intro_texture,
+    supports_intro_texture,
+)
+
+from .transparency_masks import (
+    render_transparency_mask,
+    supports_transparency_mask,
+)
+
+from .menu_pointers import (
+    MENU_POINTER_FILES,
+    render_menu_pointer,
+    supports_menu_pointer,
+)

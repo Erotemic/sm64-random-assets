@@ -1,14 +1,3 @@
-
-### Changed
-- Raised semantic synthesized audio by another approximately 1.5x in average level, corresponding to the requested 7.5/10 balance, with a soft limiter at 0.97 full scale to avoid hard clipping.
-
-
-### Fixed
-* Corrected Castle Grounds feedback regressions: outside-bank `03000` is lawn again, `06800` is masonry rather than water, moat water remains blue, and the fence texture retains a transparent iron mask.
-
-### Changed
-* Raised semantic generated SFX peaks from roughly 0.32-0.42 to category-specific 0.66-0.74 targets so they sit closer to the engine's coin sound without clipping.
-
 # Changelog
 We [keep a changelog](https://keepachangelog.com/en/1.0.0/).
 We aim to adhere to [semantic versioning](https://semver.org/spec/v2.0.0.html).
@@ -16,8 +5,8 @@ We aim to adhere to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
-* Added the `openai.differentiated-textures` realization for 198 additional actor and animation textures, with coherent family palettes, semantically distinct named parts, non-identical same-shape assets, and frame-varying flame, explosion, smoke, water-wave, and Yoshi-egg sequences.
-* Added a code-authored Bowser/Peach hallway fake-out portrait pair and differentiated Bowser, Peach, and Bowser-flame texture renderers.
+* A dedicated `openai.file-select-textures` realization with sapphire backdrops, separate occupied/empty save plaques, and differentiated Score, Copy, Erase, Sound, and auxiliary action-button materials.
+* A dedicated `openai.menu-pointers` realization for transparent, high-contrast pointing and pressed glove cursors used by the main menu/file select and title screen.
 * broadened the clean-room castle portrait generator to cover every castle portrait / portal texture, including Tiny-Huge Island's two standalone square paintings.
 * A clean-room `openai.simple-music` M64 realization with compact two-voice melodies and bass lines.
 * Target sound-bank inspection to choose suitable pitched instruments when available.
@@ -27,9 +16,9 @@ We aim to adhere to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 * A quality-based realization selector with author filtering.
 * An incremental semantic asset catalog with family/member identities.
 * Regression tests for realization selection and deterministic human realizations.
+* A dedicated `openai.transparency-masks` image realization for IA / alpha-mask textures such as fences, smoke, flames, shadows, foliage cutouts, and other assets where transparency quality is critical.
 
 ### Changed
-* Restored the high-exposure texture realization in the merged registry after later environment overlays had replaced its registration.
 * routed all supported castle portrait textures through the dedicated portrait realization and expanded tests to cover the full mapped portrait set.
 * `build.sh` now defaults `TARGET_QUALITY` to `1`, selecting semantic samples and simple music.
 * Binary generation now participates in author/version/quality realization selection.
@@ -37,6 +26,7 @@ We aim to adhere to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 * Preserved the original image generators as frozen `human.random` and `human.semantic` realizations.
 * Reorganized image generation so the top-level generator is now a thin orchestrator.
 * Default `build.sh` target is now the playable `sm64-port`.
+* High-quality builds now route supported transparent IA / mask textures through a specialized generator instead of leaving them to generic color-texture logic.
 
 ## [Version 0.0.1] -
 

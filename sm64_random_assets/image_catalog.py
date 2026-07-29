@@ -10,6 +10,63 @@ def determine_asset_identity(info_or_fname, *, name_to_text_lut=None) -> AssetId
     else:
         fname = str(info_or_fname)
 
+    file_select_members = {
+        'levels/menu/main_menu_seg7.00018.rgba16.png': 'backdrop_deep',
+        'levels/menu/main_menu_seg7.00818.rgba16.png': 'backdrop_light',
+        'levels/menu/main_menu_seg7.01018.rgba16.png': 'save_slot_occupied',
+        'levels/menu/main_menu_seg7.02018.rgba16.png': 'save_slot_empty',
+        'levels/menu/main_menu_seg7.03468.rgba16.png': 'action_score',
+        'levels/menu/main_menu_seg7.03C68.rgba16.png': 'action_copy',
+        'levels/menu/main_menu_seg7.04468.rgba16.png': 'action_erase',
+        'levels/menu/main_menu_seg7.04C68.rgba16.png': 'action_sound',
+        'levels/menu/main_menu_seg7.05468.rgba16.png': 'action_auxiliary',
+        'levels/menu/main_menu_seg7.0D1A8.rgba16.png': 'backdrop_upper',
+        'levels/menu/main_menu_seg7.0E1A8.rgba16.png': 'backdrop_lower',
+    }
+    if fname in file_select_members:
+        return AssetIdentity(
+            fname=fname, family='menu.file_select', member=file_select_members[fname])
+
+    if fname in {
+        'levels/menu/main_menu_seg7.06328.rgba16.png',
+        'levels/menu/main_menu_seg7.06B28.rgba16.png',
+    }:
+        member = 'open' if '.06328.' in fname else 'pressed'
+        return AssetIdentity(fname=fname, family='menu.pointer', member=member)
+
+    if fname.startswith('textures/title_screen_bg/title_screen_bg.'):
+        member = fname.split('.')[-3]
+        return AssetIdentity(fname=fname, family='intro.title_background', member=member)
+
+    if fname in {
+        'levels/intro/0.rgba16.png',
+        'levels/intro/1.rgba16.png',
+    }:
+        member = fname.rsplit('/', 1)[1].split('.', 1)[0]
+        return AssetIdentity(fname=fname, family='intro.logo_material', member=member)
+
+    if fname.startswith('textures/intro_raw/red_star_'):
+        member = fname.rsplit('red_star_', 1)[1].split('.', 1)[0]
+        return AssetIdentity(fname=fname, family='intro.red_star', member=member)
+
+    if fname.startswith('textures/intro_raw/white_star_'):
+        member = fname.rsplit('white_star_', 1)[1].split('.', 1)[0]
+        return AssetIdentity(fname=fname, family='intro.white_star', member=member)
+
+    if fname.startswith('textures/intro_raw/sparkle_'):
+        member = fname.rsplit('sparkle_', 1)[1].split('.', 1)[0]
+        return AssetIdentity(fname=fname, family='intro.sparkle', member=member)
+
+    if fname in {
+        'textures/intro_raw/hand_open.rgba16.png',
+        'textures/intro_raw/hand_closed.rgba16.png',
+    }:
+        member = 'open' if 'hand_open' in fname else 'closed'
+        return AssetIdentity(fname=fname, family='intro.glove', member=member)
+
+    if fname == 'textures/intro_raw/mario_face_shine.ia8.png':
+        return AssetIdentity(fname=fname, family='intro.face_shine', member='default')
+
     if fname.startswith('actors/power_meter/power_meter_'):
         member = fname.rsplit('power_meter_', 1)[1].split('.', 1)[0]
         return AssetIdentity(fname=fname, family='hud.power_meter', member=member)
