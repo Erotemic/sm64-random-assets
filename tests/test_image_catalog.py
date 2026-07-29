@@ -31,3 +31,16 @@ def test_bowser_peach_eye_and_fakeout_families_are_separate():
     assert peach_fakeout.family == bowser_fakeout.family == 'castle.fakeout_portrait'
     assert bowser_eye.family == 'actor.bowser.eyes'
     assert peach_eye.family == 'actor.peach.eyes'
+
+
+def test_differentiated_actor_and_animation_identities_are_grouped_coherently():
+    koopa_eye = determine_asset_identity('actors/koopa/koopa_eyes_open.rgba16.png')
+    koopa_shell = determine_asset_identity('actors/koopa/koopa_shell_back.rgba16.png')
+    explosion0 = determine_asset_identity('actors/explosion/explosion_0.rgba16.png')
+    explosion6 = determine_asset_identity('actors/explosion/explosion_6.rgba16.png')
+    assert koopa_eye.family == 'actor.koopa'
+    assert koopa_shell.family == 'actor.koopa'
+    assert koopa_eye.member != koopa_shell.member
+    assert explosion0.family == 'animation.explosion'
+    assert explosion6.family == 'animation.explosion'
+    assert explosion0.member != explosion6.member

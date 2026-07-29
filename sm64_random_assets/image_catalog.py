@@ -53,6 +53,30 @@ def determine_asset_identity(info_or_fname, *, name_to_text_lut=None) -> AssetId
     if 'goomba_face' in fname:
         return AssetIdentity(fname=fname, family='actor.goomba.face', member='open')
 
+
+    differentiated_actor_families = {
+        'amp', 'bobomb', 'bookend', 'bully', 'chain_chomp', 'chillychief',
+        'dorrie', 'eyerok', 'flyguy', 'haunted_cage', 'heave_ho',
+        'king_bobomb', 'klepto', 'koopa', 'lakitu_cameraman', 'lakitu_enemy',
+        'mad_piano', 'monty_mole', 'penguin', 'piranha_plant', 'scuttlebug',
+        'seaweed', 'snowman', 'spindrift', 'treasure_chest', 'ukiki', 'unagi',
+        'whomp', 'wiggler', 'yoshi',
+    }
+    differentiated_animation_families = {
+        'explosion', 'flame', 'impact_smoke', 'stomp_smoke', 'walk_smoke',
+        'water_wave', 'yoshi_egg',
+    }
+    if fname.startswith('actors/'):
+        parts = fname.split('/', 2)
+        if len(parts) == 3:
+            actor_family = parts[1]
+            if actor_family in differentiated_actor_families:
+                member = parts[2].split('.', 1)[0]
+                return AssetIdentity(fname=fname, family=f'actor.{actor_family}', member=member)
+            if actor_family in differentiated_animation_families:
+                member = parts[2].split('.', 1)[0]
+                return AssetIdentity(fname=fname, family=f'animation.{actor_family}', member=member)
+
     eye_tokens = [
         'eyes_center', 'eyes_closed', 'eyes_dead',
         'eye_mostly_open', 'iris_mostly_open',

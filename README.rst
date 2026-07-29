@@ -321,3 +321,15 @@ The castle hallway fake-out uses code-authored Peach and Bowser portraits for
 ``openai.bowser-peach-textures`` realization also differentiates named Bowser
 and Peach actor parts and gives Bowser flame frames transparent animated
 silhouettes.
+
+
+Broader actor and animation differentiation
+-------------------------------------------
+
+The ``openai.differentiated-textures`` realization adds filename-aware code
+renderers for 198 additional textures across common enemies, NPCs, props, and
+effects.  Multi-part actors now use coherent family palettes while their eyes,
+mouths, shells, scales, fur, foliage, machinery, locks, bars, and other named
+parts remain visually distinct.  Flame, explosion, smoke, water-wave, and
+Yoshi-egg frame sequences also change shape and phase across frames instead of
+reusing nearly identical generic art.

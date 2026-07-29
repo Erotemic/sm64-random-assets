@@ -16,6 +16,7 @@ We aim to adhere to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+* Added the `openai.differentiated-textures` realization for 198 additional actor and animation textures, with coherent family palettes, semantically distinct named parts, non-identical same-shape assets, and frame-varying flame, explosion, smoke, water-wave, and Yoshi-egg sequences.
 * Added a code-authored Bowser/Peach hallway fake-out portrait pair and differentiated Bowser, Peach, and Bowser-flame texture renderers.
 * broadened the clean-room castle portrait generator to cover every castle portrait / portal texture, including Tiny-Huge Island's two standalone square paintings.
 * A clean-room `openai.simple-music` M64 realization with compact two-voice melodies and bass lines.

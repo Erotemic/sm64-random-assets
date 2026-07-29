@@ -87,3 +87,17 @@ def test_default_registry_uses_bowser_peach_and_restored_frequent_realizations()
         identity = determine_asset_identity(info, name_to_text_lut=human_semantic.name_to_text_lut)
         realization = policy.resolve(identity, info)
         assert realization.id == expected
+
+
+def test_default_registry_uses_differentiated_textures_for_samey_actor_families():
+    policy = image_generator.build_realization_policy(target_quality=1.0)
+    for info in [
+        {'fname': 'actors/koopa/koopa_eyes_open.rgba16.png', 'shape': [32, 32, 4]},
+        {'fname': 'actors/piranha_plant/piranha_plant_leaf.rgba16.png', 'shape': [64, 32, 4]},
+        {'fname': 'actors/explosion/explosion_3.rgba16.png', 'shape': [32, 32, 4]},
+        {'fname': 'actors/water_wave/water_wave_2.ia16.png', 'shape': [32, 32, 2]},
+    ]:
+        identity = determine_asset_identity(info, name_to_text_lut=human_semantic.name_to_text_lut)
+        realization = policy.resolve(identity, info)
+        assert realization.id == 'openai.differentiated-textures'
+        assert realization.estimated_quality == 0.83

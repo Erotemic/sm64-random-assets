@@ -3,6 +3,13 @@ from .bowser_peach_textures import (
     render_bowser_peach_texture,
     supports_bowser_peach_texture,
 )
+from .differentiated_textures import (
+    DIFFERENTIATED_ACTOR_FAMILIES,
+    DIFFERENTIATED_ANIMATION_FAMILIES,
+    actor_family_from_fname,
+    render_differentiated_texture,
+    supports_differentiated_texture,
+)
 from .environment_textures import (
     can_generate as environment_can_generate,
     render_environment_texture,
@@ -23,6 +30,11 @@ from .pil_textures import (
 )
 
 __all__ = [
+    'DIFFERENTIATED_ACTOR_FAMILIES',
+    'DIFFERENTIATED_ANIMATION_FAMILIES',
+    'actor_family_from_fname',
+    'render_differentiated_texture',
+    'supports_differentiated_texture',
     'FAKEOUT_PORTRAIT_FILES',
     'FREQUENT_TEXTURE_SPECS',
     'TextureIntent',

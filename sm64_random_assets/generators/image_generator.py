@@ -16,6 +16,7 @@ from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import pil_te
 from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import environment_textures
 from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import frequent_textures
 from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import bowser_peach_textures
+from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import differentiated_textures
 
 
 def _semantic_supports(identity, info):
@@ -37,6 +38,10 @@ def _semantic_supports(identity, info):
 
 def _early_environment_supports(identity, info):
     return environment_textures.can_generate(identity.fname, info.get('shape', None))
+
+
+def _differentiated_texture_supports(identity, info):
+    return differentiated_textures.supports_differentiated_texture(identity, info)
 
 
 def _bowser_peach_supports(identity, info):
@@ -98,6 +103,15 @@ def default_image_realization_registry():
             generator=frequent_textures.render_frequent_texture,
             supports=frequent_textures.supports_frequent_texture,
             notes='Restored focused high-exposure texture pass for Mario details, recurring collectibles, shadows, effects, trees, doors, boxes, switches, signposts, Goombas, and Koopa shells after later environment overlays replaced the registry file.',
+        ))
+        registry.register(AssetRealization(
+            id='openai.differentiated-textures',
+            author='openai:gpt-5.6-thinking',
+            version=1,
+            estimated_quality=0.83,
+            generator=differentiated_textures.render_differentiated_texture,
+            supports=_differentiated_texture_supports,
+            notes='Code-authored differentiation pass for multi-part actors and frame animations that previously collapsed to samey generic materials. Distinguishes eyes, mouths, shells, scales, fur, foliage, machinery, locks, bars, effects, waves, smoke, explosions, and rotating egg frames.',
         ))
         registry.register(AssetRealization(
             id='openai.bowser-peach-textures',
