@@ -59,6 +59,41 @@ The low-level configuration selected by the preset is:
 ``TARGET`` can be used directly when scripting, but ``PRESET=steamframe`` is
 preferred for interactive use.
 
+Cross-Architecture Host Tools (``Error 127``)
+--------------------------------------------------
+
+The decomp variant trees keep their helper tools (``textconv``, ``armips``,
+``n64graphics``, ``mio0``, ``n64cksum``, and the rest) as untracked build
+artifacts inside ``tools/``, next to their sources. Each binary is compiled
+for the architecture that built it, and the tools ``Makefile`` rebuilds one
+only when its sources are newer. A tree that has been built natively on an
+x86_64 machine therefore carries x86_64 tools, which the ARM64 container
+cannot execute.
+
+The symptom is that asset generation and the early C compilations complete,
+then the build dies at the first text-encoding rule::
+
+    make: *** [build/us_pc/include/text_menu_strings.h] Error 127
+
+If ``textconv`` is fixed, ``armips``, ``n64graphics``, ``mio0``, and
+``n64cksum`` fail the same way when their rules run.
+
+Clean the variant's tools before the cross-architecture build::
+
+    make -C tpl/sm64-port/tools clean
+
+The container build then compiles all the tools natively for ARM64 on its
+first run. The clean is a one-way street in practice: after an ARM64 build
+the tree carries ARM64 tools, so a later native x86_64 build from the same
+tree needs the same clean first. A fresh clone is unaffected because the
+tool binaries are gitignored.
+
+The same applies to the ``tpl/sm64`` tree (``make -C tpl/sm64/tools clean``)
+if that variant is built cross-architecture. A permanent fix is a small
+``tools/Makefile`` change that stamps the host architecture and forces a
+rebuild whenever it changes; that change belongs in the sm64-port and sm64
+projects.
+
 Deploy
 ======
 

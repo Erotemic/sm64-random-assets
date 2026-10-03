@@ -5,6 +5,7 @@ We aim to adhere to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- documented the cross-architecture host-tool failure mode (`Error 127` from stale x86_64 `tools/` binaries) in the Steam Frame off-device build docs, including the tools-clean workaround and the permanent arch-stamp fix owed to the sm64-port / sm64 Makefiles.
 - added a dedicated `openai.castle-inside-textures` realization for the non-portrait `levels/castle_inside` material bank, covering cream wall blocks, checker marble, carpet, parquet, paneling, wallpaper, bronze plates, iron masks, and interior light/glow textures.
 - added an opt-in `debug.texture-id` realization under author `debug:openai` that stamps numeric / offset-style textures with high-contrast labels and orientation cues for screenshot-driven texture identification.
 * broadened the clean-room castle portrait generator to cover every castle portrait / portal texture, including Tiny-Huge Island's two standalone square paintings.
