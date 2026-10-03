@@ -15,14 +15,25 @@ from sm64_random_assets.generators import image_generator
 
 
 def test_castle_inside_texture_supports_and_renders_expected_shape():
-    for fname, kind in list(CASTLE_INSIDE_TEXTURE_SPECS.items())[:4]:
+    for fname, kind in CASTLE_INSIDE_TEXTURE_SPECS.items():
         identity = determine_asset_identity(fname)
         assert supports_castle_inside_texture(identity, {'fname': fname})
-        shape = (32, 32, 4) if fname.endswith('.rgba16.png') else (32, 32, 2)
+        channels = 4 if fname.endswith('.rgba16.png') else 2
+        shape = (32, 32, channels)
         arr = render_castle_inside_texture(fname, shape)
         assert arr.shape == shape
         assert arr.dtype == np.uint8
         assert arr.std() > 0
+
+
+def test_castle_inside_texture_renders_wide_shapes_without_crashing():
+    # Some castle interior assets are wider than tall in the real game; the
+    # internal 64x64 canvas must resize cleanly to wide targets as well.
+    shape = (16, 64, 4)
+    arr = render_castle_inside_texture('levels/castle_inside/1.rgba16.png', shape)
+    assert arr.shape == shape
+    assert arr.dtype == np.uint8
+    assert arr.std() > 0
 
 
 def test_default_registry_uses_castle_inside_realization_for_material_tiles():

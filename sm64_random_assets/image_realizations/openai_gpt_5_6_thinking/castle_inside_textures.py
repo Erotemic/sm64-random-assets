@@ -99,7 +99,7 @@ def _render_wall_blocks(W, H, rng):
     mortar = (126, 110, 96, 255)
     for row, y in enumerate(range(0, H, block_h)):
         offset = (block_w // 2) if (row % 2) else 0
-        for x in range(-offset, W + block_w, block_w):
+        for x in range(-offset, W, block_w):
             x1 = x
             y1 = y
             x2 = min(W - 1, x + block_w - 2)
@@ -172,7 +172,7 @@ def _render_parquet(W, H, rng):
     for row, y in enumerate(range(0, H, plank_h)):
         seg = max(8, W // 3)
         shift = (seg // 2) if row % 2 else 0
-        for x in range(-shift, W + seg, seg):
+        for x in range(-shift, W, seg):
             color = colors[(row + x // max(seg, 1)) % len(colors)]
             rect = (x, y, min(W - 1, x + seg - 1), min(H - 1, y + plank_h - 1))
             _draw_bevel(draw, rect, fill=color + (255,),
@@ -316,7 +316,7 @@ def _render_glow_mask(W, H, rng, *, warm=False):
     dx = (xx - (W - 1) / 2) / max(W * 0.5, 1)
     dy = (yy - (H - 1) / 2) / max(H * 0.5, 1)
     dist = np.sqrt(dx * dx + dy * dy)
-    alpha = np.clip((1.0 - dist) ** 2.2 * 255, 0, 255).astype(np.uint8)
+    alpha = np.clip(np.maximum(0.0, 1.0 - dist) ** 2.2 * 255, 0, 255).astype(np.uint8)
     if warm:
         rgb = np.dstack([
             np.full((H, W), 255, dtype=np.uint8),

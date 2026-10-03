@@ -13,3 +13,5 @@ sm64.us.z64
 *.tar.gz
 *.us.z64
 git-of-theseus/
+*.egg-info/
+tpl/sm64ex-ref/

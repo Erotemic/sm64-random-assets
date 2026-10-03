@@ -18,6 +18,8 @@ We aim to adhere to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 * Regression tests for realization selection and deterministic human realizations.
 
 ### Changed
+- updated the Mario-eye selection test to expect the `openai.frequent-textures` route (whose mario pass delegates eye files to the semantic PIL eye renderer, verified pixel-identical) instead of the now-outdated `openai.pil-textures` expectation.
+- fixed the castle interior wall-block and parquet renderers that built inverted draw boxes when a tile row started beyond the right edge, and quieted the NaN power warning in the glow-mask renderer; the test now renders all fifteen material kinds plus a wide shape.
 - grouped the castle interior material files under a shared `castle.interior.material` asset family so the registry can route them coherently without interfering with fake-out portraits or course-portrait paintings.
 * routed all supported castle portrait textures through the dedicated portrait realization and expanded tests to cover the full mapped portrait set.
 * `build.sh` now defaults `TARGET_QUALITY` to `1`, selecting semantic samples and simple music.
