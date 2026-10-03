@@ -178,3 +178,113 @@ def test_steamrt_helper_does_not_start_login_shell():
     helper = (REPO_DPATH / "dev" / "build_steamrt_target.sh").read_text()
     assert "bash -c 'mkdir -p" in helper
     assert "bash -lc 'mkdir -p" not in helper
+
+
+def resolve_asset_config(**env_updates):
+    env = os.environ.copy()
+    for key in ["ASSET_MODE", "BASEROM_FPATH", "EXTERNAL_ROM_FPATH"]:
+        env.pop(key, None)
+    env.update(env_updates)
+    command = f'''
+        source {CONFIG_FPATH!s}
+        sm64ra_resolve_asset_config || exit $?
+        printf '%s\t%s\n' "$ASSET_MODE" "${{BASEROM_FPATH:-}}"
+    '''
+    return subprocess.run(
+        ["bash", "-c", command],
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def test_asset_mode_defaults_to_generate():
+    result = resolve_asset_config()
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "generate"
+
+
+def test_asset_mode_reuse_aliases():
+    for alias in ["reuse", "existing", "skip"]:
+        result = resolve_asset_config(ASSET_MODE=alias)
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.split("\t", 1)[0].strip() == "reuse"
+
+
+def test_asset_mode_rejects_unknown_value():
+    result = resolve_asset_config(ASSET_MODE="magic")
+    assert result.returncode != 0
+    assert "Expected generate, reuse, or baserom" in result.stderr
+
+
+def test_external_rom_path_preserves_legacy_generate_default(tmp_path):
+    rom = tmp_path / "baserom.us.z64"
+    result = resolve_asset_config(EXTERNAL_ROM_FPATH=str(rom))
+    assert result.returncode == 0, result.stderr
+    mode, path = result.stdout.strip().split("\t")
+    assert mode == "generate"
+    assert path == str(rom)
+
+
+def test_explicit_baserom_path_implies_baserom_mode(tmp_path):
+    rom = tmp_path / "baserom.us.z64"
+    result = resolve_asset_config(BASEROM_FPATH=str(rom))
+    assert result.returncode == 0, result.stderr
+    mode, path = result.stdout.strip().split("\t")
+    assert mode == "baserom"
+    assert path == str(rom)
+
+
+def test_explicit_asset_mode_overrides_baserom_inference(tmp_path):
+    rom = tmp_path / "baserom.us.z64"
+    result = resolve_asset_config(BASEROM_FPATH=str(rom), ASSET_MODE="generate")
+    assert result.returncode == 0, result.stderr
+    mode, path = result.stdout.strip().split("\t")
+    assert mode == "generate"
+    assert path == str(rom)
+
+
+def test_conflicting_baserom_aliases_are_rejected(tmp_path):
+    result = resolve_asset_config(
+        BASEROM_FPATH=str(tmp_path / "one.z64"),
+        EXTERNAL_ROM_FPATH=str(tmp_path / "two.z64"),
+    )
+    assert result.returncode != 0
+    assert "different files" in result.stderr
+
+
+def test_build_script_has_explicit_asset_modes_and_target_tool_cleanup():
+    build_script = (REPO_DPATH / "build.sh").read_text()
+    assert 'if [[ "$ASSET_MODE" == "generate" ]]' in build_script
+    assert '"$SM64RA_PYTHON" -m sm64_random_assets generate' in build_script
+    assert '"$SM64RA_PYTHON" extract_assets.py --clean' in build_script
+    assert '"$SM64RA_PYTHON" extract_assets.py us' in build_script
+    assert "Skipping asset generation/extraction" in build_script
+    assert "Skipping the random asset generator" in build_script
+    assert "Cleaning native SM64 helper tools for target environment" in build_script
+    assert 'make -s -C "$tools_dpath" clean' in build_script
+    assert 'NOEXTRACT=1 COMPARE=0 NON_MATCHING=0 VERSION=us make' in build_script
+
+
+def test_build_script_preserves_original_presentation_and_control_flow():
+    build_script = (REPO_DPATH / "build.sh").read_text()
+    assert "____ _  _  _   _ _    ____ ____ _  _ ___" in build_script
+    assert r"[__  |\/|  |_  |_|" in build_script
+    assert "Run Asset Generator" in build_script
+    assert "Compile the ROM" in build_script
+    assert "Finalize" in build_script
+    assert "ub.color_text" in build_script
+    assert "ub.highlight_code" in build_script
+    assert 'NUM_CPUS=${NUM_CPUS:=}' in build_script
+    assert 'if [[ ${BASH_SOURCE[0]} == "$0" ]]' in build_script
+    assert 'echo "To execute locally use: "' in build_script
+
+
+def test_steamrt_helper_forwards_asset_mode_and_baserom():
+    helper = (REPO_DPATH / "dev" / "build_steamrt_target.sh").read_text()
+    assert 'sm64ra_resolve_asset_config' in helper
+    assert '--env "ASSET_MODE=$ASSET_MODE"' in helper
+    assert 'BASEROM_ABS=$(readlink -f "$BASEROM_FPATH")' in helper
+    assert '--env BASEROM_FPATH=/inputs/baserom.us.z64' in helper
+    assert '--env EXTERNAL_ROM_FPATH=/inputs/baserom.us.z64' not in helper

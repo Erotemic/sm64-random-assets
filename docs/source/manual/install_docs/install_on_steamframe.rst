@@ -50,6 +50,36 @@ The snapshot can be overridden for diagnostics without changing the Dockerfile:
 
 Normal builds should leave this at its default.
 
+Asset source modes
+==================
+
+The device preset does not force asset generation. Asset provenance is selected
+independently:
+
+.. code:: bash
+
+    # Default when no baserom is supplied: run sm64-random-assets, then compile
+    PRESET=steamframe ./build.sh
+
+    # Compile assets already present in tpl/<variant> without invoking the generator
+    PRESET=steamframe ASSET_MODE=reuse ./build.sh
+
+    # Supplying a baserom selects baserom mode by default. The random asset
+    # generator is not invoked.
+    PRESET=steamframe BASEROM_FPATH=/path/to/baserom.us.z64 ./build.sh
+
+``ASSET_MODE=baserom`` cleans the extracted/generated asset set and uses the
+variant's upstream ``extract_assets.py`` to recover original assets from the
+ROM. If ``baserom.us.z64`` is already present in the variant tree, set
+``ASSET_MODE=baserom`` without ``BASEROM_FPATH``. The historical
+``EXTERNAL_ROM_FPATH`` spelling remains supported with its original behavior;
+it does not implicitly switch away from randomized generation.
+
+Native SM64 helper tools such as ``textconv`` are architecture-specific but
+live outside the normal ``build/`` directory. Steam Runtime builds therefore
+clean and rebuild those helpers inside the target container before use; this
+prevents stale x86_64 helpers from being reused during ARM64 builds.
+
 The low-level configuration selected by the preset is:
 
 .. code:: bash
@@ -58,41 +88,6 @@ The low-level configuration selected by the preset is:
 
 ``TARGET`` can be used directly when scripting, but ``PRESET=steamframe`` is
 preferred for interactive use.
-
-Cross-Architecture Host Tools (``Error 127``)
---------------------------------------------------
-
-The decomp variant trees keep their helper tools (``textconv``, ``armips``,
-``n64graphics``, ``mio0``, ``n64cksum``, and the rest) as untracked build
-artifacts inside ``tools/``, next to their sources. Each binary is compiled
-for the architecture that built it, and the tools ``Makefile`` rebuilds one
-only when its sources are newer. A tree that has been built natively on an
-x86_64 machine therefore carries x86_64 tools, which the ARM64 container
-cannot execute.
-
-The symptom is that asset generation and the early C compilations complete,
-then the build dies at the first text-encoding rule::
-
-    make: *** [build/us_pc/include/text_menu_strings.h] Error 127
-
-If ``textconv`` is fixed, ``armips``, ``n64graphics``, ``mio0``, and
-``n64cksum`` fail the same way when their rules run.
-
-Clean the variant's tools before the cross-architecture build::
-
-    make -C tpl/sm64-port/tools clean
-
-The container build then compiles all the tools natively for ARM64 on its
-first run. The clean is a one-way street in practice: after an ARM64 build
-the tree carries ARM64 tools, so a later native x86_64 build from the same
-tree needs the same clean first. A fresh clone is unaffected because the
-tool binaries are gitignored.
-
-The same applies to the ``tpl/sm64`` tree (``make -C tpl/sm64/tools clean``)
-if that variant is built cross-architecture. A permanent fix is a small
-``tools/Makefile`` change that stamps the host architecture and forces a
-rebuild whenever it changes; that change belongs in the sm64-port and sm64
-projects.
 
 Deploy
 ======

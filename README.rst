@@ -192,6 +192,21 @@ execution/runtime target (``TARGET``), and convenient named configurations
    # Presets and variants are independent
    PRESET=steamframe VARIANT=sm64ex ./build.sh
 
+Asset source is independent as well. With no baserom specified,
+``ASSET_MODE=generate`` remains the default. Use ``reuse`` to compile assets
+already present in the selected variant tree. Supplying ``BASEROM_FPATH``
+selects ``ASSET_MODE=baserom`` by default and bypasses the random asset
+generator entirely:
+
+.. code:: bash
+
+   PRESET=steamframe ASSET_MODE=reuse ./build.sh
+   PRESET=steamframe BASEROM_FPATH=/path/to/baserom.us.z64 ./build.sh
+
+Set ``ASSET_MODE=generate`` explicitly if a baserom is present but should only
+serve another purpose such as ``BUILD_REFERENCE=1``. The historical
+``EXTERNAL_ROM_FPATH`` spelling remains supported with its original behavior.
+
 Legacy ``TARGET=pc``, ``TARGET=rom``, and ``TARGET=<variant>`` spellings are
 still accepted with a warning.
 

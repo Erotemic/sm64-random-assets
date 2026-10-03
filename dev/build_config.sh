@@ -168,6 +168,63 @@ sm64ra_resolve_build_config() {
     export PRESET VARIANT TARGET
 }
 
+sm64ra_resolve_asset_config() {
+    local asset_mode_was_explicit=0
+    local baserom_was_explicit=0
+    local old_rom new_rom
+
+    if [[ -n ${ASSET_MODE+x} && -n ${ASSET_MODE:-} ]]; then
+        asset_mode_was_explicit=1
+    fi
+    if [[ -n ${BASEROM_FPATH+x} && -n ${BASEROM_FPATH:-} ]]; then
+        baserom_was_explicit=1
+    fi
+
+    # EXTERNAL_ROM_FPATH is the historical spelling used by build.sh. Keep it
+    # working with its old semantics. BASEROM_FPATH is the clearer spelling for
+    # explicitly selecting baserom assets.
+    EXTERNAL_ROM_FPATH=${EXTERNAL_ROM_FPATH:-}
+    BASEROM_FPATH=${BASEROM_FPATH:-}
+
+    if [[ -n $EXTERNAL_ROM_FPATH && -n $BASEROM_FPATH ]]; then
+        old_rom=$(readlink -m "$EXTERNAL_ROM_FPATH")
+        new_rom=$(readlink -m "$BASEROM_FPATH")
+        if [[ $old_rom != "$new_rom" ]]; then
+            sm64ra_die "BASEROM_FPATH and EXTERNAL_ROM_FPATH name different files"
+            return 1
+        fi
+    elif [[ -n $EXTERNAL_ROM_FPATH ]]; then
+        BASEROM_FPATH=$EXTERNAL_ROM_FPATH
+    elif [[ -n $BASEROM_FPATH ]]; then
+        # Reference builds historically consume EXTERNAL_ROM_FPATH. Mirroring
+        # the new spelling into it preserves that path without changing the old
+        # EXTERNAL_ROM_FPATH default behavior below.
+        EXTERNAL_ROM_FPATH=$BASEROM_FPATH
+    fi
+
+    if [[ $asset_mode_was_explicit == 0 ]]; then
+        if [[ $baserom_was_explicit == 1 ]]; then
+            ASSET_MODE=baserom
+        else
+            ASSET_MODE=generate
+        fi
+    fi
+
+    case "$ASSET_MODE" in
+        generate|reuse|baserom) ;;
+        existing|skip)
+            sm64ra_warn "ASSET_MODE=$ASSET_MODE is an alias; use ASSET_MODE=reuse"
+            ASSET_MODE=reuse
+            ;;
+        *)
+            sm64ra_die "Unknown ASSET_MODE=$ASSET_MODE. Expected generate, reuse, or baserom."
+            return 1
+            ;;
+    esac
+
+    export ASSET_MODE BASEROM_FPATH EXTERNAL_ROM_FPATH
+}
+
 sm64ra_is_container_target() {
     case "$1" in
         steamrt3-x86_64|steamrt3-aarch64) return 0 ;;
