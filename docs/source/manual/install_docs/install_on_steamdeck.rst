@@ -1,63 +1,39 @@
-SteamDeck Instructions
-----------------------
+Steam Deck Instructions
+-----------------------
 
-These instructions outlines the steps to compile a SM64 PCPort on a steam deck
-(or more generally arch linux).
+Steam Deck is represented as a build preset. The preset selects the x86_64
+Steam Linux Runtime 3 target while ``VARIANT`` selects the SM64 implementation.
+This keeps device names out of the low-level compiler configuration.
 
-Install Prereq
-==============
+Build Off-Device
+================
 
-These instructions are written to use system packages, which may not be the
-best idea.  It requires us to disable readonly mode, which may not be safe,
-then we can install system packages.
-
-NOTE: THIS DOES NOT WORK YET. For something that does:
-See ./dockerfiles/steamdeck_sm64_referenced_assets.Dockerfile
+From a Linux development machine with Docker and Docker Buildx installed:
 
 .. code:: bash
 
-    sudo steamos-readonly disable
+    PRESET=steamdeck ./build.sh
 
-    sudo pacman-key --init
-    sudo pacman-key --populate archlinux
-    sudo pacman-key --populate holo
-
-    sudo pacman -Sy base-devel
-    sudo pacman -Sy gcc
-    sudo pacman -Sy python
-    sudo pacman -Sy python-pip
-    sudo pacman -Sy sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
-    sudo pacman -Sy glibc linux-api-headers
-
-    # Ref: https://gist.github.com/tomshen/c7ae6f99429316eab4097f657cfb2185
-    sudo pacman -S sdl2 glew glibc linux-api-headers libusb libglvnd
-    sudo pacman -Rs sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
-
-    # https://github.com/MorsGames/sm64plus/wiki/Manual-Building-Guide
-    #sudo pacman -S git make python3 #mingw-w64-x86_64-gcc mingw-w64-x86_64-SDL2 mingw-w64-x86_64-glew
-    sudo pacman -S base-devel python sdl2 glew
-
-    # Setup a venv
-    python -m venv $HOME/.venv/py311
-
-    source $HOME/.venv/py311/bin/activate
-
-    python -m pip install kwimage opencv-python-headless ubelt numpy ruamel.yaml PyYAML kwconf rich parse matplotlib
-
-
-Setup the Repo
-==============
+The default variant is ``sm64-port``. Another native variant can be selected
+independently:
 
 .. code:: bash
 
-    CODE_DPATH=$HOME/code
-    mkdir -p "$CODE_DPATH"
-    git clone https://github.com/Erotemic/sm64-random-assets.git $CODE_DPATH/sm64-random-assets
-    cd "$CODE_DPATH"/sm64-random-assets
+    PRESET=steamdeck VARIANT=sm64ex ./build.sh
 
-    cd "$CODE_DPATH"/sm64-random-assets
-    git submodule update --init tpl/sm64-port
+The low-level target selected by the preset is:
 
-    # Move into the PC port directory and build
-    cd $CODE_DPATH/sm64-random-assets
-    ./build.sh
+.. code:: bash
+
+    TARGET=steamrt3-x86_64
+
+The old SteamOS-specific Docker recipes remain in ``dockerfiles/`` for
+historical reference, but the preset-driven Steam Runtime build is the
+preferred path.
+
+Deploy
+======
+
+Copy the resulting build to the Steam Deck as before. For example, if the Deck
+is reachable as ``steamdeck`` over SSH, ``rsync`` can be used to copy the build
+output into a game directory under the user's home directory.

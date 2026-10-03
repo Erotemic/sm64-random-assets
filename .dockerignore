@@ -1,0 +1,7 @@
+.git
+tpl
+build
+__pycache__
+.pytest_cache
+*.z64
+*.tar.gz

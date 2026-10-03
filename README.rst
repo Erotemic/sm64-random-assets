@@ -168,15 +168,32 @@ initializing submodules, generating assets, compiling the binaries, and even
 running them with the PC port, in an emulator, or copying ROMs to an EverDrive.
 Environment variables can be used to control the build.sh behavior.
 
-The following are several common examples:
+The build configuration separates the SM64 codebase (``VARIANT``), the
+execution/runtime target (``TARGET``), and convenient named configurations
+(``PRESET``). The following are several common examples:
 
 .. code::
 
-   # Build and run the PC port
-   TEST_LOCALLY=1 TARGET=pc ./build.sh
+   # Build and run sm64-port for this machine
+   TEST_LOCALLY=1 VARIANT=sm64-port TARGET=host ./build.sh
 
    # Build and run the ROM in an emulator (m64py)
-   TEST_LOCALLY=1 TARGET=rom EMULATOR=m64py ./build.sh
+   TEST_LOCALLY=1 PRESET=n64 EMULATOR=m64py ./build.sh
+
+   # Build an x86_64 Steam Runtime binary for Steam Deck
+   PRESET=steamdeck ./build.sh
+
+   # One-time setup when building ARM64 on an x86_64 Docker host
+   ./dev/setup_docker_binfmt.sh arm64
+
+   # Build an ARM64 Steam Runtime binary for Steam Frame
+   PRESET=steamframe ./build.sh
+
+   # Presets and variants are independent
+   PRESET=steamframe VARIANT=sm64ex ./build.sh
+
+Legacy ``TARGET=pc``, ``TARGET=rom``, and ``TARGET=<variant>`` spellings are
+still accepted with a warning.
 
 
 Specialized Install Documentation
@@ -186,7 +203,8 @@ See specialized install docs for:
 
 * `Windows <docs/source/manual/install_docs/install-on-windows.rst>`_
 * `Replit <docs/source/manual/install_docs/install_on_replit.rst>`_
-* `SteamDeck <docs/source/manual/install_docs/install_on_steamdeck.rst>`_
+* `Steam Deck <docs/source/manual/install_docs/install_on_steamdeck.rst>`_
+* `Steam Frame <docs/source/manual/install_docs/install_on_steamframe.rst>`_
 
 
 Resources

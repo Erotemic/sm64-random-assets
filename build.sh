@@ -1,328 +1,248 @@
-#!/bin/bash
-__doc__="
-Generate randomized assets and build the ROM.
+#!/usr/bin/env bash
+set -eo pipefail
 
+__doc__='Generate randomized assets and build an SM64 variant.
 
-To build an end-to-end randomized executable:
+The build model has three independent concepts:
 
-.. code:: bash
+    VARIANT  Which SM64 codebase to build.
+    TARGET   Which execution/runtime target to build for.
+    PRESET   A human-friendly configuration shortcut.
 
+Examples:
+
+    # Default: sm64-port for the current host
     ./build.sh
 
+    # Native ARM64 Steam Runtime build for Steam Frame, built off-device
+    PRESET=steamframe ./build.sh
 
-To build a PC port with original assets
-(requires personal copy of the original ROM):
+    # Same target, different codebase
+    PRESET=steamframe VARIANT=sm64ex ./build.sh
 
-.. code:: bash
+    # Native x86_64 Steam Runtime build for Steam Deck
+    PRESET=steamdeck ./build.sh
 
-    # Replace this with some method to ensure a reference baserom exists if you
-    # manually place the baserom in the cwd with this path then you can remove
-    # this line.
-    ./dev/grab_reference_baserom.sh ./baserom.us.z64
+    # N64 ROM
+    PRESET=n64 ./build.sh
 
-    export EXTERNAL_ROM_FPATH=baserom.us.z64
-    export TARGET=pc
-    export BUILD_REFERENCE=1
-    export COMPARE=1
-    export NUM_CPUS=all
-    export ASSET_CONFIG='
-        png: generate
-        aiff: generate
-        m64: generate
-        bin: generate
-    '
-    ./build.sh
-
-"
-
-echo '
-____ _  _  _   _ _    ____ ____ _  _ ___  ____ _  _    ____ ____ ____ ____ ___ ____
-[__  |\/|  |_  |_|    |__/ |__| |\ | |  \ |  | |\/|    |__| [__  [__  |___  |  [__
-___] |  |  |_|   |    |  \ |  | | \| |__/ |__| |  |    |  | ___] ___] |___  |  ___]
-
+Legacy TARGET=pc / TARGET=rom / TARGET=<variant> spellings remain accepted.
 '
 
-if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
-    # Use bash magic to get the path to this file if running as a script
-    THIS_DPATH=$(python3 -c "import pathlib; print(pathlib.Path('${BASH_SOURCE[0]}').parent.absolute())")
-	set -eo pipefail
-else
-    # Assume CWD
-    THIS_DPATH=$(python3 -c "import pathlib; print(pathlib.Path('.').parent.absolute())")
-fi
+THIS_DPATH=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=dev/build_config.sh
+source "$THIS_DPATH/dev/build_config.sh"
+sm64ra_resolve_build_config
 
-NUM_CPUS=${NUM_CPUS:=}
-BUILD=${BUILD:=1}
+NUM_CPUS=${NUM_CPUS:-all}
+BUILD=${BUILD:-1}
+BUILD_REFERENCE=${BUILD_REFERENCE:-0}
+EXTERNAL_ROM_FPATH=${EXTERNAL_ROM_FPATH:-}
+TEST_LOCALLY=${TEST_LOCALLY:-0}
+COMPARE=${COMPARE:-0}
+TARGET_QUALITY=${TARGET_QUALITY:-1}
+INCLUDE_AUTHORS=${INCLUDE_AUTHORS:-*}
+EXCLUDE_AUTHORS=${EXCLUDE_AUTHORS:-}
+SM64RA_TARGET_CONTAINER=${SM64RA_TARGET_CONTAINER:-0}
 
-BUILD_REFERENCE=${BUILD_REFERENCE:=0}
-
-EXTERNAL_ROM_FPATH=${EXTERNAL_ROM_FPATH:=""}
-
-# TARGET can be rom or pc
-#TARGET=${TARGET:="rom"}
-TARGET=${TARGET:="sm64-port"}
-
-TEST_LOCALLY=${TEST_LOCALLY:=0}
-
-COMPARE=${COMPARE:=0}
-TARGET_QUALITY=${TARGET_QUALITY:=1}
-INCLUDE_AUTHORS=${INCLUDE_AUTHORS:='*'}
-EXCLUDE_AUTHORS=${EXCLUDE_AUTHORS:=''}
-
-# Default to an existing emulator if possible
-if command -v mupen64plus &>/dev/null; then
-    # requires: sudo apt install mupen64plus-qt
-    EMULATOR=${EMULATOR:=mupen64plus}
-else
-    EMULATOR=${EMULATOR:=m64py}
-fi
-
-EVERDRIVE_DPATH=${EVERDRIVE_DPATH:=/media/$USER/9DC3-BFF3}
-
-if [[ "$NUM_CPUS" == "all" ]]; then
+if [[ $NUM_CPUS == all ]]; then
     NUM_CPUS=$(nproc --all)
 fi
 
+if sm64ra_is_container_target "$TARGET" && [[ $BUILD == 1 && $SM64RA_TARGET_CONTAINER != 1 ]]; then
+    exec "$THIS_DPATH/dev/build_steamrt_target.sh"
+fi
 
-# This config is passed to sm64_random_assets/main.py
-# and controls how assets will be generated
-DEFAULT_ASSET_CONFIG="
+if sm64ra_is_container_target "$TARGET" && [[ $SM64RA_TARGET_CONTAINER == 1 ]]; then
+    EXPECTED_ARCH=$(sm64ra_target_arch "$TARGET")
+    HOST_ARCH=$(sm64ra_host_arch)
+    if [[ $EXPECTED_ARCH != "$HOST_ARCH" ]]; then
+        echo "ERROR: $TARGET requires $EXPECTED_ARCH, but the build container reports $HOST_ARCH" >&2
+        exit 2
+    fi
+fi
+
+if command -v mupen64plus >/dev/null 2>&1; then
+    EMULATOR=${EMULATOR:-mupen64plus}
+else
+    EMULATOR=${EMULATOR:-m64py}
+fi
+EVERDRIVE_DPATH=${EVERDRIVE_DPATH:-/media/$USER/9DC3-BFF3}
+
+DEFAULT_ASSET_CONFIG='
     png: generate
     aiff: generate
     m64: generate
     bin: generate
+'
+ASSET_CONFIG=${ASSET_CONFIG:-$DEFAULT_ASSET_CONFIG}
 
-    #aiff: reference
-    #m64: reference
-    #bin: reference
+SM64_REPO_REL_DPATH=$(sm64ra_variant_repo_relpath "$VARIANT")
+SM64_REPO_DPATH="$THIS_DPATH/$SM64_REPO_REL_DPATH"
+BINARY_REL_FPATH=$(sm64ra_variant_binary_relpath "$VARIANT")
+BINARY_TYPE=$(sm64ra_variant_binary_type "$VARIANT")
+BINARY_FPATH="$SM64_REPO_DPATH/$BINARY_REL_FPATH"
+REFERENCE_DPATH="${SM64_REPO_DPATH}-ref"
+REFERENCE_BASEROM_FPATH="$REFERENCE_DPATH/baserom.us.z64"
+REFERENCE_BINARY_FPATH="$REFERENCE_DPATH/$BINARY_REL_FPATH"
 
-    #never_generate:
-    #  - '*bowser_flame*png'
-    #  #- '*bowser*png'
-"
-ASSET_CONFIG=${ASSET_CONFIG:=$DEFAULT_ASSET_CONFIG}
+if [[ $TARGET == n64 ]]; then
+    EXECUTE_INVOCATION="$EMULATOR $BINARY_FPATH"
+else
+    EXECUTE_INVOCATION="$BINARY_FPATH"
+fi
 
-python3 -c "if 1:
-    import ubelt as ub
+cat <<EOF_CONFIG
 
-    print(ub.color_text(ub.codeblock('''
-    CONFIGURATION
-    =============
-    '''), 'green'))
+CONFIGURATION
+=============
+THIS_DPATH=$THIS_DPATH
+PRESET=${PRESET:-<none>}
+VARIANT=$VARIANT
+TARGET=$TARGET
+NUM_CPUS=${NUM_CPUS:-<make default>}
+BUILD=$BUILD
+BUILD_REFERENCE=$BUILD_REFERENCE
+EXTERNAL_ROM_FPATH=$EXTERNAL_ROM_FPATH
+COMPARE=$COMPARE
+TARGET_QUALITY=$TARGET_QUALITY
+TEST_LOCALLY=$TEST_LOCALLY
+SM64_REPO_DPATH=$SM64_REPO_DPATH
+BINARY_FPATH=$BINARY_FPATH
+EOF_CONFIG
 
-    print(ub.highlight_code(ub.codeblock('''
+if [[ ! -d $SM64_REPO_DPATH ]] || [[ -z $(find "$SM64_REPO_DPATH" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null) ]]; then
+    echo "Initialize SM64 variant submodule: $SM64_REPO_REL_DPATH"
+    git -C "$THIS_DPATH" submodule update --init "$SM64_REPO_REL_DPATH"
+else
+    echo "SM64 variant already present: $SM64_REPO_REL_DPATH"
+fi
 
-    THIS_DPATH=$THIS_DPATH
-    NUM_CPUS=$NUM_CPUS
-
-    TARGET=$TARGET
-
-    BUILD=$BUILD
-
-    TEST_LOCALLY=$TEST_LOCALLY
-
-    BUILD_REFERENCE=$BUILD_REFERENCE
-    EXTERNAL_ROM_FPATH=$EXTERNAL_ROM_FPATH
-    COMPARE=$COMPARE
-    ASSET_CONFIG=\"$ASSET_CONFIG
-    \"
-
-    '''), lexer_name='bash'))
-
-    if '$TARGET' == 'rom':
-        print(ub.highlight_code(ub.codeblock('''
-
-        EVERDRIVE_DPATH=$EVERDRIVE_DPATH
-        EMULATOR=$EMULATOR
-
-        '''), lexer_name='bash'))
-"
-
-# ROM-only dependencies
-#sudo apt install -y binutils-mips-linux-gnu build-essential git libcapstone-dev pkgconf python3
-
-
-if [[ "$EXTERNAL_ROM_FPATH" != "" ]]; then
-    echo "User specified an external ROM with original assets"
-    echo "Checking external ROM hash"
-    echo "$EXTERNAL_ROM_FPATH"
-    echo "17ce077343c6133f8c9f2d6d6d9a4ab62c8cd2aa57c40aea1f490b4c8bb21d91 $EXTERNAL_ROM_FPATH" | sha256sum --check --status
-    _RESULT=$?
-    if [[ "$_RESULT" == "0" ]]; then
-        echo "Externally specified ROM has the expected hash"
+if [[ -n $EXTERNAL_ROM_FPATH ]]; then
+    echo "Checking external ROM hash: $EXTERNAL_ROM_FPATH"
+    EXPECTED_ROM_SHA256=17ce077343c6133f8c9f2d6d6d9a4ab62c8cd2aa57c40aea1f490b4c8bb21d91
+    if echo "$EXPECTED_ROM_SHA256 $EXTERNAL_ROM_FPATH" | sha256sum --check --status; then
+        echo "External ROM has the expected hash"
     else
-        echo "WARNING: Externally specified ROM has an UNEXPECTED hash!"
+        echo "WARNING: external ROM has an unexpected hash" >&2
         sha256sum "$EXTERNAL_ROM_FPATH"
     fi
 fi
 
-
-if [[ "$TARGET" == "rom" || "$TARGET" == "sm64" ]]; then
-    SM64_REPO_DPATH="$THIS_DPATH"/tpl/sm64
-    BINARY_TYPE="ROM"
-    BINARY_FPATH="$SM64_REPO_DPATH"/build/us/sm64.us.z64
-    REFERENCE_BINARY_FPATH="$REFERENCE_DPATH"/build/us/sm64.us.z64
-    EXECUTE_INVOCATION="$EMULATOR $BINARY_FPATH"
-elif [[ "$TARGET" == "pc" || "$TARGET" == "sm64-port" ]]; then
-    SM64_REPO_DPATH="$THIS_DPATH"/tpl/sm64-port
-    BINARY_TYPE="executable"
-    BINARY_FPATH="$SM64_REPO_DPATH"/build/us_pc/sm64.us
-    REFERENCE_BINARY_FPATH="$REFERENCE_DPATH"/build/us_pc/sm64.us
-    EXECUTE_INVOCATION="$BINARY_FPATH"
-elif [[ "$TARGET" == "sm64ex" ]]; then
-    SM64_REPO_DPATH="$THIS_DPATH"/tpl/sm64ex
-    BINARY_TYPE="executable"
-    BINARY_FPATH="$SM64_REPO_DPATH"/build/us_pcsm64.us.f3dex2e
-    REFERENCE_BINARY_FPATH="$REFERENCE_DPATH"/build/us_pc/sm64.us.f3dex2e
-    EXECUTE_INVOCATION="$BINARY_FPATH"
-elif [[ "$TARGET" == "Render96ex" ]]; then
-    SM64_REPO_DPATH="$THIS_DPATH"/tpl/Render96ex
-    BINARY_TYPE="executable"
-    BINARY_FPATH="$SM64_REPO_DPATH"/build/us_pc/sm64.us.f3dex2e
-    REFERENCE_BINARY_FPATH="$REFERENCE_DPATH"/build/us_pc/sm64.us.f3dex2e
-    EXECUTE_INVOCATION="$BINARY_FPATH"
-elif [[ "$TARGET" == "SM64CoopDX" ]]; then
-    SM64_REPO_DPATH="$THIS_DPATH"/tpl/sm64coopdx
-    BINARY_TYPE="executable"
-    BINARY_FPATH="$SM64_REPO_DPATH"/build/us_pc/sm64.us
-    REFERENCE_BINARY_FPATH="$REFERENCE_DPATH"/build/us_pc/sm64.us
-    EXECUTE_INVOCATION="$BINARY_FPATH"
+make_parallel_args=()
+if [[ -n $NUM_CPUS ]]; then
+    make_parallel_args+=("-j$NUM_CPUS")
 fi
 
-# Initialize the specific sm64 submodule variant you want to build against
-echo "Ensure the sm64 variant ($TARGET) submodule exists"
-git submodule update --init "$SM64_REPO_DPATH"
+if [[ $BUILD_REFERENCE == 1 ]]; then
+    echo
+    echo "Build reference"
+    echo "==============="
 
-REFERENCE_DPATH="${SM64_REPO_DPATH}-ref"
-REFERENCE_BASEROM_FPATH="$REFERENCE_DPATH/baserom.us.z64"
-echo "REFERENCE_BASEROM_FPATH = $REFERENCE_BASEROM_FPATH"
-
-if [[ "$BUILD_REFERENCE" == "1" ]]; then
-
-    echo "Handle building the reference"
-
-    if ! test -d "$REFERENCE_DPATH" ; then
-        echo "Need to clone the reference repo"
-        git clone "$SM64_REPO_DPATH"/.git "$REFERENCE_DPATH"
-    else
-        echo "Reference repo is already cloned"
+    if [[ ! -d $REFERENCE_DPATH ]]; then
+        git clone "$SM64_REPO_DPATH" "$REFERENCE_DPATH"
     fi
 
-    if ! test -f "$REFERENCE_BASEROM_FPATH" ; then
-        echo "Reference repo does not have the baserom, need to copy it"
-        # Dont do this unless we have a proper copy, which we cannot provide here.
-        # The correct us baserom should have a sha256sum of
-        # 17ce077343c6133f8c9f2d6d6d9a4ab62c8cd2aa57c40aea1f490b4c8bb21d91
-
-        if [[ "$EXTERNAL_ROM_FPATH" != "" ]]; then
-            # Externally supplied path to personal copy of the ROM
-            echo "Copying personal copy of the ROM to the reference path"
+    if [[ ! -f $REFERENCE_BASEROM_FPATH ]]; then
+        if [[ -n $EXTERNAL_ROM_FPATH ]]; then
             cp "$EXTERNAL_ROM_FPATH" "$REFERENCE_BASEROM_FPATH"
         else
-            echo "ERROR: Specify EXTERNAL_ROM_FPATH"
+            echo "ERROR: BUILD_REFERENCE=1 requires EXTERNAL_ROM_FPATH" >&2
+            exit 2
         fi
-    else
-        echo "Reference repo already had a baserom"
     fi
 
-    if ! test -f "$REFERENCE_BINARY_FPATH" ; then
-
-        if test -f "$REFERENCE_BASEROM_FPATH" ; then
-            echo "Building the reference binary"
-            (cd "$REFERENCE_DPATH" && make "-j$NUM_CPUS")
-        else
-            echo "Reference ROM does not exist, cannot make reference build"
-            exit 1
-        fi
+    if [[ ! -f $REFERENCE_BINARY_FPATH ]]; then
+        (
+            cd "$REFERENCE_DPATH"
+            make "${make_parallel_args[@]}"
+        )
     fi
 fi
 
-if ! test -d "$REFERENCE_DPATH" ; then
-    REFERENCE_DPATH=None
+REFERENCE_ARG=$REFERENCE_DPATH
+if [[ ! -d $REFERENCE_DPATH ]]; then
+    REFERENCE_ARG=None
 fi
 
-
-# Run the asset generator
-python3 -c "if 1:
-    import ubelt as ub
-    print(ub.color_text(ub.codeblock('''
-
-    Run Asset Generator
-    ===================
-    '''), 'green'))
-"
-
+echo
+echo "Run asset generator"
+echo "==================="
 python3 -m sm64_random_assets generate \
     --dst "$SM64_REPO_DPATH" \
-    --reference "$REFERENCE_DPATH" \
-    --hybrid_mode="0" \
+    --reference "$REFERENCE_ARG" \
+    --hybrid_mode=0 \
     --compare="$COMPARE" \
     --target_quality="$TARGET_QUALITY" \
     --include_authors "$INCLUDE_AUTHORS" \
     --exclude_authors "$EXCLUDE_AUTHORS" \
     --asset_config "$ASSET_CONFIG"
 
+if [[ $BUILD == 1 ]]; then
+    echo
+    echo "Compile"
+    echo "======="
+    (
+        cd "$SM64_REPO_DPATH"
+        make clean
+        NOEXTRACT=1 COMPARE=0 NON_MATCHING=0 VERSION=us make "${make_parallel_args[@]}"
+    )
 
-# Compile
-if [[ "$BUILD" == "1" ]]; then
-    python3 -c "if 1:
-        import ubelt as ub
-        print(ub.color_text(ub.codeblock('''
+    if [[ ! -e $BINARY_FPATH ]]; then
+        echo "ERROR: build completed but expected output is missing: $BINARY_FPATH" >&2
+        exit 2
+    fi
 
-        Compile the ROM
-        ===============
-        '''), 'green'))
-    "
-    # Move into the ROM-only sm64 directory
-    # FIXME: Annoying that we need a "make clean" here otherwise the sm64 build
-    # wont realize the assets have changed. There might be a faster way to make
-    # the makefiles aware of this without needing to start from scratch each
-    # time.
-    ( cd "$SM64_REPO_DPATH" && make clean && NOEXTRACT=1 COMPARE=0 NON_MATCHING=0 VERSION=us make -j"$NUM_CPUS" )
-    #( cd "$SM64_REPO_DPATH" && NOEXTRACT=1 COMPARE=0 NON_MATCHING=0 VERSION=us make -j"$NUM_CPUS" )
+    if sm64ra_is_container_target "$TARGET"; then
+        BINARY_DESCRIPTION=$(file -b "$BINARY_FPATH")
+        case "$TARGET" in
+            steamrt3-aarch64)
+                if [[ $BINARY_DESCRIPTION != *"ARM aarch64"* && $BINARY_DESCRIPTION != *"ARM64"* ]]; then
+                    echo "ERROR: expected an ARM64 executable, got: $BINARY_DESCRIPTION" >&2
+                    exit 2
+                fi
+                ;;
+            steamrt3-x86_64)
+                if [[ $BINARY_DESCRIPTION != *"x86-64"* && $BINARY_DESCRIPTION != *"x86_64"* ]]; then
+                    echo "ERROR: expected an x86_64 executable, got: $BINARY_DESCRIPTION" >&2
+                    exit 2
+                fi
+                ;;
+        esac
+        echo "Verified target executable: $BINARY_DESCRIPTION"
+    fi
 fi
 
-# Run the asset generator
-python3 -c "if 1:
-    import ubelt as ub
-    print(ub.color_text(ub.codeblock('''
+echo
+echo "Finalize"
+echo "========"
+echo "BINARY_TYPE=$BINARY_TYPE"
+echo "BINARY_FPATH=$BINARY_FPATH"
 
-    Finalize
-    ========
-    '''), 'green'))
-    print(ub.highlight_code(ub.codeblock('''
-
-    BINARY_TYPE=$BINARY_TYPE
-    BINARY_FPATH=$BINARY_FPATH
-
-    TEST_LOCALLY=$TEST_LOCALLY
-    '''), lexer_name='bash'))
-
-    if '$TARGET' == 'rom':
-        print(ub.highlight_code(ub.codeblock('''
-
-        EVERDRIVE_DPATH=$EVERDRIVE_DPATH
-        EMULATOR=$EMULATOR
-
-        '''), lexer_name='bash'))
-
-"
-
-if [[ "$TARGET" == "rom" ]]; then
-    if test -d "$EVERDRIVE_DPATH" ; then
+if [[ $TARGET == n64 && $BUILD == 1 ]]; then
+    if [[ -d $EVERDRIVE_DPATH ]]; then
         echo "Copying ROM to EverDrive directory"
-        cp "$BINARY_FPATH" "$EVERDRIVE_DPATH"/Custom/sm64.us.z64
-        echo "EVERDRIVE_DPATH = $EVERDRIVE_DPATH"
-        ls -al "$EVERDRIVE_DPATH"/Custom/
+        cp "$BINARY_FPATH" "$EVERDRIVE_DPATH/Custom/sm64.us.z64"
     else
         echo "No EverDrive detected."
     fi
 fi
 
-echo "To execute locally use: "
-echo "$EXECUTE_INVOCATION"
+if [[ $TARGET == host || $TARGET == n64 ]]; then
+    echo "To execute locally: $EXECUTE_INVOCATION"
+else
+    echo "Built for $TARGET; deploy the artifact to the target runtime before executing it."
+fi
 
-if [[ "$TEST_LOCALLY" == "1" ]]; then
+if [[ $TEST_LOCALLY == 1 ]]; then
+    if [[ $TARGET != host && $TARGET != n64 ]]; then
+        echo "ERROR: TEST_LOCALLY=1 is only valid for TARGET=host or TARGET=n64" >&2
+        exit 2
+    fi
     echo "Testing locally"
-    $EXECUTE_INVOCATION
+    if [[ $TARGET == n64 ]]; then
+        "$EMULATOR" "$BINARY_FPATH"
+    else
+        "$BINARY_FPATH"
+    fi
 fi
