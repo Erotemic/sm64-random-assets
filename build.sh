@@ -44,6 +44,7 @@ TARGET_QUALITY=${TARGET_QUALITY:-1}
 INCLUDE_AUTHORS=${INCLUDE_AUTHORS:-*}
 EXCLUDE_AUTHORS=${EXCLUDE_AUTHORS:-}
 SM64RA_TARGET_CONTAINER=${SM64RA_TARGET_CONTAINER:-0}
+SM64RA_PYTHON=${SM64RA_PYTHON:-python3}
 
 if [[ $NUM_CPUS == all ]]; then
     NUM_CPUS=$(nproc --all)
@@ -109,6 +110,7 @@ TARGET_QUALITY=$TARGET_QUALITY
 TEST_LOCALLY=$TEST_LOCALLY
 SM64_REPO_DPATH=$SM64_REPO_DPATH
 BINARY_FPATH=$BINARY_FPATH
+SM64RA_PYTHON=$SM64RA_PYTHON
 EOF_CONFIG
 
 if [[ ! -d $SM64_REPO_DPATH ]] || [[ -z $(find "$SM64_REPO_DPATH" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null) ]]; then
@@ -155,7 +157,7 @@ if [[ $BUILD_REFERENCE == 1 ]]; then
     if [[ ! -f $REFERENCE_BINARY_FPATH ]]; then
         (
             cd "$REFERENCE_DPATH"
-            make "${make_parallel_args[@]}"
+            make "${make_parallel_args[@]}" PYTHON="$SM64RA_PYTHON"
         )
     fi
 fi
@@ -168,7 +170,7 @@ fi
 echo
 echo "Run asset generator"
 echo "==================="
-python3 -m sm64_random_assets generate \
+"$SM64RA_PYTHON" -m sm64_random_assets generate \
     --dst "$SM64_REPO_DPATH" \
     --reference "$REFERENCE_ARG" \
     --hybrid_mode=0 \
@@ -185,7 +187,7 @@ if [[ $BUILD == 1 ]]; then
     (
         cd "$SM64_REPO_DPATH"
         make clean
-        NOEXTRACT=1 COMPARE=0 NON_MATCHING=0 VERSION=us make "${make_parallel_args[@]}"
+        NOEXTRACT=1 COMPARE=0 NON_MATCHING=0 VERSION=us make "${make_parallel_args[@]}" PYTHON="$SM64RA_PYTHON"
     )
 
     if [[ ! -e $BINARY_FPATH ]]; then

@@ -64,6 +64,8 @@ EOF
 fi
 
 IMAGE_TAG="sm64ra-${TARGET}:local"
+DEBIAN_SECURITY_SNAPSHOT=${STEAMRT_DEBIAN_SECURITY_SNAPSHOT:-20260903T220410Z}
+STEAMRT_PYTHON_VERSION=${STEAMRT_PYTHON_VERSION:-3.12}
 
 echo "Build target environment"
 echo "========================"
@@ -72,12 +74,16 @@ echo "VARIANT=$VARIANT"
 echo "TARGET=$TARGET"
 echo "DOCKER_PLATFORM=$DOCKER_PLATFORM"
 echo "STEAMRT_SDK_IMAGE=$STEAMRT_SDK_IMAGE"
+echo "DEBIAN_SECURITY_SNAPSHOT=$DEBIAN_SECURITY_SNAPSHOT"
+echo "STEAMRT_PYTHON_VERSION=$STEAMRT_PYTHON_VERSION"
 echo
 
 docker buildx build \
     --platform "$DOCKER_PLATFORM" \
     --load \
     --build-arg "STEAMRT_SDK_IMAGE=$STEAMRT_SDK_IMAGE" \
+    --build-arg "DEBIAN_SECURITY_SNAPSHOT=$DEBIAN_SECURITY_SNAPSHOT" \
+    --build-arg "PYTHON_VERSION=$STEAMRT_PYTHON_VERSION" \
     --tag "$IMAGE_TAG" \
     --file "$THIS_DPATH/dockerfiles/steamrt_sm64_random_assets.Dockerfile" \
     "$THIS_DPATH"
@@ -127,4 +133,4 @@ if [[ ${TEST_LOCALLY:-0} == 1 ]]; then
 fi
 
 docker "${DOCKER_ARGS[@]}" "$IMAGE_TAG" \
-    bash -lc 'mkdir -p "$HOME" "$XDG_CACHE_HOME" "$MPLCONFIGDIR"; git config --global --add safe.directory /work; exec ./build.sh'
+    bash -c 'mkdir -p "$HOME" "$XDG_CACHE_HOME" "$MPLCONFIGDIR"; git config --global --add safe.directory /work; exec ./build.sh'
