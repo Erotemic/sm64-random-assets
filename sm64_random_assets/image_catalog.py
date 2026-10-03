@@ -3,6 +3,25 @@ from __future__ import annotations
 from sm64_random_assets.realizations import AssetIdentity
 
 
+_CASTLE_INSIDE_MATERIAL_MEMBERS = {
+    'levels/castle_inside/1.rgba16.png': 'wall_blocks',
+    'levels/castle_inside/2.ia16.png': 'iron_railing_mask',
+    'levels/castle_inside/3.rgba16.png': 'checker_marble_floor',
+    'levels/castle_inside/4.rgba16.png': 'red_carpet_runner',
+    'levels/castle_inside/7.rgba16.png': 'carpet_border',
+    'levels/castle_inside/8.rgba16.png': 'parquet_floor',
+    'levels/castle_inside/9.rgba16.png': 'wall_plaster_panel',
+    'levels/castle_inside/10.rgba16.png': 'stone_column',
+    'levels/castle_inside/11.rgba16.png': 'ceiling_panel',
+    'levels/castle_inside/12.rgba16.png': 'wood_wainscot',
+    'levels/castle_inside/13.rgba16.png': 'blue_diamond_wallpaper',
+    'levels/castle_inside/14.rgba16.png': 'star_medallion_tile',
+    'levels/castle_inside/15.rgba16.png': 'bronze_door_plate',
+    'levels/castle_inside/16.ia16.png': 'window_glow_mask',
+    'levels/castle_inside/castle_light.ia16.png': 'castle_light_glow',
+}
+
+
 def determine_asset_identity(info_or_fname, *, name_to_text_lut=None) -> AssetIdentity:
     """Incrementally classifies assets into semantic families."""
     if isinstance(info_or_fname, dict):
@@ -90,6 +109,10 @@ def determine_asset_identity(info_or_fname, *, name_to_text_lut=None) -> AssetId
         member = fname.rsplit('mario_eyes_', 1)[1].split('.', 1)[0]
         return AssetIdentity(fname=fname, family='actor.mario.eyes', member=member)
 
+    if fname in _CASTLE_INSIDE_MATERIAL_MEMBERS:
+        return AssetIdentity(
+            fname=fname, family='castle.interior.material', member=_CASTLE_INSIDE_MATERIAL_MEMBERS[fname])
+
     if fname in {
         'levels/castle_inside/5.rgba16.png',
         'levels/castle_inside/6.rgba16.png',
@@ -109,7 +132,6 @@ def determine_asset_identity(info_or_fname, *, name_to_text_lut=None) -> AssetId
         return AssetIdentity(fname=fname, family='actor.goomba.face', member='blink')
     if 'goomba_face' in fname:
         return AssetIdentity(fname=fname, family='actor.goomba.face', member='open')
-
 
     differentiated_actor_families = {
         'amp', 'bobomb', 'bookend', 'bully', 'chain_chomp', 'chillychief',

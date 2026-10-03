@@ -10,3 +10,6 @@ sm64config.txt
 build
 dist
 sm64.us.z64
+*.tar.gz
+*.us.z64
+git-of-theseus/

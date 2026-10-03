@@ -21,6 +21,8 @@ from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import intro_
 from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import transparency_masks
 from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import menu_pointers
 from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import file_select_textures
+from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import castle_inside_textures
+from sm64_random_assets.image_realizations.openai_gpt_5_6_thinking import debug_texture_ids
 
 
 def _intro_texture_supports(identity, info):
@@ -70,6 +72,14 @@ def _bowser_peach_supports(identity, info):
 
 def _castle_portrait_supports(identity, info):
     return identity.fname in pil_textures._CASTLE_PORTRAIT_LAYOUTS
+
+
+def _castle_inside_texture_supports(identity, info):
+    return castle_inside_textures.supports_castle_inside_texture(identity, info)
+
+
+def _debug_texture_id_supports(identity, info):
+    return debug_texture_ids.supports_debug_texture_id(identity, info)
 
 
 _DEFAULT_IMAGE_REALIZATION_REGISTRY = None
@@ -168,6 +178,24 @@ def default_image_realization_registry():
             generator=intro_textures.render_intro_texture,
             supports=_intro_texture_supports,
             notes='Dedicated code-authored startup and title-screen textures: coherent title background strips, glossy intro-logo materials, animated stars and sparkles, Mario-face shine, and distinct open/closed glove cursors.',
+        ))
+        registry.register(AssetRealization(
+            id='openai.castle-inside-textures',
+            author='openai:gpt-5.6-thinking',
+            version=1,
+            estimated_quality=0.89,
+            generator=castle_inside_textures.render_castle_inside_texture,
+            supports=_castle_inside_texture_supports,
+            notes='Dedicated code-authored materials for the castle interior texture bank: cream wall blocks, checker marble, red carpet, parquet, paneling, wallpaper, bronze plates, iron masks, and light/glow textures so the main hall no longer falls back to ambiguous generic fillers.',
+        ))
+        registry.register(AssetRealization(
+            id='debug.texture-id',
+            author='debug:openai',
+            version=1,
+            estimated_quality=-1.0,
+            generator=debug_texture_ids.render_debug_texture_id,
+            supports=_debug_texture_id_supports,
+            notes='Opt-in debugging pass for otherwise unclear numeric/offset-style texture assets. Renders high-contrast labeled tiles with orientation markers so screenshots can be traced back to exact source filenames. Select it explicitly via author filtering, e.g. --include_authors=debug:* --target_quality=-1.',
         ))
         registry.register(AssetRealization(
             id='openai.bowser-peach-textures',

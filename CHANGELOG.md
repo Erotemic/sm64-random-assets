@@ -5,8 +5,8 @@ We aim to adhere to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
-* A dedicated `openai.file-select-textures` realization with sapphire backdrops, separate occupied/empty save plaques, and differentiated Score, Copy, Erase, Sound, and auxiliary action-button materials.
-* A dedicated `openai.menu-pointers` realization for transparent, high-contrast pointing and pressed glove cursors used by the main menu/file select and title screen.
+- added a dedicated `openai.castle-inside-textures` realization for the non-portrait `levels/castle_inside` material bank, covering cream wall blocks, checker marble, carpet, parquet, paneling, wallpaper, bronze plates, iron masks, and interior light/glow textures.
+- added an opt-in `debug.texture-id` realization under author `debug:openai` that stamps numeric / offset-style textures with high-contrast labels and orientation cues for screenshot-driven texture identification.
 * broadened the clean-room castle portrait generator to cover every castle portrait / portal texture, including Tiny-Huge Island's two standalone square paintings.
 * A clean-room `openai.simple-music` M64 realization with compact two-voice melodies and bass lines.
 * Target sound-bank inspection to choose suitable pitched instruments when available.
@@ -16,9 +16,9 @@ We aim to adhere to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 * A quality-based realization selector with author filtering.
 * An incremental semantic asset catalog with family/member identities.
 * Regression tests for realization selection and deterministic human realizations.
-* A dedicated `openai.transparency-masks` image realization for IA / alpha-mask textures such as fences, smoke, flames, shadows, foliage cutouts, and other assets where transparency quality is critical.
 
 ### Changed
+- grouped the castle interior material files under a shared `castle.interior.material` asset family so the registry can route them coherently without interfering with fake-out portraits or course-portrait paintings.
 * routed all supported castle portrait textures through the dedicated portrait realization and expanded tests to cover the full mapped portrait set.
 * `build.sh` now defaults `TARGET_QUALITY` to `1`, selecting semantic samples and simple music.
 * Binary generation now participates in author/version/quality realization selection.
@@ -26,7 +26,6 @@ We aim to adhere to [semantic versioning](https://semver.org/spec/v2.0.0.html).
 * Preserved the original image generators as frozen `human.random` and `human.semantic` realizations.
 * Reorganized image generation so the top-level generator is now a thin orchestrator.
 * Default `build.sh` target is now the playable `sm64-port`.
-* High-quality builds now route supported transparent IA / mask textures through a specialized generator instead of leaving them to generic color-texture logic.
 
 ## [Version 0.0.1] -
 
