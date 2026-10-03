@@ -105,7 +105,7 @@ class GenerateAssetsConfig(kwconf.Config):
         '''))
     target_quality = kwconf.Value(0.0, type=float, help='Select each asset realization nearest to this quality score.')
     include_authors = kwconf.Value(['*'], nargs='+', help='Author glob patterns to include when selecting image realizations.')
-    exclude_authors = kwconf.Value([], nargs='+', help='Author glob patterns to exclude when selecting image realizations.')
+    exclude_authors: list[str] = kwconf.Value([], nargs='+', help='Author glob patterns to exclude when selecting image realizations.')
 
     asset_config = kwconf.Value(None, help=ub.paragraph(
         '''

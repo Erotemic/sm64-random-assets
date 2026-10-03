@@ -274,8 +274,9 @@ def _render_sparkle(fname: str, shape):
     W, H = w * scale, h * scale
     img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img, 'RGBA')
-    frame = int(re.search(r'_(\d+)\.', fname).group(1))
-    envelope = [0.18, 0.45, 0.78, 1.0, 0.70, 0.32][frame]
+    m = re.search(r'_(\d+)\.', fname)
+    frame = int(m.group(1)) if m is not None else 0
+    envelope = [0.18, 0.45, 0.78, 1.0, 0.70, 0.32][frame % 6]
     cx, cy = W // 2, H // 2
     long_r = int(min(W, H) * 0.43 * envelope)
     short_r = max(scale, int(long_r * 0.28))
