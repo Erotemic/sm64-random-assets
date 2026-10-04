@@ -243,6 +243,14 @@ def test_explicit_baserom_path_implies_baserom_mode(tmp_path):
     assert path == str(rom)
 
 
+def test_build_script_resolves_asset_mode_after_baserom_input_initialization():
+    build_script = (REPO_DPATH / "build.sh").read_text()
+    baserom_init = build_script.index('BASEROM_FPATH=${BASEROM_FPATH:=""}')
+    resolve = build_script.index('sm64ra_resolve_asset_config')
+    generator = build_script.index('"$SM64RA_PYTHON" -m sm64_random_assets generate')
+    assert baserom_init < resolve < generator
+
+
 def test_baserom_path_cannot_fall_through_to_generator(tmp_path):
     rom = tmp_path / "baserom.us.z64"
     result = resolve_asset_config(BASEROM_FPATH=str(rom), ASSET_MODE="generate")
@@ -266,19 +274,26 @@ def test_conflicting_baserom_aliases_are_rejected(tmp_path):
     assert "different files" in result.stderr
 
 
-def test_build_script_has_explicit_asset_modes_and_target_tool_cleanup():
+def test_build_script_has_explicit_asset_modes_and_cache_preservation():
     build_script = (REPO_DPATH / "build.sh").read_text()
     assert 'if [[ "$ASSET_MODE" == "generate" ]]' in build_script
     assert '"$SM64RA_PYTHON" -m sm64_random_assets generate' in build_script
     assert "Skipping asset generation/extraction" in build_script
     assert "Skipping the random asset generator" in build_script
-    # A baserom build must remove any randomized assets already present before
-    # extracting originals. Upstream extract_assets intentionally preserves
-    # existing compatible files if this clean step is omitted.
-    assert '"$SM64RA_PYTHON" extract_assets.py --clean' in build_script
+    # An explicit baserom is guarded immediately next to the generator branch.
+    assert 'BASEROM_FPATH is set but ASSET_MODE=' in build_script
+    assert 'generator branch reached with BASEROM_FPATH set' in build_script
+    # Baseline assets live in their own persistent checkout: no destructive
+    # extract_assets --clean when switching provenance.
+    assert 'BASEROM_REPO_DPATH="${VARIANT_REPO_DPATH}-baserom"' in build_script
+    assert 'extract_assets.py --clean' not in build_script
     assert '"$SM64RA_PYTHON" extract_assets.py us' in build_script
+    assert '.assets-local.txt' in build_script
+    assert 'extract_assets.py --clean' not in build_script
+    # Native helper cleanup is conditional on an ISA mismatch.
     assert "Cleaning native SM64 helper tools for target environment" in build_script
     assert 'make -s -C "$tools_dpath" clean' in build_script
+    assert 'host_arch=$(sm64ra_host_arch)' in build_script
     assert 'NOEXTRACT=1' in build_script
     assert 'SM64RA_MAKE_ARGS' in build_script
 
@@ -307,10 +322,140 @@ def test_build_script_preserves_original_presentation_and_control_flow():
     assert 'echo "To execute locally use: "' in build_script
 
 
-def test_steamrt_helper_forwards_asset_mode_and_baserom():
+def test_steamrt_helper_forwards_asset_mode_and_baserom_fail_closed():
     helper = (REPO_DPATH / "dev" / "build_steamrt_target.sh").read_text()
     assert 'sm64ra_resolve_asset_config' in helper
     assert '--env "ASSET_MODE=$ASSET_MODE"' in helper
-    assert 'BASEROM_ABS=$(readlink -f "$BASEROM_FPATH")' in helper
-    assert '--env BASEROM_FPATH=/inputs/baserom.us.z64' in helper
+    assert 'BASEROM_ABS=$(realpath -e -- "$BASEROM_FPATH"' in helper
+    assert 'SM64RA_EXPECT_BASEROM=1' in helper
+    assert '--env "SM64RA_EXPECT_BASEROM=$SM64RA_EXPECT_BASEROM"' in helper
+    assert 'CONTAINER_BASEROM_FPATH="/work/$BASEROM_REL"' in helper
+    assert 'CONTAINER_BASEROM_FPATH=/inputs/baserom.us.z64' in helper
+    assert '--env "BASEROM_FPATH=$CONTAINER_BASEROM_FPATH"' in helper
     assert '--env EXTERNAL_ROM_FPATH=/inputs/baserom.us.z64' not in helper
+
+    # Resolve/validate the host file before paying the Docker image-build cost.
+    assert helper.index('BASEROM_ABS=$(realpath -e -- "$BASEROM_FPATH"') < helper.index('docker buildx build')
+
+
+def test_inner_build_refuses_to_fall_back_if_baserom_handoff_is_lost():
+    build_script = (REPO_DPATH / "build.sh").read_text()
+    marker_guard = build_script.index('if [[ "$SM64RA_EXPECT_BASEROM" == "1" ]]')
+    resolve = build_script.index('sm64ra_resolve_asset_config')
+    generator = build_script.index('"$SM64RA_PYTHON" -m sm64_random_assets generate')
+    assert marker_guard < resolve < generator
+    assert 'expected a baserom, but BASEROM_FPATH was not forwarded' in build_script
+    assert 'expected a mounted baserom, but it is not visible' in build_script
+
+
+def test_baserom_examples_are_executable_relative_paths():
+    readme = (REPO_DPATH / "README.rst").read_text()
+    frame_docs = (REPO_DPATH / "docs/source/manual/install_docs/install_on_steamframe.rst").read_text()
+    assert "BASEROM_FPATH=baserom.us.z64" in readme
+    assert "BASEROM_FPATH=baserom.us.z64" in frame_docs
+    assert "BASEROM_FPATH=/path/to" not in readme
+    assert "BASEROM_FPATH=/path/to" not in frame_docs
+
+
+def test_baserom_checkout_is_ignored_by_superproject():
+    gitignore = (REPO_DPATH / ".gitignore").read_text()
+    assert "tpl/*-baserom" in gitignore
+
+
+def test_steamrt_relative_baserom_maps_into_work_mount(tmp_path):
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    docker_log = tmp_path / "docker.log"
+    docker = fake_bin / "docker"
+    docker.write_text(
+        """#!/usr/bin/env bash
+set -eu
+printf '<%s>' \"$@\" >> \"$FAKE_DOCKER_LOG\"
+printf '\\n' >> \"$FAKE_DOCKER_LOG\"
+if [[ \"${1:-} ${2:-}\" == \"buildx version\" ]]; then
+    exit 0
+elif [[ \"${1:-} ${2:-}\" == \"buildx inspect\" ]]; then
+    echo 'Platforms: linux/amd64, linux/arm64'
+    exit 0
+elif [[ \"${1:-} ${2:-}\" == \"buildx build\" ]]; then
+    exit 0
+elif [[ \"${1:-}\" == \"run\" ]]; then
+    exit 0
+fi
+exit 0
+"""
+    )
+    docker.chmod(0o755)
+
+    rom = REPO_DPATH / "baserom.us.z64"
+    try:
+        rom.write_bytes(b"test-rom")
+        env = os.environ.copy()
+        env.update(
+            {
+                "PATH": f"{fake_bin}:{env['PATH']}",
+                "FAKE_DOCKER_LOG": str(docker_log),
+                "PRESET": "steamframe",
+                "BASEROM_FPATH": "baserom.us.z64",
+            }
+        )
+        for key in ["VARIANT", "TARGET", "ASSET_MODE", "EXTERNAL_ROM_FPATH"]:
+            env.pop(key, None)
+        result = subprocess.run(
+            ["bash", "dev/build_steamrt_target.sh"],
+            cwd=REPO_DPATH,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr
+        assert "ASSET_MODE=baserom" in result.stdout
+        assert f"BASEROM_HOST_FPATH={rom}" in result.stdout
+        assert "BASEROM_CONTAINER_FPATH=/work/baserom.us.z64" in result.stdout
+        log = docker_log.read_text()
+        assert "<ASSET_MODE=baserom>" in log
+        assert "<SM64RA_EXPECT_BASEROM=1>" in log
+        assert "<BASEROM_FPATH=/work/baserom.us.z64>" in log
+        # A repo-local baserom is already visible through the /work bind mount;
+        # don't make a redundant /inputs mount.
+        assert "dst=/inputs/baserom.us.z64" not in log
+    finally:
+        rom.unlink(missing_ok=True)
+
+
+def test_steamrt_missing_explicit_baserom_fails_before_docker_build(tmp_path):
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    docker_log = tmp_path / "docker.log"
+    docker = fake_bin / "docker"
+    docker.write_text(
+        """#!/usr/bin/env bash
+printf '<%s>' \"$@\" >> \"$FAKE_DOCKER_LOG\"
+printf '\\n' >> \"$FAKE_DOCKER_LOG\"
+exit 0
+"""
+    )
+    docker.chmod(0o755)
+    env = os.environ.copy()
+    env.update(
+        {
+            "PATH": f"{fake_bin}:{env['PATH']}",
+            "FAKE_DOCKER_LOG": str(docker_log),
+            "PRESET": "steamframe",
+            "BASEROM_FPATH": "baserom.us.z64",
+        }
+    )
+    for key in ["VARIANT", "TARGET", "ASSET_MODE", "EXTERNAL_ROM_FPATH"]:
+        env.pop(key, None)
+    result = subprocess.run(
+        ["bash", "dev/build_steamrt_target.sh"],
+        cwd=REPO_DPATH,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "BASEROM_FPATH does not exist: baserom.us.z64" in result.stderr
+    assert not docker_log.exists() or "buildx build" not in docker_log.read_text()

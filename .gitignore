@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 tpl/sm64-ref
 tpl/sm64-port-ref
+tpl/*-baserom
 sm64_save_file.bin
 sm64config.txt
 .coverage
@@ -11,8 +12,7 @@ build
 dist
 sm64.us.z64
 *.tar.gz
+*.egg-info
+tpl/sm64ex-ref
 *.us.z64
-git-of-theseus/
-*.egg-info/
-tpl/sm64ex-ref/
-.venv/
+git-of-theseus

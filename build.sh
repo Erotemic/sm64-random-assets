@@ -89,7 +89,6 @@ fi
 # shellcheck source=dev/build_config.sh
 source "$THIS_DPATH/dev/build_config.sh"
 sm64ra_resolve_build_config
-sm64ra_resolve_asset_config
 
 NUM_CPUS=${NUM_CPUS:=}
 BUILD=${BUILD:=1}
@@ -98,6 +97,32 @@ BUILD_REFERENCE=${BUILD_REFERENCE:=0}
 
 EXTERNAL_ROM_FPATH=${EXTERNAL_ROM_FPATH:=""}
 BASEROM_FPATH=${BASEROM_FPATH:=""}
+SM64RA_EXPECT_BASEROM=${SM64RA_EXPECT_BASEROM:-0}
+
+# When the outer Steam Runtime wrapper saw an explicit BASEROM_FPATH it passes
+# this independent marker into the target container. Fail closed if either the
+# mounted file or the path variable was lost at the host/container boundary;
+# never silently fall back to random asset generation.
+if [[ "$SM64RA_EXPECT_BASEROM" == "1" ]]; then
+    if [[ -z "$BASEROM_FPATH" ]]; then
+        echo "ERROR: target wrapper expected a baserom, but BASEROM_FPATH was not forwarded" >&2
+        exit 2
+    fi
+    if [[ ! -f "$BASEROM_FPATH" ]]; then
+        echo "ERROR: target wrapper expected a mounted baserom, but it is not visible: $BASEROM_FPATH" >&2
+        exit 2
+    fi
+fi
+
+# Resolve asset provenance only after the input variables above have been
+# initialized. In particular, an explicit BASEROM_FPATH must become baserom
+# mode before any generator/container handoff can occur.
+sm64ra_resolve_asset_config
+
+if [[ "$SM64RA_EXPECT_BASEROM" == "1" && "$ASSET_MODE" != "baserom" ]]; then
+    echo "INTERNAL ERROR: explicit baserom handoff resolved to ASSET_MODE=$ASSET_MODE" >&2
+    exit 2
+fi
 
 TEST_LOCALLY=${TEST_LOCALLY:=0}
 
@@ -157,11 +182,22 @@ DEFAULT_ASSET_CONFIG="
 ASSET_CONFIG=${ASSET_CONFIG:=$DEFAULT_ASSET_CONFIG}
 
 SM64_REPO_REL_DPATH=$(sm64ra_variant_repo_relpath "$VARIANT")
-SM64_REPO_DPATH="$THIS_DPATH/$SM64_REPO_REL_DPATH"
+VARIANT_REPO_DPATH="$THIS_DPATH/$SM64_REPO_REL_DPATH"
+BASEROM_REPO_DPATH="${VARIANT_REPO_DPATH}-baserom"
+
+# Keep original-ROM assets in a dedicated persistent checkout. Switching to a
+# baserom build must not delete or overwrite the randomized asset cache in the
+# normal variant checkout.
+if [[ "$ASSET_MODE" == "baserom" ]]; then
+    SM64_REPO_DPATH="$BASEROM_REPO_DPATH"
+else
+    SM64_REPO_DPATH="$VARIANT_REPO_DPATH"
+fi
+
 BINARY_REL_FPATH=$(sm64ra_variant_binary_relpath "$VARIANT")
 BINARY_TYPE=$(sm64ra_variant_binary_type "$VARIANT")
 BINARY_FPATH="$SM64_REPO_DPATH/$BINARY_REL_FPATH"
-REFERENCE_DPATH="${SM64_REPO_DPATH}-ref"
+REFERENCE_DPATH="${VARIANT_REPO_DPATH}-ref"
 REFERENCE_BASEROM_FPATH="$REFERENCE_DPATH/baserom.us.z64"
 REFERENCE_BINARY_FPATH="$REFERENCE_DPATH/$BINARY_REL_FPATH"
 
@@ -233,6 +269,30 @@ fi
 echo "Ensure the sm64 variant ($VARIANT) submodule exists"
 git -C "$THIS_DPATH" submodule update --init "$SM64_REPO_REL_DPATH"
 
+sm64ra_ensure_baserom_repo() {
+    local source_commit cache_commit
+    source_commit=$(git -C "$VARIANT_REPO_DPATH" rev-parse HEAD)
+
+    if [[ ! -d "$BASEROM_REPO_DPATH/.git" ]]; then
+        echo "Create persistent baserom checkout: $BASEROM_REPO_DPATH"
+        git clone --quiet --no-hardlinks "$VARIANT_REPO_DPATH" "$BASEROM_REPO_DPATH"
+    fi
+
+    cache_commit=$(git -C "$BASEROM_REPO_DPATH" rev-parse HEAD)
+    if [[ "$cache_commit" != "$source_commit" ]]; then
+        echo "Update persistent baserom checkout to variant commit $source_commit"
+        git -C "$BASEROM_REPO_DPATH" fetch --quiet "$VARIANT_REPO_DPATH" "$source_commit"
+        # This only refreshes tracked source files. Extracted baserom assets are
+        # deliberately retained so upstream extraction can incrementally fill
+        # anything newly required by the updated source.
+        git -C "$BASEROM_REPO_DPATH" reset --hard "$source_commit"
+    fi
+}
+
+if [[ "$ASSET_MODE" == "baserom" ]]; then
+    sm64ra_ensure_baserom_repo
+fi
+
 echo "REFERENCE_BASEROM_FPATH = $REFERENCE_BASEROM_FPATH"
 
 if [[ "$BUILD_REFERENCE" == "1" ]]; then
@@ -292,24 +352,18 @@ sm64ra_prepare_native_tools() {
     fi
 
     local clean_tools=0
-    if sm64ra_is_container_target "$TARGET"; then
-        # SteamRT bind-mounts the source tree, so a helper built for a previous
-        # host/target can be the wrong ISA even when make considers it current.
-        clean_tools=1
-    else
-        local helper helper_desc host_arch
-        host_arch=$(sm64ra_host_arch)
-        for helper in textconv mio0 n64graphics skyconv; do
-            if [[ -x "$tools_dpath/$helper" ]]; then
-                helper_desc=$(file -b "$tools_dpath/$helper" 2>/dev/null || true)
-                case "$host_arch:$helper_desc" in
-                    x86_64:*x86-64*|x86_64:*x86_64*|aarch64:*ARM\ aarch64*|aarch64:*ARM64*) ;;
-                    *) clean_tools=1 ;;
-                esac
-                break
-            fi
-        done
-    fi
+    local helper helper_desc host_arch
+    host_arch=$(sm64ra_host_arch)
+    for helper in textconv mio0 n64graphics skyconv; do
+        if [[ -x "$tools_dpath/$helper" ]]; then
+            helper_desc=$(file -b "$tools_dpath/$helper" 2>/dev/null || true)
+            case "$host_arch:$helper_desc" in
+                x86_64:*x86-64*|x86_64:*x86_64*|aarch64:*ARM\ aarch64*|aarch64:*ARM64*) ;;
+                *) clean_tools=1 ;;
+            esac
+            break
+        fi
+    done
 
     if [[ "$clean_tools" == "1" ]]; then
         echo "Cleaning native SM64 helper tools for target environment"
@@ -347,7 +401,20 @@ sm64ra_stage_baserom() {
 # Prepare the requested asset source. Only ASSET_MODE=generate runs the random
 # asset generator. BASEROM_FPATH always selects ASSET_MODE=baserom; use
 # EXTERNAL_ROM_FPATH when a ROM is only being supplied for a reference build.
+# Keep this invariant immediately adjacent to the generator invocation so a
+# future configuration refactor cannot silently route an explicit baserom into
+# random generation.
+if [[ -n "$BASEROM_FPATH" && "$ASSET_MODE" != "baserom" ]]; then
+    echo "INTERNAL ERROR: BASEROM_FPATH is set but ASSET_MODE=$ASSET_MODE" >&2
+    echo "Refusing to run the random asset generator." >&2
+    exit 2
+fi
+
 if [[ "$ASSET_MODE" == "generate" ]]; then
+    if [[ -n "$BASEROM_FPATH" ]]; then
+        echo "INTERNAL ERROR: generator branch reached with BASEROM_FPATH set" >&2
+        exit 2
+    fi
     # Run the asset generator
     "$SM64RA_PYTHON" -c "if 1:
         import ubelt as ub
@@ -381,10 +448,12 @@ elif [[ "$ASSET_MODE" == "reuse" ]]; then
 
 elif [[ "$ASSET_MODE" == "baserom" ]]; then
     if [[ "$BASEROM_FPATH" == "" ]]; then
-        if test -f "$SM64_REPO_DPATH/baserom.us.z64" ; then
+        if test -f "$VARIANT_REPO_DPATH/baserom.us.z64" ; then
+            BASEROM_FPATH="$VARIANT_REPO_DPATH/baserom.us.z64"
+        elif test -f "$SM64_REPO_DPATH/baserom.us.z64" ; then
             BASEROM_FPATH="$SM64_REPO_DPATH/baserom.us.z64"
         else
-            echo "ERROR: ASSET_MODE=baserom requires BASEROM_FPATH or an existing $SM64_REPO_DPATH/baserom.us.z64" >&2
+            echo "ERROR: ASSET_MODE=baserom requires BASEROM_FPATH or baserom.us.z64 in the variant checkout" >&2
             exit 2
         fi
     fi
@@ -398,17 +467,22 @@ elif [[ "$ASSET_MODE" == "baserom" ]]; then
         '''), 'green'))
     "
 
-    echo "Skipping the random asset generator; cleaning any previously generated assets and extracting originals from:"
-    echo "$BASEROM_FPATH"
+    echo "Skipping the random asset generator."
+    echo "Using persistent baserom asset cache: $SM64_REPO_DPATH"
+    echo "Base ROM: $BASEROM_FPATH"
     sm64ra_prepare_native_tools
     sm64ra_stage_baserom
+
+    # Upstream extract_assets.py is itself cache-aware: when its asset list is
+    # complete and .assets-local.txt has the current extraction revision, it
+    # returns before reading the ROM. Because baserom assets live in a separate
+    # checkout, we can rely on that incremental behavior without ever deleting
+    # the randomized asset cache.
     (
         cd "$SM64_REPO_DPATH"
-        "$SM64RA_PYTHON" extract_assets.py --clean
         "$SM64RA_PYTHON" extract_assets.py us
     )
-    # The prepared source tree no longer needs the ROM for compilation because
-    # the compile step always uses NOEXTRACT=1.
+
     sm64ra_unstage_baserom
     trap - EXIT
 fi
@@ -451,7 +525,32 @@ if [[ "$BUILD" == "1" ]]; then
             CONTROLLER_API=SDL2
         )
     fi
-    ( cd "$SM64_REPO_DPATH" && make clean && make -j"$NUM_CPUS" "${SM64RA_MAKE_ARGS[@]}" )
+    # Generated assets can change without upstream make dependencies noticing,
+    # so preserve the historical clean-build behavior for generate mode. For
+    # reuse/baserom modes keep object caches when the target is unchanged. A
+    # target stamp forces one clean build after an architecture/runtime switch.
+    BUILD_TARGET_STAMP="$SM64_REPO_DPATH/build/.sm64ra-target"
+    BUILD_TARGET_ID="$TARGET:$VARIANT"
+    NEED_MAKE_CLEAN=0
+    if [[ "$ASSET_MODE" == "generate" ]]; then
+        NEED_MAKE_CLEAN=1
+    elif [[ -d "$SM64_REPO_DPATH/build" ]]; then
+        CACHED_BUILD_TARGET=$(cat "$BUILD_TARGET_STAMP" 2>/dev/null || true)
+        if [[ "$CACHED_BUILD_TARGET" != "$BUILD_TARGET_ID" ]]; then
+            NEED_MAKE_CLEAN=1
+        fi
+    fi
+
+    if [[ "$NEED_MAKE_CLEAN" == "1" ]]; then
+        echo "Clean build required for ASSET_MODE=$ASSET_MODE / target=$BUILD_TARGET_ID"
+        ( cd "$SM64_REPO_DPATH" && make clean )
+    else
+        echo "Reusing compatible native build cache in $SM64_REPO_DPATH/build"
+    fi
+
+    ( cd "$SM64_REPO_DPATH" && make -j"$NUM_CPUS" "${SM64RA_MAKE_ARGS[@]}" )
+    mkdir -p "$SM64_REPO_DPATH/build"
+    printf '%s\n' "$BUILD_TARGET_ID" > "$BUILD_TARGET_STAMP"
     #( cd "$SM64_REPO_DPATH" && NOEXTRACT=1 COMPARE=0 NON_MATCHING=0 VERSION=us make -j"$NUM_CPUS" )
 
     if ! test -e "$BINARY_FPATH" ; then
