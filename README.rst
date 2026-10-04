@@ -189,6 +189,9 @@ execution/runtime target (``TARGET``), and convenient named configurations
    # Build the preferred ARM64 Steam Frame frontend (sm64ex + SDL2)
    PRESET=steamframe ./build.sh
 
+   # Deploy tpl/sm64ex/build/us_pc with SteamOS Devkit Client. On the Frame,
+   # select Steam Linux Runtime 4.0 ARM64 and start sm64.us.f3dex2e.
+
    # Presets and variants are independent; override when testing another port
    PRESET=steamframe VARIANT=sm64-port ./build.sh
 
@@ -201,15 +204,29 @@ generator entirely:
 .. code:: bash
 
    PRESET=steamframe ASSET_MODE=reuse ./build.sh
-   PRESET=steamframe BASEROM_FPATH=/path/to/baserom.us.z64 ./build.sh
+   PRESET=steamframe BASEROM_FPATH=baserom.us.z64 ./build.sh
 
 ``BASEROM_FPATH`` is intentionally unambiguous: when it is set, the build is
-baserom-only and ``ASSET_MODE=generate``/``reuse`` are rejected. This prevents
-randomized assets already present in a variant checkout from leaking into a
-supposedly vanilla build. To supply a ROM only for reference generation while
-continuing to randomize assets, use ``EXTERNAL_ROM_FPATH`` together with
-``BUILD_REFERENCE=1``. The historical ``EXTERNAL_ROM_FPATH`` spelling keeps its
-original behavior.
+baserom-only and ``ASSET_MODE=generate``/``reuse`` are rejected. Baseline assets
+are kept in a persistent sibling checkout such as ``tpl/sm64ex-baserom`` rather
+than cleaning the randomized ``tpl/sm64ex`` checkout. The first baserom build
+extracts the original assets; later builds reuse that extraction and compatible
+native build outputs. Upstream ``extract_assets.py`` already has its own
+``.assets-local.txt`` cache and returns immediately when extraction is current.
+Nothing in the randomized checkout is deleted when switching modes.
+
+For Steam Runtime builds the wrapper resolves ``BASEROM_FPATH`` on the host
+*before* building the container image. A repo-local path such as
+``BASEROM_FPATH=baserom.us.z64`` is already visible through the repository's
+``/work`` bind mount and is forwarded as ``/work/baserom.us.z64``. A baserom
+outside the repository receives a dedicated read-only ``/inputs`` mount. The
+wrapper prints both resolved paths. If the outer wrapper saw a baserom but the
+inner build cannot see it, the build aborts rather than falling back to asset
+generation.
+
+To supply a ROM only for reference generation while continuing to randomize
+assets, use ``EXTERNAL_ROM_FPATH`` together with ``BUILD_REFERENCE=1``. The
+historical ``EXTERNAL_ROM_FPATH`` spelling keeps its original behavior.
 
 Legacy ``TARGET=pc``, ``TARGET=rom``, and ``TARGET=<variant>`` spellings are
 still accepted with a warning.
