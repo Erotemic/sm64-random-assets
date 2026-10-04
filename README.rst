@@ -186,11 +186,11 @@ execution/runtime target (``TARGET``), and convenient named configurations
    # One-time setup when building ARM64 on an x86_64 Docker host
    ./dev/setup_docker_binfmt.sh arm64
 
-   # Build an ARM64 Steam Runtime binary for Steam Frame
+   # Build the preferred ARM64 Steam Frame frontend (sm64ex + SDL2)
    PRESET=steamframe ./build.sh
 
-   # Presets and variants are independent
-   PRESET=steamframe VARIANT=sm64ex ./build.sh
+   # Presets and variants are independent; override when testing another port
+   PRESET=steamframe VARIANT=sm64-port ./build.sh
 
 Asset source is independent as well. With no baserom specified,
 ``ASSET_MODE=generate`` remains the default. Use ``reuse`` to compile assets
@@ -203,9 +203,13 @@ generator entirely:
    PRESET=steamframe ASSET_MODE=reuse ./build.sh
    PRESET=steamframe BASEROM_FPATH=/path/to/baserom.us.z64 ./build.sh
 
-Set ``ASSET_MODE=generate`` explicitly if a baserom is present but should only
-serve another purpose such as ``BUILD_REFERENCE=1``. The historical
-``EXTERNAL_ROM_FPATH`` spelling remains supported with its original behavior.
+``BASEROM_FPATH`` is intentionally unambiguous: when it is set, the build is
+baserom-only and ``ASSET_MODE=generate``/``reuse`` are rejected. This prevents
+randomized assets already present in a variant checkout from leaking into a
+supposedly vanilla build. To supply a ROM only for reference generation while
+continuing to randomize assets, use ``EXTERNAL_ROM_FPATH`` together with
+``BUILD_REFERENCE=1``. The historical ``EXTERNAL_ROM_FPATH`` spelling keeps its
+original behavior.
 
 Legacy ``TARGET=pc``, ``TARGET=rom``, and ``TARGET=<variant>`` spellings are
 still accepted with a warning.

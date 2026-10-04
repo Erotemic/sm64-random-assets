@@ -15,12 +15,19 @@ Buildx installed:
 
     PRESET=steamframe ./build.sh
 
-The default variant is ``sm64-port``. Other native variants can use the same
-preset:
+The Steam Frame preset defaults to ``sm64ex``. This is deliberate: ``sm64ex``
+uses SDL2 for its Linux window, audio, and controller backends, whereas the
+older ``sm64-port`` Linux frontend uses GLX. The variant remains independently
+overridable for diagnostics:
 
 .. code:: bash
 
-    PRESET=steamframe VARIANT=sm64ex ./build.sh
+    PRESET=steamframe VARIANT=sm64-port ./build.sh
+
+For ARM64 Frame builds the ``sm64ex`` compile pins ``TARGET_ARCH=armv8-a`` and
+explicitly selects ``RENDER_API=GL``, ``WINDOW_API=SDL2``, ``AUDIO_API=SDL2``,
+and ``CONTROLLER_API=SDL2``. This avoids deriving ``-march=native`` from the
+QEMU build environment and makes the intended frontend explicit.
 
 The build runs in Valve's ARM64 Steam Runtime 3 (Sniper) SDK container. On an
 x86_64 build host Docker needs ARM64 ``binfmt``/QEMU support so it can execute
@@ -68,12 +75,18 @@ independently:
     # generator is not invoked.
     PRESET=steamframe BASEROM_FPATH=/path/to/baserom.us.z64 ./build.sh
 
-``ASSET_MODE=baserom`` cleans the extracted/generated asset set and uses the
-variant's upstream ``extract_assets.py`` to recover original assets from the
-ROM. If ``baserom.us.z64`` is already present in the variant tree, set
-``ASSET_MODE=baserom`` without ``BASEROM_FPATH``. The historical
-``EXTERNAL_ROM_FPATH`` spelling remains supported with its original behavior;
-it does not implicitly switch away from randomized generation.
+``ASSET_MODE=baserom`` first runs the selected variant's upstream
+``extract_assets.py --clean`` and then re-extracts ``us`` assets from the ROM.
+This cleanup is required because upstream extraction intentionally leaves
+existing compatible assets alone; without it, randomized PNG/audio/binary
+assets from an earlier build could survive a later baserom build. The
+``sm64_random_assets`` generator is never invoked in baserom mode.
+
+If ``baserom.us.z64`` is already present in the variant tree, set
+``ASSET_MODE=baserom`` without ``BASEROM_FPATH``. ``BASEROM_FPATH`` always means
+baserom-only: combining it with ``ASSET_MODE=generate`` or ``reuse`` is an error.
+To provide a ROM only to ``BUILD_REFERENCE=1`` while continuing to generate
+randomized assets, use the legacy ``EXTERNAL_ROM_FPATH`` input instead.
 
 Native SM64 helper tools such as ``textconv`` are architecture-specific but
 live outside the normal ``build/`` directory. Steam Runtime builds therefore
@@ -92,9 +105,16 @@ preferred for interactive use.
 Deploy
 ======
 
-Upload the produced native Linux binary to the Steam Frame with the SteamOS
-Devkit Client and select ``Steam Linux Runtime 3.0 ARM64 (Sniper)`` as the
-runtime.
+The default Frame artifact is:
+
+.. code:: text
+
+    tpl/sm64ex/build/us_pc/sm64.us.f3dex2e
+
+Upload that native Linux binary to the Steam Frame with the SteamOS Devkit
+Client and select ``Steam Linux Runtime 3.0 ARM64 (Sniper)`` as the runtime.
+``EXTERNAL_DATA=0`` remains the upstream default, so a separate resource pack
+is not required for this baseline build.
 
 Python used during the target build
 -----------------------------------

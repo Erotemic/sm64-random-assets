@@ -345,8 +345,8 @@ sm64ra_stage_baserom() {
 }
 
 # Prepare the requested asset source. Only ASSET_MODE=generate runs the random
-# asset generator. BASEROM_FPATH by itself selects ASSET_MODE=baserom unless the
-# user explicitly chose a different ASSET_MODE.
+# asset generator. BASEROM_FPATH always selects ASSET_MODE=baserom; use
+# EXTERNAL_ROM_FPATH when a ROM is only being supplied for a reference build.
 if [[ "$ASSET_MODE" == "generate" ]]; then
     # Run the asset generator
     "$SM64RA_PYTHON" -c "if 1:
@@ -398,7 +398,7 @@ elif [[ "$ASSET_MODE" == "baserom" ]]; then
         '''), 'green'))
     "
 
-    echo "Skipping the random asset generator; extracting original assets from:"
+    echo "Skipping the random asset generator; cleaning any previously generated assets and extracting originals from:"
     echo "$BASEROM_FPATH"
     sm64ra_prepare_native_tools
     sm64ra_stage_baserom
@@ -407,6 +407,8 @@ elif [[ "$ASSET_MODE" == "baserom" ]]; then
         "$SM64RA_PYTHON" extract_assets.py --clean
         "$SM64RA_PYTHON" extract_assets.py us
     )
+    # The prepared source tree no longer needs the ROM for compilation because
+    # the compile step always uses NOEXTRACT=1.
     sm64ra_unstage_baserom
     trap - EXIT
 fi
@@ -428,7 +430,28 @@ if [[ "$BUILD" == "1" ]]; then
     # the makefiles aware of this without needing to start from scratch each
     # time.
     sm64ra_prepare_native_tools
-    ( cd "$SM64_REPO_DPATH" && make clean && NOEXTRACT=1 COMPARE=0 NON_MATCHING=0 VERSION=us make -j"$NUM_CPUS" PYTHON="$SM64RA_PYTHON" )
+
+    # Keep the original compile semantics: assets are prepared before make and
+    # native builds compile that prepared tree with extraction disabled. Frame
+    # sm64ex builds additionally pin a conservative ARMv8 target and make the
+    # SDL2 frontend explicit rather than relying on GLX or QEMU's -march=native.
+    SM64RA_MAKE_ARGS=(
+        NOEXTRACT=1
+        COMPARE=0
+        NON_MATCHING=0
+        VERSION=us
+        "PYTHON=$SM64RA_PYTHON"
+    )
+    if [[ "$VARIANT" == "sm64ex" && "$TARGET" == "steamrt3-aarch64" ]]; then
+        SM64RA_MAKE_ARGS+=(
+            TARGET_ARCH=armv8-a
+            RENDER_API=GL
+            WINDOW_API=SDL2
+            AUDIO_API=SDL2
+            CONTROLLER_API=SDL2
+        )
+    fi
+    ( cd "$SM64_REPO_DPATH" && make clean && make -j"$NUM_CPUS" "${SM64RA_MAKE_ARGS[@]}" )
     #( cd "$SM64_REPO_DPATH" && NOEXTRACT=1 COMPARE=0 NON_MATCHING=0 VERSION=us make -j"$NUM_CPUS" )
 
     if ! test -e "$BINARY_FPATH" ; then
@@ -455,6 +478,11 @@ if [[ "$BUILD" == "1" ]]; then
         echo "Verified target executable: $BINARY_DESCRIPTION"
     fi
 fi
+
+# Remove only a temporary baserom symlink that this script staged. Existing
+# baserom files in the variant checkout are left untouched.
+sm64ra_unstage_baserom
+trap - EXIT
 
 # Run the asset generator
 "$SM64RA_PYTHON" -c "if 1:

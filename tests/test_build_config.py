@@ -32,16 +32,16 @@ def test_default_build_config():
     assert result.stdout.strip() == "sm64-port\thost"
 
 
-def test_steamframe_preset():
+def test_steamframe_preset_prefers_sm64ex():
     result = resolve_config(PRESET="steamframe")
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "steamframe\tsm64-port\tsteamrt3-aarch64"
+    assert result.stdout.strip() == "steamframe\tsm64ex\tsteamrt3-aarch64"
 
 
 def test_steamframe_allows_variant_override():
-    result = resolve_config(PRESET="steamframe", VARIANT="sm64ex")
+    result = resolve_config(PRESET="steamframe", VARIANT="sm64-port")
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "steamframe\tsm64ex\tsteamrt3-aarch64"
+    assert result.stdout.strip() == "steamframe\tsm64-port\tsteamrt3-aarch64"
 
 
 def test_steamdeck_preset():
@@ -73,7 +73,7 @@ def test_legacy_variant_target_is_translated():
 def test_preset_owns_target_selection():
     result = resolve_config(PRESET="steamframe", TARGET="steamrt3-x86_64")
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "steamframe\tsm64-port\tsteamrt3-aarch64"
+    assert result.stdout.strip() == "steamframe\tsm64ex\tsteamrt3-aarch64"
 
 
 def test_n64_target_rejects_pc_variant():
@@ -109,6 +109,13 @@ def test_steamrt_dockerfile_preserves_sdk_sdl_stack():
     ]
     assert not any(line == "libsdl2-dev \\" for line in active_lines)
     assert "command -v sdl2-config" in install_block
+
+def test_steamrt_dockerfile_installs_sm64ex_hexdump_dependency():
+    dockerfile = (
+        REPO_DPATH / "dockerfiles" / "steamrt_sm64_random_assets.Dockerfile"
+    ).read_text()
+    assert "bsdextrautils" in dockerfile
+
 
 def test_steamrt_dockerfile_pins_eol_bullseye_security_snapshot():
     dockerfile = (
@@ -222,9 +229,9 @@ def test_external_rom_path_preserves_legacy_generate_default(tmp_path):
     rom = tmp_path / "baserom.us.z64"
     result = resolve_asset_config(EXTERNAL_ROM_FPATH=str(rom))
     assert result.returncode == 0, result.stderr
-    mode, path = result.stdout.strip().split("\t")
+    mode, _, path = result.stdout.rstrip("\n").partition("\t")
     assert mode == "generate"
-    assert path == str(rom)
+    assert path == ""
 
 
 def test_explicit_baserom_path_implies_baserom_mode(tmp_path):
@@ -236,13 +243,18 @@ def test_explicit_baserom_path_implies_baserom_mode(tmp_path):
     assert path == str(rom)
 
 
-def test_explicit_asset_mode_overrides_baserom_inference(tmp_path):
+def test_baserom_path_cannot_fall_through_to_generator(tmp_path):
     rom = tmp_path / "baserom.us.z64"
     result = resolve_asset_config(BASEROM_FPATH=str(rom), ASSET_MODE="generate")
-    assert result.returncode == 0, result.stderr
-    mode, path = result.stdout.strip().split("\t")
-    assert mode == "generate"
-    assert path == str(rom)
+    assert result.returncode != 0
+    assert "BASEROM_FPATH selects ASSET_MODE=baserom" in result.stderr
+
+
+def test_baserom_path_cannot_be_combined_with_reuse(tmp_path):
+    rom = tmp_path / "baserom.us.z64"
+    result = resolve_asset_config(BASEROM_FPATH=str(rom), ASSET_MODE="reuse")
+    assert result.returncode != 0
+    assert "BASEROM_FPATH selects ASSET_MODE=baserom" in result.stderr
 
 
 def test_conflicting_baserom_aliases_are_rejected(tmp_path):
@@ -258,13 +270,27 @@ def test_build_script_has_explicit_asset_modes_and_target_tool_cleanup():
     build_script = (REPO_DPATH / "build.sh").read_text()
     assert 'if [[ "$ASSET_MODE" == "generate" ]]' in build_script
     assert '"$SM64RA_PYTHON" -m sm64_random_assets generate' in build_script
-    assert '"$SM64RA_PYTHON" extract_assets.py --clean' in build_script
-    assert '"$SM64RA_PYTHON" extract_assets.py us' in build_script
     assert "Skipping asset generation/extraction" in build_script
     assert "Skipping the random asset generator" in build_script
+    # A baserom build must remove any randomized assets already present before
+    # extracting originals. Upstream extract_assets intentionally preserves
+    # existing compatible files if this clean step is omitted.
+    assert '"$SM64RA_PYTHON" extract_assets.py --clean' in build_script
+    assert '"$SM64RA_PYTHON" extract_assets.py us' in build_script
     assert "Cleaning native SM64 helper tools for target environment" in build_script
     assert 'make -s -C "$tools_dpath" clean' in build_script
-    assert 'NOEXTRACT=1 COMPARE=0 NON_MATCHING=0 VERSION=us make' in build_script
+    assert 'NOEXTRACT=1' in build_script
+    assert 'SM64RA_MAKE_ARGS' in build_script
+
+
+def test_steamframe_sm64ex_uses_explicit_sdl2_arm_build_flags():
+    build_script = (REPO_DPATH / "build.sh").read_text()
+    assert '"$VARIANT" == "sm64ex" && "$TARGET" == "steamrt3-aarch64"' in build_script
+    assert "TARGET_ARCH=armv8-a" in build_script
+    assert "RENDER_API=GL" in build_script
+    assert "WINDOW_API=SDL2" in build_script
+    assert "AUDIO_API=SDL2" in build_script
+    assert "CONTROLLER_API=SDL2" in build_script
 
 
 def test_build_script_preserves_original_presentation_and_control_flow():
